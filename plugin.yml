@@ -1,6 +1,6 @@
 name: TrueHardcore
 main: au.com.addstar.truehardcore.TrueHardcore
-version: 1.0.1
+version: ${project.version}
 author: add5tar
 softdepend: [Vault, iConomy, Multiverse-Core, My Worlds, WorldEdit, Worldguard]
 description: Multiplayer hardcore plugin to simulate true hardcore

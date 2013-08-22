@@ -69,6 +69,20 @@
       <version>1.2.12</version>
     </dependency>
 
+    <!-- Used for LWC stuff -->
+    <dependency>
+      <groupId>com.griefcraft</groupId>
+      <artifactId>lwc</artifactId>
+      <version>4.4.0</version>
+    </dependency>
+
+    <!-- Used for LogBlock stuff -->
+    <dependency>
+      <groupId>de.diddiz</groupId>
+      <artifactId>logblock</artifactId>
+      <version>1.70</version>
+    </dependency>
+
     <!-- MCStats.org -->
     <dependency>
         <groupId>org.mcstats.bukkit</groupId>
