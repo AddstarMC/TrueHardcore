@@ -1,0 +1,16 @@
+# Enable plugin debugging (warning: this is very verbose!)
+debug: true
+
+# Which world to use as the hardcore world
+world: hardcore
+
+# How long should the player be banned from playing again after death (seconds)
+death-ban: 60
+
+# Database settings
+mysql:
+  host: localhost
+  port: 3306
+  database: truehardcore
+  username: truehardcore
+  password: "truehardcore"
