@@ -7,6 +7,9 @@ world: hardcore
 # How long should the player be banned from playing again after death (seconds)
 death-ban: 60
 
+# How long to protect the player after they spawn
+spawn-protection: 60
+
 # Database settings
 mysql:
   host: localhost

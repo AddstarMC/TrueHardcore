@@ -33,10 +33,7 @@ public class PlayerListener implements Listener {
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		final Player player = event.getEntity();
 		
-		if (!plugin.HardcoreWorld.equals(player.getWorld().getName())) {
-			plugin.Debug("Player " + player.getName() + " died outside the hardcore world... ignoring!");
-			return;
-		} else {
+		if (plugin.HardcoreWorld.equals(player.getWorld().getName())) {
 			plugin.Debug("Handling player death...");
 			plugin.DoPlayerDeath(player, event);
 		}

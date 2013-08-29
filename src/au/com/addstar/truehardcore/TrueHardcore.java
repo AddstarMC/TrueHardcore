@@ -17,6 +17,7 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
@@ -31,6 +32,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -42,10 +45,13 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
+import com.wimbli.WorldBorder.BorderData;
+import com.wimbli.WorldBorder.WorldBorder;
 
 import de.diddiz.LogBlock.CommandsHandler.CommandClearLog;
 import de.diddiz.LogBlock.CommandsHandler.CommandRollback;
@@ -63,6 +69,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public String HardcoreWorld = null;
 	public List<String> RollbackCmds = null;
 	public int DeathBan;
+	public int SpawnProtection;
 	
 	private static final Logger logger = Logger.getLogger("Minecraft");
 	public ConfigManager cfg = new ConfigManager(this);
@@ -78,9 +85,27 @@ public final class TrueHardcore extends JavaPlugin {
 	
 	private Boolean LWCHooked = false;
 	private Boolean LBHooked = false;
+	private Boolean WBHooked = false;
 	private LWC lwc;
 	private LogBlock logblock;
+	private WorldBorder wb;
 	
+	private final List<Material> SpawnBlocks = Arrays.asList(
+			Material.DIRT, 
+			Material.GRASS,
+			Material.SAND,
+			Material.STONE,
+			Material.COBBLESTONE,
+			Material.BEDROCK,
+			Material.SNOW,
+			Material.SNOW_BLOCK,
+			Material.CLAY,
+			Material.OBSIDIAN,
+			Material.SANDSTONE
+	);
+	
+	public String Header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore" + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
+			
 	@Override
 	public void onEnable(){
 		// Register necessary events
@@ -116,7 +141,17 @@ public final class TrueHardcore extends JavaPlugin {
     		Log("LogBlock not found! This won't work very well...");
     	}
 
-		// Read (or initialise) plugin config file
+    	p = pm.getPlugin("WorldBorder");
+    	if (p != null && p instanceof WorldBorder) {
+    		WBHooked = true;
+    		wb = WorldBorder.plugin;
+    		Log("WorldBorder found, hooking it.");
+    	} else {
+    		WBHooked = false;
+    		Log("WorldBorder not found! Spawning will not be limited...");
+    	}
+
+    	// Read (or initialise) plugin config file
 		cfg.LoadConfig(getConfig());
 
 		// Save the default config (if one doesn't exist)
@@ -254,8 +289,13 @@ public final class TrueHardcore extends JavaPlugin {
 
 	public void DoPlayerDeath(final Player player, PlayerDeathEvent event) {
 		final TrueHardcore plugin = this;
-		plugin.getServer().broadcastMessage("[TrueHardcore] " + player.getName() + " died in the hardcore world!");
-		plugin.getServer().broadcastMessage("[TrueHardcore] Final Score: " + player.getTotalExperience());
+
+		// Let's handle the death messages ourself  
+		String DeathMsg = event.getDeathMessage();
+		DeathMsg = DeathMsg.replaceFirst(player.getName(), ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
+		plugin.getServer().broadcastMessage(Header + DeathMsg + "!");
+		plugin.getServer().broadcastMessage(Header + "Final Score: " + ChatColor.GREEN + player.getTotalExperience());
+		event.setDeathMessage(null);
 
 		// Dont drop XP or items
 		event.setDroppedExp(0);
@@ -342,8 +382,13 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean StartGame(Player player) {
-		Location spawn = getServer().getWorld(HardcoreWorld).getSpawnLocation();
+		int x = player.getLocation().getBlockX();
+		int z = player.getLocation().getBlockZ();
+		Location spawn = GetNewLocation(x, z, 3000);
+		player.setNoDamageTicks(SpawnProtection * 20);
 		player.teleport(spawn);
+		player.setHealth(20);
+		player.setFoodLevel(20);
 		player.setAllowFlight(false);
 		player.setFlying(false);
 		player.setExp(0);
@@ -353,6 +398,64 @@ public final class TrueHardcore extends JavaPlugin {
 		player.setFlySpeed(0.2F);
 		player.setGameMode(GameMode.SURVIVAL);
 		player.sendMessage(ChatColor.GREEN + "Welcome to TrueHardcore. Good luck on your adventure!");
+		player.sendMessage(ChatColor.YELLOW + "You are invincible for 60 seconds...");
 		return true;
+	}
+	
+	public Location GetNewLocation(int oldX, int oldZ, int dist) {
+		Location l = new Location(getServer().getWorld(HardcoreWorld), oldX, 255, oldZ);
+		Debug(l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
+
+		double x;
+		double z;
+		int deg;
+		Location nl = null;
+		
+		for (int count = 0; count < 30; count++) {
+			dist = dist + (int) (Math.random() * 100);									// Random radius padding
+			deg = (int) (Math.random() * 360);											// Random degrees
+			Debug("Deg : " + deg);
+			x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();  
+			z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ(); 
+			nl = new Location(getServer().getWorld(HardcoreWorld), x, 255, z);
+			//Debug(nl.getBlockX() + " / " + nl.getBlockY() + " / " + nl.getBlockZ());
+			Debug("Distance: " + l.distance(nl));
+
+			// Get the highest block at the selected location
+			Block b = nl.getBlock();
+			while((b.getType() == Material.AIR) && (b.getY() > 1)) {
+				b = b.getRelative(BlockFace.DOWN);
+			}
+
+			Debug(b.getLocation().getBlockX() + " / " + b.getLocation().getBlockY() + " / " + b.getLocation().getBlockZ());
+			Debug(b.getType().toString());
+
+			// Get worldborder
+			BorderData bd = wb.GetWorldBorder(HardcoreWorld);
+			
+			if (SpawnBlocks.contains(b.getType())) {
+				Location spawn = new Location(b.getWorld(), b.getX(), b.getY()+2, b.getZ());
+				if (spawn.getBlockX() >= 0) { spawn.setX(spawn.getBlockX() + 0.5); }
+				if (spawn.getBlockX() < 0)  { spawn.setX(spawn.getBlockX() - 0.5); }
+
+				if (spawn.getBlockZ() >= 0) { spawn.setZ(spawn.getBlockZ() + 0.5); }
+				if (spawn.getBlockZ() < 0)  { spawn.setZ(spawn.getBlockZ() - 0.5); }
+				
+				if (bd.insideBorder(spawn)) {
+					Debug(spawn.getX() + " / " + spawn.getY() + " / " + spawn.getZ());
+					Debug("GOOD SPAWN LOCATION!");
+					spawn.setPitch(0F);
+					spawn.setYaw(0F);
+					return spawn;
+				} else {
+					Debug("OUTSIDE WORLD!!");
+				}
+			} else {
+				Debug("WRONG BLOCK!!");
+			}
+			Debug("======================================");
+		}
+		
+		return null;
 	}
 }

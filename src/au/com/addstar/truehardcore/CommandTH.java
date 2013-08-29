@@ -1,6 +1,6 @@
 package au.com.addstar.truehardcore;
 /*
-* BirthdayGift
+* TrueHardcore
 * Copyright (C) 2013 add5tar <copyright at addstar dot com dot au>
 *
 * This program is free software: you can redistribute it and/or modify
@@ -17,10 +17,8 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -37,13 +35,6 @@ public class CommandTH implements CommandExecutor {
 	 * Handle the /truehardcore command
 	 */
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-		if (!(sender instanceof Player)) {
-			sender.sendMessage("Sorry, only in game players can use this command");
-			return false;
-		} else {
-			if (!plugin.RequirePermission((Player) sender, "truehardcore.use")) { return false; }
-		}
-
 		String action = "";
 		if (args.length > 0) {
 			action = args[0].toUpperCase();

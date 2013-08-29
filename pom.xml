@@ -90,6 +90,11 @@
         <version>R6</version>
         <scope>compile</scope>
     </dependency>
+    <dependency>
+    	<groupId>com.wimbli</groupId>
+    	<artifactId>worldborder</artifactId>
+    	<version>1.7.5</version>
+    </dependency>
   </dependencies>
 
   <build>
