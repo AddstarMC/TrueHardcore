@@ -397,6 +397,11 @@ public final class TrueHardcore extends JavaPlugin {
 		player.setWalkSpeed(0.2F);
 		player.setFlySpeed(0.2F);
 		player.setGameMode(GameMode.SURVIVAL);
+		player.setOp(false);
+		player.getEnderChest().clear();
+		player.getEquipment().clear();
+		player.getInventory().clear();
+		player.setPassenger(null);
 		player.sendMessage(ChatColor.GREEN + "Welcome to TrueHardcore. Good luck on your adventure!");
 		player.sendMessage(ChatColor.YELLOW + "You are invincible for 60 seconds...");
 		return true;
