@@ -41,10 +41,14 @@ public class CommandTH implements CommandExecutor {
 		}
 
 		if (action.equals("PLAY")) {
-			plugin.PlayGame("hardcore", (Player) sender);
+			if (Util.RequirePermission((Player) sender, "truehardcore.use")) {
+				plugin.PlayGame("hardcore", (Player) sender);
+			}
 		}
 		else if (action.equals("LEAVE")) {
-			plugin.LeaveGame((Player) sender);
+			if (Util.RequirePermission((Player) sender, "truehardcore.use")) {
+				plugin.LeaveGame((Player) sender);
+			}
 		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");

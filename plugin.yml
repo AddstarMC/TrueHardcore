@@ -8,10 +8,13 @@ description: Multiplayer hardcore plugin to simulate true hardcore
 commands:
   truehardcore:
     aliases: th
-    description: TrueHardcore command 
+    description: TrueHardcore command
+    permission: truehardcore.use
     
 permissions:
   truehardcore.*:
     description: Full access to all commands (admin)
     children:
       truehardcore.use: true
+  truehardcore.use:
+    description: Standard permission for players

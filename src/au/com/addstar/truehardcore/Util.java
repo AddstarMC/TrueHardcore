@@ -107,7 +107,7 @@ public class Util {
 		}
 	}
 
-	public Material GetMaterial(String name) {
+	public static Material GetMaterial(String name) {
 		Material mat = Material.matchMaterial(name);
 		if (mat != null) {
 			return mat;
@@ -115,14 +115,14 @@ public class Util {
 		return null;
 	}
 	
-	public boolean GiveItemStack(Player player, ItemStack itemstack) {
+	public static boolean GiveItemStack(Player player, ItemStack itemstack) {
 		PlayerInventory inventory = player.getInventory();
 		HashMap result = inventory.addItem(itemstack);
 		//TODO: Check "result" to ensure all items were given
 		return true;
 	}
 
-	public ItemStack CreateStack(Material item, int datavalue, int amount) {
+	public static ItemStack CreateStack(Material item, int datavalue, int amount) {
 		ItemStack itemstack = new ItemStack(item, amount, (short)datavalue);
 		return itemstack;
 	}
@@ -130,7 +130,7 @@ public class Util {
 	/*
 	 * Check if the player has the specified permission
 	 */
-	public boolean HasPermission(Player player, String perm) {
+	public static boolean HasPermission(Player player, String perm) {
 		if (player instanceof Player) {
 			// Real player
 			if (player.hasPermission(perm)) {
@@ -146,7 +146,7 @@ public class Util {
 	/*
 	 * Check required permission and send error response to player if not allowed
 	 */
-	public boolean RequirePermission(Player player, String perm) {
+	public static boolean RequirePermission(Player player, String perm) {
 		if (!HasPermission(player, perm)) {
 			if (player instanceof Player) {
 				player.sendMessage(ChatColor.RED + "Sorry, you do not have permission for this command.");
@@ -159,7 +159,7 @@ public class Util {
 	/*
 	 * Check if player is online
 	 */
-	public boolean IsPlayerOnline(String player) {
+	public static boolean IsPlayerOnline(String player) {
 		if (player == null) { return false; }
 		if (player == "") { return false; }
 		if (TrueHardcore.instance.getServer().getPlayer(player) != null) {
