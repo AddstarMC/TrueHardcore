@@ -40,11 +40,16 @@ public class CommandTH implements CommandExecutor {
 			action = args[0].toUpperCase();
 		}
 
-		if (action.equals("START")) {
-			plugin.StartGame((Player) sender);
+		if (action.equals("PLAY")) {
+			plugin.PlayGame("hardcore", (Player) sender);
+		}
+		else if (action.equals("LEAVE")) {
+			plugin.LeaveGame((Player) sender);
 		}
 		else {
-			sender.sendMessage(ChatColor.RED + "Invalid action! Type /th help for help.");
+			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
+			sender.sendMessage(ChatColor.AQUA + "/th play   " + ChatColor.YELLOW + ": Start or resume your hardcore game");
+			sender.sendMessage(ChatColor.AQUA + "/th leave  " + ChatColor.YELLOW + ": Leave the hardcore game (progress is saved)");
 		}
 		
 		return true;

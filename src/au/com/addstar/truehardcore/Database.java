@@ -17,9 +17,6 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -84,15 +81,17 @@ public class Database {
 		try {
 			ps = Conn.prepareStatement(query);
 			// Construct PreparedStatement by adding all supplied params to the query
-			plugin.Debug("SQL Query: " + query);
-			for (int x=0; x < params.length; x++) {
-				plugin.Debug("Param " + (x+1) + ": "+ params[x]);
-				ps.setString(x+1, params[x]);
+			plugin.DebugLog("SQL Query: " + query);
+			if (params != null) {
+				for (int x=0; x < params.length; x++) {
+					plugin.DebugLog("Param " + (x+1) + ": "+ params[x]);
+					ps.setString(x+1, params[x]);
+				}
 			}
 			return ps.executeQuery();
 		} catch (SQLException e) {
 			plugin.Warn("Prepared query execution failed!");
-			plugin.Log("SQL: " + query);
+			plugin.DebugLog("SQL: " + query);
 			e.printStackTrace();
 			return null;
 		}
@@ -123,15 +122,15 @@ public class Database {
 		try {
 			ps = Conn.prepareStatement(query);
 			// Construct PreparedStatement by adding all supplied params to the query
-			plugin.Debug("SQL Update: " + query);
+			plugin.DebugLog("SQL Update: " + query);
 			for (int x=0; x < params.length; x++) {
-				plugin.Debug("Param " + (x+1) + ": "+ params[x]);
+				plugin.DebugLog("Param " + (x+1) + ": "+ params[x]);
 				ps.setString(x+1, params[x]);
 			}
 			return ps.executeUpdate();
 		} catch (SQLException e) {
 			plugin.Warn("Prepared query execution failed!");
-			plugin.Log("SQL: " + query);
+			plugin.DebugLog("SQL: " + query);
 			e.printStackTrace();
 			return -1;
 		}

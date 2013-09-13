@@ -39,6 +39,8 @@ public class ConfigManager {
 		plugin.DebugEnabled = Config().getBoolean("debug");
 		plugin.HardcoreWorld = Config().getString("world");
 		plugin.SpawnProtection = Config().getInt("spawn-protection");
+		plugin.SpawnDistance = Config().getInt("spawn-distance");
+		plugin.DeathBan = Config().getInt("death-ban");
 
 		List<String> cmds = (List<String>) config.getList("rollback");
 		plugin.RollbackCmds = cmds;

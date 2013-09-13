@@ -4,6 +4,9 @@ debug: true
 # Which world to use as the hardcore world
 world: hardcore
 
+# How far away should players be spawned from their previous death point
+spawn-distance: 4000
+
 # How long should the player be banned from playing again after death (seconds)
 death-ban: 60
 
