@@ -87,13 +87,14 @@ public class CommandTH implements CommandExecutor {
 			}
 			
 			if (hcp != null) {
-				sender.sendMessage("Player: " + hcp.getPlayerName());
-				sender.sendMessage("World: " + hcp.getWorld());
-				sender.sendMessage("State: " + hcp.getState());
-				sender.sendMessage("Current XP: " + hcp.getExp());
-				sender.sendMessage("Total Score: " + hcp.getScore());
-				sender.sendMessage("Total Deaths: " + hcp.getDeaths());
-				sender.sendMessage("Top Score: " + hcp.getTopScore());
+				sender.sendMessage(ChatColor.GREEN + "Hardcore player information:");
+				sender.sendMessage(ChatColor.YELLOW + "Player: "       + ChatColor.AQUA + hcp.getPlayerName());
+				sender.sendMessage(ChatColor.YELLOW + "World: "        + ChatColor.AQUA + hcp.getWorld());
+				sender.sendMessage(ChatColor.YELLOW + "State: "        + ChatColor.AQUA + hcp.getState());
+				sender.sendMessage(ChatColor.YELLOW + "Current XP: "   + ChatColor.AQUA + hcp.getExp());
+				sender.sendMessage(ChatColor.YELLOW + "Total Score: "  + ChatColor.AQUA + hcp.getScore());
+				sender.sendMessage(ChatColor.YELLOW + "Total Deaths: " + ChatColor.AQUA + hcp.getDeaths());
+				sender.sendMessage(ChatColor.YELLOW + "Top Score: "    + ChatColor.AQUA + hcp.getTopScore());
 			}
 		}
 		else if (action.equals("LIST")) {
