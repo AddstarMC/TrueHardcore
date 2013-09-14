@@ -193,17 +193,31 @@ public class PlayerListener implements Listener {
 		plugin.DebugLog("FROM : " + from);
 		plugin.DebugLog("TO   : " + to);
 
-		// Prevent exit from hardcore
 		if (plugin.IsHardcoreWorld(from.getWorld())) {
-			HardcorePlayer hcp = HCPlayers.Get(player);
+			// Prevent unauthorised exit from hardcore
+			HardcorePlayer hcp = HCPlayers.Get(from.getWorld(), player);
 			if (hcp == null) { return; }
 			if (hcp.getState() == PlayerState.IN_GAME) {
 				if (player.isOp()) {
 					plugin.Debug("OP override! Teleport allowed.");
 				} else { 
 					event.setCancelled(true);
-					plugin.Debug("Player teleport cancelled!");
-					player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in Hardcore!");
+					plugin.Debug("Player teleport out of hardcore cancelled!");
+					player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
+					player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+				}
+			}
+		}
+		else if (plugin.IsHardcoreWorld(to.getWorld())) {
+			// Prevent unauthorised entry into hardcore worlds
+			HardcorePlayer hcp = HCPlayers.Get(to.getWorld(), player);
+			if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
+				if (player.isOp()) {
+					plugin.Debug("OP override! Teleport allowed.");
+				} else { 
+					event.setCancelled(true);
+					plugin.Debug("Player teleport into hardcore was cancelled!");
+					player.sendMessage(ChatColor.RED + "You are not allowed to teleport to a hardcore world.");
 				}
 			}
 		}
