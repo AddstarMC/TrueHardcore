@@ -24,6 +24,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
+
 public class CommandTH implements CommandExecutor {
 	private TrueHardcore plugin;
 	
@@ -63,11 +65,41 @@ public class CommandTH implements CommandExecutor {
 			plugin.LeaveGame((Player) sender);
 		}
 		else if (action.equals("INFO")) {
-			// Nothing yet
+			HardcorePlayer hcp = null;
+			if (args.length == 1) {
+				if (sender instanceof Player) {
+					Player player = (Player) sender;
+					hcp = plugin.HCPlayers.Get(player);
+				} else {
+					sender.sendMessage(ChatColor.RED + "Usage: /th info <player> [world]");
+				}
+			}
+			else if (args.length == 2) {
+				Player player = (Player) plugin.getServer().getPlayer(args[2]);
+				if (player != null) {
+					hcp = plugin.HCPlayers.Get(player);
+				} else {
+					sender.sendMessage(ChatColor.RED + "Unknown player");
+				}
+			}
+			else if (args.length == 3) {
+				hcp = plugin.HCPlayers.Get(args[3], args[2]);
+			}
+			
+			if (hcp != null) {
+				sender.sendMessage("Player: " + hcp.getPlayerName());
+				sender.sendMessage("World: " + hcp.getWorld());
+				sender.sendMessage("State: " + hcp.getState());
+				sender.sendMessage("Current XP: " + hcp.getExp());
+				sender.sendMessage("Total Score: " + hcp.getScore());
+				sender.sendMessage("Total Deaths: " + hcp.getDeaths());
+				sender.sendMessage("Top Score: " + hcp.getTopScore());
+			}
 		}
 		else if (action.equals("LIST")) {
 			for (String key : plugin.HCPlayers.AllRecords().keySet()) {
-				sender.sendMessage("Record: " + key);
+				HardcorePlayer hcp = plugin.HCPlayers.Get(key);
+				sender.sendMessage(Util.padRight(key, 30) + " " + hcp.getState());
 			}
 		}
 		else {

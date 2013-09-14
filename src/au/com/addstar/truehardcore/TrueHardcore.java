@@ -138,7 +138,7 @@ public final class TrueHardcore extends JavaPlugin {
 			e.printStackTrace();
 		}  
 
-        // Register necessary events
+        // Grab that plugin manager!
 		pdfFile = this.getDescription();
 		pm = this.getServer().getPluginManager();
 
@@ -414,13 +414,16 @@ public final class TrueHardcore extends JavaPlugin {
 				}
 				
 				if (spawn != null) {
-					Debug("OLD STATE: " + HCPlayers.Get(world, player.getName()).getState());
+					//Debug("OLD STATE: " + HCPlayers.Get(world, player.getName()).getState());
 					hcp.setState(PlayerState.IN_GAME);
-					Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
-					NewSpawn(player, spawn);
-					hcp.updatePlayer(player);
-					SavePlayer(hcp);
-					return true;
+					//Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
+					if (NewSpawn(player, spawn)) {
+						hcp.updatePlayer(player);
+						SavePlayer(hcp);
+						return true;
+					} else {
+						return false;
+					}
 				} else {
 					player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location. Please try again.");
 					return false;
@@ -440,32 +443,39 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 	}
 	
-	public void NewSpawn(Player player, Location spawn) {
+	public boolean NewSpawn(Player player, Location spawn) {
+		HardcorePlayer hcp = HCPlayers.Get(spawn.getWorld(), player);
+		
 		player.setNoDamageTicks(SpawnProtection * 20);
-		player.teleport(spawn);
-		player.setFallDistance(0);
-		player.setHealth(20);
-		player.setFoodLevel(20);
-		player.setAllowFlight(false);
-		player.setFlying(false);
-		player.setExp(0);
-		player.setLevel(0);
-		player.setTotalExperience(0);
-		player.setWalkSpeed(0.2F);
-		player.setFlySpeed(0.2F);
-		player.setGameMode(GameMode.SURVIVAL);
-		player.setOp(false);
-		player.getEnderChest().clear();
-		player.getEquipment().clear();
-		player.getInventory().clear();
-		player.setPassenger(null);
-		player.sendMessage(ChatColor.GREEN + "Welcome to TrueHardcore. Good luck on your adventure!");
-		player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
-		player.sendMessage(ChatColor.RED + "WARNING!!");
-		player.sendMessage(ChatColor.RED + "This plugin is highly experimental. You might die for no reason, have your hardcore world reset, get kicked off the server or even lose your entire survival inventory!");
-		player.sendMessage(ChatColor.RED + "Use of this plugin is at your own risk!");
-		player.sendMessage(ChatColor.YELLOW + "You are invincible for 60 seconds...");
-		return;
+		if (player.teleport(spawn)) {
+			hcp.setState(PlayerState.IN_GAME);
+			player.setFallDistance(0);
+			player.setHealth(20);
+			player.setFoodLevel(20);
+			player.setAllowFlight(false);
+			player.setFlying(false);
+			player.setExp(0);
+			player.setLevel(0);
+			player.setTotalExperience(0);
+			player.setWalkSpeed(0.2F);
+			player.setFlySpeed(0.2F);
+			player.setGameMode(GameMode.SURVIVAL);
+			player.setOp(false);
+			player.getEnderChest().clear();
+			player.getEquipment().clear();
+			player.getInventory().clear();
+			player.setPassenger(null);
+			player.sendMessage(ChatColor.GREEN + "Welcome to TrueHardcore. Good luck on your adventure!");
+			player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+			player.sendMessage(ChatColor.RED + "WARNING!!");
+			player.sendMessage(ChatColor.RED + "This plugin is highly experimental. You might die for no reason, have your hardcore world reset, get kicked off the server or even lose your entire survival inventory!");
+			player.sendMessage(ChatColor.RED + "Use of this plugin is at your own risk!");
+			player.sendMessage(ChatColor.YELLOW + "You are invincible for 60 seconds...");
+			return true;
+		} else {
+			Warn("Teleport failed!");
+			return false;
+		}
 	}
 	
 	public Location GetNewLocation(World world, int oldX, int oldZ, int dist) {

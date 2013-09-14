@@ -66,6 +66,8 @@ public class PlayerListener implements Listener {
 	 */
 	@EventHandler
 	public void onPlayerKick(PlayerKickEvent event) {
+		if (event.isCancelled()) { return; }
+
 		final Player player = event.getPlayer();
 		if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
 
@@ -179,6 +181,8 @@ public class PlayerListener implements Listener {
 	 */
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
+		if (event.isCancelled()) { return; }
+
 		final Player player = event.getPlayer();
 		final Location from = event.getFrom();
 		final Location to   = event.getTo();

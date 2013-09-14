@@ -190,6 +190,10 @@ public class HardcorePlayers {
 		return Get(player.getLocation().getWorld().getName(), player.getName());
 	}
 	
+	public HardcorePlayer Get(String key) {
+		return Players.get(key);
+	}
+	
 	public boolean AddPlayer(String world, String name, HardcorePlayer hcp) {
 		String key = world + "/" + name;
 		Players.put(key, hcp);
