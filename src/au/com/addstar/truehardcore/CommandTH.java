@@ -83,7 +83,7 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 3) {
-				hcp = plugin.HCPlayers.Get(args[3], args[2]);
+				hcp = plugin.HCPlayers.Get(args[2], args[1]);
 			}
 			
 			if (hcp != null) {
