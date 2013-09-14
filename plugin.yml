@@ -9,12 +9,12 @@ commands:
   truehardcore:
     aliases: th
     description: TrueHardcore command
-    permission: truehardcore.use
     
 permissions:
   truehardcore.*:
     description: Full access to all commands (admin)
     children:
       truehardcore.use: true
+    default: op
   truehardcore.use:
     description: Standard permission for players

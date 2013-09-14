@@ -1,8 +1,10 @@
 # Enable plugin debugging (warning: this is very verbose!)
 debug: true
 
-# Which world to use as the hardcore world
-world: hardcore
+# Which worlds are hardcore worlds
+worlds:
+  - hardcore1
+  - hardcore2
 
 # How far away should players be spawned from their previous death point
 spawn-distance: 4000

@@ -18,7 +18,7 @@ package au.com.addstar.truehardcore;
 */
 
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -42,12 +42,32 @@ public class CommandTH implements CommandExecutor {
 
 		if (action.equals("PLAY")) {
 			if (Util.RequirePermission((Player) sender, "truehardcore.use")) {
-				plugin.PlayGame("hardcore", (Player) sender);
+				if (args.length > 1) {
+					World world = plugin.getServer().getWorld(args[1]);
+					if (world == null) {
+						sender.sendMessage(ChatColor.RED + "Error: Unknown world!");
+						return true;
+					}
+					
+					if (plugin.IsHardcoreWorld(world)) {
+						plugin.PlayGame(world.getName(), (Player) sender);
+					} else {
+						sender.sendMessage(ChatColor.RED + "Error: That is not a hardcore world!");
+					}
+				} else {
+					sender.sendMessage(ChatColor.YELLOW + "Usage: /th play <world>");
+				}
 			}
 		}
 		else if (action.equals("LEAVE")) {
-			if (Util.RequirePermission((Player) sender, "truehardcore.use")) {
-				plugin.LeaveGame((Player) sender);
+			plugin.LeaveGame((Player) sender);
+		}
+		else if (action.equals("INFO")) {
+			// Nothing yet
+		}
+		else if (action.equals("LIST")) {
+			for (String key : plugin.HCPlayers.AllRecords().keySet()) {
+				sender.sendMessage("Record: " + key);
 			}
 		}
 		else {

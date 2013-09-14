@@ -19,7 +19,6 @@ package au.com.addstar.truehardcore;
 
 import java.util.List;
 
-import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class ConfigManager {
@@ -37,14 +36,11 @@ public class ConfigManager {
 		config.options().copyDefaults(true);
 
 		plugin.DebugEnabled = Config().getBoolean("debug");
-		plugin.HardcoreWorld = Config().getString("world");
+		plugin.HardcoreWorlds = (List<String>) Config().getList("worlds");
 		plugin.SpawnProtection = Config().getInt("spawn-protection");
 		plugin.SpawnDistance = Config().getInt("spawn-distance");
 		plugin.DeathBan = Config().getInt("death-ban");
 
-		List<String> cmds = (List<String>) config.getList("rollback");
-		plugin.RollbackCmds = cmds;
-		
 		plugin.DBHost = Config().getString("mysql.host", "localhost");
 		plugin.DBPort = Config().getString("mysql.port", "3306");
 		plugin.DBName = Config().getString("mysql.database", "truehardcore");

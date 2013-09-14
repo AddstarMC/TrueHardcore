@@ -1,6 +1,7 @@
 package au.com.addstar.truehardcore;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Location;
@@ -201,5 +202,9 @@ public class HardcorePlayers {
 	
 	public void Clear() {
 		Players.clear();
+	}
+	
+	public Map<String, HardcorePlayer> AllRecords() {
+		return Players; 
 	}
 }

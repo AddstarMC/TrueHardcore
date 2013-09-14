@@ -169,7 +169,7 @@ public class PlayerListener implements Listener {
 		plugin.Debug("Sending player to lobby");
 		Location loc = plugin.getServer().getWorld("games").getSpawnLocation();
 		event.setRespawnLocation(loc);
-		player.sendMessage(ChatColor.RED + "You are now banned from hardcore for 24 hours!");
+		player.sendMessage(ChatColor.RED + "You are now banned from hardcore for " + (plugin.DeathBan / 60) + " minutes!");
 	}
 
 	/*

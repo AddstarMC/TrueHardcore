@@ -70,7 +70,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public static Chat chat = null;
 	public boolean VaultEnabled = false;
 	public boolean DebugEnabled = false;
-	public String HardcoreWorld = null;
+	public List<String> HardcoreWorlds = null;
 	public List<String> RollbackCmds = null;
 	public int DeathBan;
 	public int SpawnProtection;
@@ -212,6 +212,8 @@ public final class TrueHardcore extends JavaPlugin {
         getServer().getScheduler().cancelTasks(this);
 		
 		Log(pdfFile.getName() + " has been disabled!");
+		
+		debugfh.close();
 	}
 	
 	/*
@@ -270,8 +272,9 @@ public final class TrueHardcore extends JavaPlugin {
 	
 	public void DoPlayerDeath(final Player player, PlayerDeathEvent event) {
 		final TrueHardcore plugin = this;
+		final World world = player.getWorld();
 
-		HardcorePlayer hcp = HCPlayers.Get(player);
+		HardcorePlayer hcp = HCPlayers.Get(world, player);
 		hcp.setState(PlayerState.DEAD);
 		hcp.setDeathMsg(event.getDeathMessage());
 		hcp.setDeathPos(player.getLocation());
@@ -313,7 +316,7 @@ public final class TrueHardcore extends JavaPlugin {
 						if (lwc.getPhysicalDatabase() != null) {
 					        List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getName());
 					        for(Protection prot : prots) {
-					        	if (prot.getWorld().equals(HardcoreWorld)) {
+					        	if (prot.getWorld().equals(world.getName())) {
 					        		count++;
 		
 					        		// Remove LWC protection
@@ -331,7 +334,7 @@ public final class TrueHardcore extends JavaPlugin {
 						try {
 							final QueryParams params = new QueryParams(logblock);
 							params.setPlayer(player.getName());
-							params.world = plugin.getServer().getWorld(HardcoreWorld);
+							params.world = world;
 							params.silent = false;
 							params.before = 0;
 							params.excludeVictimsMode = true;
@@ -394,18 +397,20 @@ public final class TrueHardcore extends JavaPlugin {
 		
 		if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
 				Location spawn = null;
+				World w = getServer().getWorld(world); 
+						
 				// Never played before... create them!
 				if (hcp == null) {
 					Debug("New hardcore player");
 					hcp = HCPlayers.NewPlayer(world, player.getName());
-					spawn = GetNewLocation(0, 0, SpawnDistance);
+					spawn = GetNewLocation(w, 0, 0, SpawnDistance);
 				}
 				else if (hcp.getDeathPos() == null) {
 					Warn("No previous position found for known player!");
-					spawn = GetNewLocation(0, 0, SpawnDistance);
+					spawn = GetNewLocation(w, 0, 0, SpawnDistance);
 				} else {
 					Debug("Player is restarting hardcore");
-					spawn = GetNewLocation(hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), SpawnDistance);
+					spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), SpawnDistance);
 				}
 				
 				if (spawn != null) {
@@ -430,6 +435,7 @@ public final class TrueHardcore extends JavaPlugin {
 			Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 			JoinGame(world, player);
 			SavePlayer(hcp);
+			player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
 			return true;
 		}
 	}
@@ -462,8 +468,8 @@ public final class TrueHardcore extends JavaPlugin {
 		return;
 	}
 	
-	public Location GetNewLocation(int oldX, int oldZ, int dist) {
-		Location l = new Location(getServer().getWorld(HardcoreWorld), oldX, 255, oldZ);
+	public Location GetNewLocation(World world, int oldX, int oldZ, int dist) {
+		Location l = new Location(world, oldX, 255, oldZ);
 		Debug("Selecting spawn point " + dist + " blocks from: " + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
 
 		double x;
@@ -482,7 +488,7 @@ public final class TrueHardcore extends JavaPlugin {
 			deg = (int) (Math.random() * 360);											// Random degrees
 			x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();  
 			z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ(); 
-			nl = new Location(getServer().getWorld(HardcoreWorld), x, 255, z);
+			nl = new Location(world, x, 255, z);
 
 			// Get the highest block at the selected location
 			Block b = nl.getBlock();
@@ -491,7 +497,10 @@ public final class TrueHardcore extends JavaPlugin {
 			}
 
 			// Get worldborder
-			BorderData bd = wb.GetWorldBorder(HardcoreWorld);
+			BorderData bd = null;
+			if (WBHooked) {
+				bd = wb.GetWorldBorder(world.getName());
+			}
 			
 			spawn = new Location(b.getWorld(), b.getX(), b.getY()+2, b.getZ());
 			if (SpawnBlocks.contains(b.getType())) {
@@ -500,8 +509,9 @@ public final class TrueHardcore extends JavaPlugin {
 
 				if (spawn.getBlockZ() >= 0) { spawn.setZ(spawn.getBlockZ() + 0.5); }
 				if (spawn.getBlockZ() < 0)  { spawn.setZ(spawn.getBlockZ() - 0.5); }
-				
-				if (bd.insideBorder(spawn)) {
+
+				// Make sure it's inside the world border (if one exists)
+				if ((bd == null) || bd.insideBorder(spawn)) {
 					GoodSpawn = true;
 					reason = "Allowed block type (" + b.getType() + ")!";
 				} else {
@@ -613,7 +623,7 @@ public final class TrueHardcore extends JavaPlugin {
 		HardcorePlayer hcp = HCPlayers.Get(world, player.getName());
 		if (hcp != null) {
 			if (hcp.getLastPos() != null) {
-				Debug("Returning player to: " + hcp.getLastPos());
+				DebugLog("Returning player to: " + hcp.getLastPos());
 				if (player.teleport(hcp.getLastPos())) {
 					player.setWalkSpeed(0.2F);
 					player.setFlySpeed(0.2F);
@@ -671,7 +681,7 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsHardcoreWorld(World world) {
-		return (HardcoreWorld.equals(world.getName()));
+		return (HardcoreWorlds.contains(world.getName()));
 	}
 	
 	public void SendToLobby(Player player) {
