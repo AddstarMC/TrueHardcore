@@ -70,6 +70,7 @@ public class CommandTH implements CommandExecutor {
 				if (sender instanceof Player) {
 					Player player = (Player) sender;
 					hcp = plugin.HCPlayers.Get(player);
+					hcp.updatePlayer(player);
 				} else {
 					sender.sendMessage(ChatColor.RED + "Usage: /th info <player> [world]");
 				}
@@ -78,6 +79,7 @@ public class CommandTH implements CommandExecutor {
 				Player player = (Player) plugin.getServer().getPlayer(args[2]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
+					hcp.updatePlayer(player);
 				} else {
 					sender.sendMessage(ChatColor.RED + "Unknown player");
 				}

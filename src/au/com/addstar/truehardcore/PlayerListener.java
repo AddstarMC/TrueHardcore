@@ -190,8 +190,8 @@ public class PlayerListener implements Listener {
 		// Ignore if neither from/to are related to hardcore
 		if (!plugin.IsHardcoreWorld(to.getWorld()) && !plugin.IsHardcoreWorld(from.getWorld())) { return; }
 
-		// Ignore block/chunk loading teleport glitches within the same world
-		if (from.getWorld().equals(to.getWorld()) && (from.distance(to) < 3)) { return; }
+		// Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
+		if (from.getWorld().equals(to.getWorld()) && (from.distance(to) <= 30)) { return; }
 
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("FROM : " + from);

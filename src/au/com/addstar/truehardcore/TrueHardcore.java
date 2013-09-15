@@ -661,7 +661,7 @@ public final class TrueHardcore extends JavaPlugin {
 			//Debug("Found " + res.getFetchSize() + " records in database");
 			if (res != null) {
 				while (res.next()) {
-					String player = res.getString("player");
+					String player = res.getString("player").toLowerCase();
 					String world = res.getString("world");
 					World w = getServer().getWorld(world);
 					DebugLog("Loading: " + world + "/" + player);

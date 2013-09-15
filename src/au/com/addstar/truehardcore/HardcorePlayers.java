@@ -167,15 +167,15 @@ public class HardcorePlayers {
 	// TODO: Add sanity checks
 	public HardcorePlayer NewPlayer(String world, String name) {
 		HardcorePlayer hcp = new HardcorePlayer();
-		hcp.setPlayerName(name);
+		hcp.setPlayerName(name.toLowerCase());
 		hcp.setWorld(world);
-		AddPlayer(world, name, hcp);
+		AddPlayer(world, name.toLowerCase(), hcp);
 		return hcp;
 	}
 
 	// TODO: Add sanity checks
 	public HardcorePlayer Get(String world, String name) {
-		String key = world + "/" + name;
+		String key = world + "/" + name.toLowerCase();
 		HardcorePlayer hcp = Players.get(key);
 		return hcp;
 	}
@@ -195,7 +195,7 @@ public class HardcorePlayers {
 	}
 	
 	public boolean AddPlayer(String world, String name, HardcorePlayer hcp) {
-		String key = world + "/" + name;
+		String key = world + "/" + name.toLowerCase();
 		Players.put(key, hcp);
 		return true;
 	}
