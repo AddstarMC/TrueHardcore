@@ -76,7 +76,7 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 2) {
-				Player player = (Player) plugin.getServer().getPlayer(args[2]);
+				Player player = (Player) plugin.getServer().getPlayer(args[1]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
 					if (plugin.IsHardcoreWorld(player.getWorld())) {
