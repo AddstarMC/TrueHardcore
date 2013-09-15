@@ -98,9 +98,11 @@ public class HardcorePlayers {
 			GameEnd = gameEnd;
 		}
 		public Integer getGameTime() {
+			TrueHardcore.instance.Debug("GET GAMETIME: " + GameTime);
 			return GameTime;
 		}
 		public void setGameTime(Integer gameTime) {
+			TrueHardcore.instance.Debug("SET GAMETIME: " + gameTime);
 			setModified(true);
 			GameTime = gameTime;
 		}
@@ -184,13 +186,13 @@ public class HardcorePlayers {
 			Date d1 = getLastJoin();
 			Date d2 = getLastQuit();
 
-			TrueHardcore.instance.Debug("DATES: " + d1 + " / " + d2);
+			TrueHardcore.instance.DebugLog("DATES: " + d1 + " / " + d2);
 			
 			// Only calculate game time if quit is after join
 			if (d2.after(d1)) {
 				int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
-				TrueHardcore.instance.Debug("DIFF: " + diff);
-				TrueHardcore.instance.Debug("NEW : " + (getGameTime() + diff));
+				TrueHardcore.instance.DebugLog("DIFF: " + diff);
+				TrueHardcore.instance.DebugLog("NEW : " + (getGameTime() + diff));
 				setGameTime(getGameTime() + diff);
 				setModified(true);
 			}

@@ -146,7 +146,7 @@ public class PlayerListener implements Listener {
 		
 		if (plugin.IsHardcoreWorld(event.getFrom())) {
 			// World change
-			plugin.Debug(player.getName() + "exit from hardcore world");
+			plugin.Debug(player.getName() + " exit from hardcore world");
 		}
 		else if (plugin.IsHardcoreWorld(player.getWorld())) {
 			// Player changing to the hardcore world
