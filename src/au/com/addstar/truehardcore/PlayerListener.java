@@ -81,6 +81,7 @@ public class PlayerListener implements Listener {
 			// Mark the player at no longer in game
 			hcp.setState(PlayerState.ALIVE);
 			hcp.updatePlayer(player);
+			hcp.calcGameTime();
 			plugin.SavePlayer(hcp);
 		}
 	}
@@ -104,6 +105,7 @@ public class PlayerListener implements Listener {
 			// Mark the player at no longer in game
 			hcp.setState(PlayerState.ALIVE);
 			hcp.updatePlayer(player);
+			hcp.calcGameTime();
 			plugin.SavePlayer(hcp);
 		}
 	}

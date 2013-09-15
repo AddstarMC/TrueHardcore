@@ -562,6 +562,7 @@ public final class TrueHardcore extends JavaPlugin {
 		if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
 			hcp.setState(PlayerState.ALIVE);
 			hcp.updatePlayer(player);
+			hcp.calcGameTime();
 			SavePlayer(hcp);
 			SendToLobby(player);
 		} else {

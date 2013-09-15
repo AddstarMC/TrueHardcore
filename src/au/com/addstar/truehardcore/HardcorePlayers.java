@@ -98,11 +98,9 @@ public class HardcorePlayers {
 			GameEnd = gameEnd;
 		}
 		public Integer getGameTime() {
-			TrueHardcore.instance.Debug("GET GAMETIME: " + GameTime);
 			return GameTime;
 		}
 		public void setGameTime(Integer gameTime) {
-			TrueHardcore.instance.Debug("SET GAMETIME: " + gameTime);
 			setModified(true);
 			GameTime = gameTime;
 		}
@@ -142,7 +140,6 @@ public class HardcorePlayers {
 				// Player has died
 				setGameEnd(new Date());
 				setLastQuit(new Date());
-				calcGameTime();
 			}
 			else if ((state == PlayerState.IN_GAME) && (State != PlayerState.IN_GAME)) {
 				// Joining a game
@@ -156,7 +153,6 @@ public class HardcorePlayers {
 			else if ((State == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
 				// Leaving a game (for any reason)
 				setLastQuit(new Date());
-				calcGameTime();
 			}
 			State = state;
 		}
@@ -178,11 +174,10 @@ public class HardcorePlayers {
 			setModified(true);
 			setExp(player.getExp());
 			setLastPos(player.getLocation());
-			setGameTime(0);  // TODO: fix this
 			setScore(player.getTotalExperience());
 			setLevel(player.getLevel());
 		}
-		private void calcGameTime() {
+		public void calcGameTime() {
 			Date d1 = getLastJoin();
 			Date d2 = getLastQuit();
 
