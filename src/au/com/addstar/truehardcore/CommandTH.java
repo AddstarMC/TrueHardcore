@@ -17,6 +17,9 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+import java.util.ArrayList;
+
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -67,6 +70,7 @@ public class CommandTH implements CommandExecutor {
 		else if (action.equals("INFO")) {
 			HardcorePlayer hcp = null;
 			if (args.length == 1) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.info")) { return true; }
 				if (sender instanceof Player) {
 					Player player = (Player) sender;
 					hcp = plugin.HCPlayers.Get(player);
@@ -76,6 +80,7 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 2) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
 				Player player = (Player) plugin.getServer().getPlayer(args[1]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
@@ -87,6 +92,7 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 3) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
 				hcp = plugin.HCPlayers.Get(args[2], args[1]);
 				Player player = (Player) plugin.getServer().getPlayer(args[2]);
 				if (player != null) {
@@ -103,18 +109,36 @@ public class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.YELLOW + "Player: "        + ChatColor.AQUA + hcp.getPlayerName());
 				sender.sendMessage(ChatColor.YELLOW + "World: "         + ChatColor.AQUA + hcp.getWorld());
 				sender.sendMessage(ChatColor.YELLOW + "State: "         + ChatColor.AQUA + hcp.getState());
-				//sender.sendMessage(ChatColor.YELLOW + "Current XP: "    + ChatColor.AQUA + hcp.getExp());
 				sender.sendMessage(ChatColor.YELLOW + "Current Level: " + ChatColor.AQUA + hcp.getLevel());
 				sender.sendMessage(ChatColor.YELLOW + "Total Score: "   + ChatColor.AQUA + hcp.getScore());
 				sender.sendMessage(ChatColor.YELLOW + "Total Deaths: "  + ChatColor.AQUA + hcp.getDeaths());
 				sender.sendMessage(ChatColor.YELLOW + "Top Score: "     + ChatColor.AQUA + hcp.getTopScore());
 			}
 		}
-		else if (action.equals("LIST")) {
+		else if (action.equals("DUMP")) {
+			if (!Util.RequirePermission((Player) sender, "truehardcore.dump")) { return true; }
 			for (String key : plugin.HCPlayers.AllRecords().keySet()) {
 				HardcorePlayer hcp = plugin.HCPlayers.Get(key);
 				sender.sendMessage(Util.padRight(key, 30) + " " + hcp.getState());
 			}
+		}
+		else if (action.endsWith("LIST")) {
+			if (!Util.RequirePermission((Player) sender, "truehardcore.list")) { return true; }
+
+			for (String w : plugin.HardcoreWorlds) {
+				World world = plugin.getServer().getWorld(w);
+				if ((world != null) && (world.getPlayers().size() > 0)) {
+					ArrayList<String> players = new ArrayList<String>();
+					for (Player p : world.getPlayers()) {
+						players.add(p.getName());
+					}
+					sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+				}
+			}
+		}
+		else if (action.equals("SAVE")) {
+			if (!Util.RequirePermission((Player) sender, "truehardcore.save")) { return true; }
+			plugin.SaveAllPlayers();
 		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");

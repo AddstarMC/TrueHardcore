@@ -210,9 +210,9 @@ public final class TrueHardcore extends JavaPlugin {
 	public void onDisable(){
 		// cancel all tasks we created
         getServer().getScheduler().cancelTasks(this);
+		SaveAllPlayers();
 		
 		Log(pdfFile.getName() + " has been disabled!");
-		
 		debugfh.close();
 	}
 	
@@ -618,6 +618,8 @@ public final class TrueHardcore extends JavaPlugin {
 			int result = dbcon.PreparedUpdate(query, values);
 			if (result < 0) {
 				Debug("Player record save failed!");
+			} else {
+				hcp.setModified(false);
 			}
 		}
 		catch (Exception e) {
@@ -687,6 +689,15 @@ public final class TrueHardcore extends JavaPlugin {
 		catch (Exception e) {
 			Debug("Unable to save player record to database!");
 			e.printStackTrace();
+		}
+	}
+	
+	public void SaveAllPlayers() {
+		for (String key : HCPlayers.AllRecords().keySet()) {
+			HardcorePlayer hcp = HCPlayers.Get(key);
+			if (hcp.isModified()) {
+				SavePlayer(hcp);
+			}
 		}
 	}
 	

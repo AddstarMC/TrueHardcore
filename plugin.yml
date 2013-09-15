@@ -18,3 +18,12 @@ permissions:
     default: op
   truehardcore.use:
     description: Standard permission for players
+  truehardcore.info:
+    description: 
+  truehardcore.info.other:
+    description:
+  truehardcore.dump:
+    description:
+  truehardcore.save:
+    description:
+  

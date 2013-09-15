@@ -39,83 +39,97 @@ public class HardcorePlayers {
 		private String DeathMsg = "";
 		private Location DeathPos;
 		private Integer Deaths = 0;
+		private boolean Modified = false;
 		
 		public Integer getDeaths() {
 			return Deaths;
 		}
 		public void setDeaths(Integer deaths) {
+			setModified(true);
 			Deaths = deaths;
 		}
 		public String getPlayerName() {
 			return PlayerName;
 		}
 		public void setPlayerName(String playerName) {
+			setModified(true);
 			PlayerName = playerName;
 		}
 		public String getWorld() {
 			return World;
 		}
 		public void setWorld(String world) {
+			setModified(true);
 			World = world;
 		}
 		public Location getLastPos() {
 			return LastPos;
 		}
 		public void setLastPos(Location lastPos) {
+			setModified(true);
 			LastPos = lastPos;
 		}
 		public Date getLastJoin() {
 			return LastJoin;
 		}
 		public void setLastJoin(Date lastJoin) {
+			setModified(true);
 			LastJoin = lastJoin;
 		}
 		public Date getLastQuit() {
 			return LastQuit;
 		}
 		public void setLastQuit(Date lastQuit) {
+			setModified(true);
 			LastQuit = lastQuit;
 		}
 		public Date getGameStart() {
 			return GameStart;
 		}
 		public void setGameStart(Date gameStart) {
+			setModified(true);
 			GameStart = gameStart;
 		}
 		public Date getGameEnd() {
 			return GameEnd;
 		}
 		public void setGameEnd(Date gameEnd) {
+			setModified(true);
 			GameEnd = gameEnd;
 		}
 		public Integer getGameTime() {
 			return GameTime;
 		}
 		public void setGameTime(Integer gameTime) {
+			setModified(true);
 			GameTime = gameTime;
 		}
 		public Integer getLevel() {
 			return Level;
 		}
 		public void setLevel(Integer level) {
+			setModified(true);
 			Level = level;
 		}
 		public float getExp() {
 			return Exp;
 		}
 		public void setExp(float exp) {
+			setModified(true);
 			Exp = exp;
 		}
 		public Integer getScore() {
 			return Score;
 		}
 		public void setScore(Integer score) {
+			setModified(true);
 			Score = score;
 		}
 		public Integer getTopScore() {
 			return TopScore;
 		}
 		public void setTopScore(Integer topScore) {
+			setModified(true);
 			TopScore = topScore;
 		}
 		public PlayerState getState() {
@@ -143,22 +157,24 @@ public class HardcorePlayers {
 				setLastQuit(new Date());
 				calcGameTime();
 			}
-			
 			State = state;
 		}
 		public String getDeathMsg() {
 			return DeathMsg;
 		}
 		public void setDeathMsg(String deathMsg) {
+			setModified(true);
 			DeathMsg = deathMsg;
 		}
 		public Location getDeathPos() {
 			return DeathPos;
 		}
 		public void setDeathPos(Location deathPos) {
+			setModified(true);
 			DeathPos = deathPos;
 		}
 		public void updatePlayer(Player player) {
+			setModified(true);
 			setExp(player.getExp());
 			setLastPos(player.getLocation());
 			setGameTime(0);  // TODO: fix this
@@ -173,7 +189,14 @@ public class HardcorePlayers {
 			if (d2.after(d1)) {
 				int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
 				setGameTime(getGameTime() + diff);
+				setModified(true);
 			}
+		}
+		public boolean isModified() {
+			return Modified;
+		}
+		public void setModified(boolean modified) {
+			Modified = modified;
 		}
 	}
 	
