@@ -126,6 +126,7 @@ public class HardcorePlayers {
 				// Player has died
 				setGameEnd(new Date());
 				setLastQuit(new Date());
+				calcGameTime();
 			}
 			else if ((state == PlayerState.IN_GAME) && (State != PlayerState.IN_GAME)) {
 				// Joining a game
@@ -135,10 +136,12 @@ public class HardcorePlayers {
 				}
 				// Always set the join date when transitioning -> IN_GAME
 				setLastJoin(new Date());
+				calcGameTime();
 			}
 			else if ((State == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
 				// Leaving a game (for any reason)
 				setLastQuit(new Date());
+				calcGameTime();
 			}
 			
 			State = state;
@@ -161,6 +164,16 @@ public class HardcorePlayers {
 			setGameTime(0);  // TODO: fix this
 			setScore(player.getTotalExperience());
 			setLevel(player.getLevel());
+		}
+		public void calcGameTime() {
+			Date d1 = getLastJoin();
+			Date d2 = getLastQuit();
+			
+			// Only calculate game time if quit is after join
+			if (d2.after(d1)) {
+				int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
+				setGameTime(getGameTime() + diff);
+			}
 		}
 	}
 	

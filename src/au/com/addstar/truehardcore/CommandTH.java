@@ -79,24 +79,35 @@ public class CommandTH implements CommandExecutor {
 				Player player = (Player) plugin.getServer().getPlayer(args[2]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
-					hcp.updatePlayer(player);
+					if (plugin.IsHardcoreWorld(player.getWorld())) {
+						hcp.updatePlayer(player);
+					}
 				} else {
 					sender.sendMessage(ChatColor.RED + "Unknown player");
 				}
 			}
 			else if (args.length == 3) {
 				hcp = plugin.HCPlayers.Get(args[2], args[1]);
+				Player player = (Player) plugin.getServer().getPlayer(args[2]);
+				if (player != null) {
+					if (plugin.IsHardcoreWorld(player.getWorld())) {
+						if (args[1] == player.getWorld().getName()) {
+							hcp.updatePlayer(player);
+						}
+					}
+				}
 			}
 			
 			if (hcp != null) {
 				sender.sendMessage(ChatColor.GREEN + "Hardcore player information:");
-				sender.sendMessage(ChatColor.YELLOW + "Player: "       + ChatColor.AQUA + hcp.getPlayerName());
-				sender.sendMessage(ChatColor.YELLOW + "World: "        + ChatColor.AQUA + hcp.getWorld());
-				sender.sendMessage(ChatColor.YELLOW + "State: "        + ChatColor.AQUA + hcp.getState());
-				sender.sendMessage(ChatColor.YELLOW + "Current XP: "   + ChatColor.AQUA + hcp.getExp());
-				sender.sendMessage(ChatColor.YELLOW + "Total Score: "  + ChatColor.AQUA + hcp.getScore());
-				sender.sendMessage(ChatColor.YELLOW + "Total Deaths: " + ChatColor.AQUA + hcp.getDeaths());
-				sender.sendMessage(ChatColor.YELLOW + "Top Score: "    + ChatColor.AQUA + hcp.getTopScore());
+				sender.sendMessage(ChatColor.YELLOW + "Player: "        + ChatColor.AQUA + hcp.getPlayerName());
+				sender.sendMessage(ChatColor.YELLOW + "World: "         + ChatColor.AQUA + hcp.getWorld());
+				sender.sendMessage(ChatColor.YELLOW + "State: "         + ChatColor.AQUA + hcp.getState());
+				//sender.sendMessage(ChatColor.YELLOW + "Current XP: "    + ChatColor.AQUA + hcp.getExp());
+				sender.sendMessage(ChatColor.YELLOW + "Current Level: " + ChatColor.AQUA + hcp.getLevel());
+				sender.sendMessage(ChatColor.YELLOW + "Total Score: "   + ChatColor.AQUA + hcp.getScore());
+				sender.sendMessage(ChatColor.YELLOW + "Total Deaths: "  + ChatColor.AQUA + hcp.getDeaths());
+				sender.sendMessage(ChatColor.YELLOW + "Top Score: "     + ChatColor.AQUA + hcp.getTopScore());
 			}
 		}
 		else if (action.equals("LIST")) {
