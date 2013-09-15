@@ -280,6 +280,7 @@ public final class TrueHardcore extends JavaPlugin {
 		hcp.setDeathPos(player.getLocation());
 		hcp.setDeaths(hcp.getDeaths()+1);
 		hcp.updatePlayer(player);
+		hcp.calcGameTime();
 		
 		String DeathMsg = event.getDeathMessage();
 		DeathMsg = DeathMsg.replaceFirst(player.getName(), ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
@@ -388,6 +389,8 @@ public final class TrueHardcore extends JavaPlugin {
 				//Debug("DIE: " + hcp.getGameEnd().getTime());
 				//Debug("DIFF: " + diff);
 				//Debug("WAIT: " + wait);
+				
+				// TODO: FIX! Seems to do 5 mins from when plugin loads (date problem?)
 				if (wait > 0) {
 					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + (int) Math.ceil(wait / 60.0) + " minutes to play hardcore again.");
 					return false;
