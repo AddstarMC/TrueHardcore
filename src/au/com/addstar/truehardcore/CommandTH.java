@@ -77,7 +77,11 @@ public class CommandTH implements CommandExecutor {
 
 					Player player = (Player) sender;
 					hcp = plugin.HCPlayers.Get(player);
-					hcp.updatePlayer(player);
+					if (hcp != null) {
+						hcp.updatePlayer(player);
+					} else {
+						sender.sendMessage(ChatColor.RED + "You must be in the hardcore world to use this command");
+					}
 				} else {
 					sender.sendMessage(ChatColor.RED + "Usage: /th info <player> [world]");
 				}
@@ -91,6 +95,8 @@ public class CommandTH implements CommandExecutor {
 					hcp = plugin.HCPlayers.Get(player);
 					if (plugin.IsHardcoreWorld(player.getWorld())) {
 						hcp.updatePlayer(player);
+					} else {
+						sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
 					}
 				} else {
 					sender.sendMessage(ChatColor.RED + "Unknown player");
@@ -101,13 +107,17 @@ public class CommandTH implements CommandExecutor {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
 				}
 				hcp = plugin.HCPlayers.Get(args[2], args[1]);
-				Player player = (Player) plugin.getServer().getPlayer(args[2]);
-				if (player != null) {
-					if (plugin.IsHardcoreWorld(player.getWorld())) {
-						if (args[1] == player.getWorld().getName()) {
-							hcp.updatePlayer(player);
+				if (hcp != null) {
+					Player player = (Player) plugin.getServer().getPlayer(args[2]);
+					if (player != null) {
+						if (plugin.IsHardcoreWorld(player.getWorld())) {
+							if (args[1] == player.getWorld().getName()) {
+								hcp.updatePlayer(player);
+							}
 						}
 					}
+				} else {
+					sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
 				}
 			}
 			
