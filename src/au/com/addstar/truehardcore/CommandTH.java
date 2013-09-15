@@ -46,22 +46,24 @@ public class CommandTH implements CommandExecutor {
 		}
 
 		if (action.equals("PLAY")) {
-			if (Util.RequirePermission((Player) sender, "truehardcore.use")) {
-				if (args.length > 1) {
-					World world = plugin.getServer().getWorld(args[1]);
-					if (world == null) {
-						sender.sendMessage(ChatColor.RED + "Error: Unknown world!");
-						return true;
-					}
-					
-					if (plugin.IsHardcoreWorld(world)) {
-						plugin.PlayGame(world.getName(), (Player) sender);
-					} else {
-						sender.sendMessage(ChatColor.RED + "Error: That is not a hardcore world!");
-					}
-				} else {
-					sender.sendMessage(ChatColor.YELLOW + "Usage: /th play <world>");
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.use")) { return true; }
+			}
+
+			if (args.length > 1) {
+				World world = plugin.getServer().getWorld(args[1]);
+				if (world == null) {
+					sender.sendMessage(ChatColor.RED + "Error: Unknown world!");
+					return true;
 				}
+				
+				if (plugin.IsHardcoreWorld(world)) {
+					plugin.PlayGame(world.getName(), (Player) sender);
+				} else {
+					sender.sendMessage(ChatColor.RED + "Error: That is not a hardcore world!");
+				}
+			} else {
+				sender.sendMessage(ChatColor.YELLOW + "Usage: /th play <world>");
 			}
 		}
 		else if (action.equals("LEAVE")) {
@@ -70,8 +72,9 @@ public class CommandTH implements CommandExecutor {
 		else if (action.equals("INFO")) {
 			HardcorePlayer hcp = null;
 			if (args.length == 1) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.info")) { return true; }
 				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.info")) { return true; }
+
 					Player player = (Player) sender;
 					hcp = plugin.HCPlayers.Get(player);
 					hcp.updatePlayer(player);
@@ -80,7 +83,9 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 2) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
+				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
+				}
 				Player player = (Player) plugin.getServer().getPlayer(args[1]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
@@ -92,7 +97,9 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 3) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
+				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
+				}
 				hcp = plugin.HCPlayers.Get(args[2], args[1]);
 				Player player = (Player) plugin.getServer().getPlayer(args[2]);
 				if (player != null) {
@@ -116,15 +123,19 @@ public class CommandTH implements CommandExecutor {
 			}
 		}
 		else if (action.equals("DUMP")) {
-			if (!Util.RequirePermission((Player) sender, "truehardcore.dump")) { return true; }
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.dump")) { return true; }
+			}
 			for (String key : plugin.HCPlayers.AllRecords().keySet()) {
 				HardcorePlayer hcp = plugin.HCPlayers.Get(key);
 				sender.sendMessage(Util.padRight(key, 30) + " " + hcp.getState());
 			}
 		}
 		else if (action.endsWith("LIST")) {
-			if (!Util.RequirePermission((Player) sender, "truehardcore.list")) { return true; }
-
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.list")) { return true; }
+			}
+			
 			for (String w : plugin.HardcoreWorlds) {
 				World world = plugin.getServer().getWorld(w);
 				if ((world != null) && (world.getPlayers().size() > 0)) {
@@ -137,7 +148,9 @@ public class CommandTH implements CommandExecutor {
 			}
 		}
 		else if (action.equals("SAVE")) {
-			if (!Util.RequirePermission((Player) sender, "truehardcore.save")) { return true; }
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.save")) { return true; }
+			}
 			plugin.SaveAllPlayers();
 		}
 		else {
