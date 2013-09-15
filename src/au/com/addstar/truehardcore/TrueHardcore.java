@@ -232,18 +232,18 @@ public final class TrueHardcore extends JavaPlugin {
     }
 	
 	public void Log(String data) {
-		logger.info(pdfFile.getName() + " " + data);
+		logger.info("[" + pdfFile.getName() + "] " + data);
 		debuglog.info(data);
 	}
 
 	public void Warn(String data) {
-		logger.warning(pdfFile.getName() + " " + data);
+		logger.warning("[" + pdfFile.getName() + "] " + data);
 		debuglog.warning(data);
 	}
 	
 	public void Debug(String data) {
 		if (DebugEnabled) {
-			logger.info(pdfFile.getName() + " " + data);
+			logger.info("[" + pdfFile.getName() + "] " + data);
 		}
 		debuglog.info(data);
 	}
@@ -401,15 +401,15 @@ public final class TrueHardcore extends JavaPlugin {
 						
 				// Never played before... create them!
 				if (hcp == null) {
-					Debug("New hardcore player");
+					Debug("New hardcore player: " + player.getName());
 					hcp = HCPlayers.NewPlayer(world, player.getName());
 					spawn = GetNewLocation(w, 0, 0, SpawnDistance);
 				}
 				else if (hcp.getDeathPos() == null) {
-					Warn("No previous position found for known player!");
+					Warn("No previous position found for known " + player.getName());
 					spawn = GetNewLocation(w, 0, 0, SpawnDistance);
 				} else {
-					Debug("Player is restarting hardcore");
+					Debug(player.getName() + " is restarting hardcore");
 					spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), SpawnDistance);
 				}
 				
@@ -418,6 +418,7 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setState(PlayerState.IN_GAME);
 					//Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 					if (NewSpawn(player, spawn)) {
+						hcp.setGameTime(0);
 						hcp.updatePlayer(player);
 						SavePlayer(hcp);
 						return true;

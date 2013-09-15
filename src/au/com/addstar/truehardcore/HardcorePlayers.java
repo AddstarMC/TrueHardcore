@@ -150,7 +150,6 @@ public class HardcorePlayers {
 				}
 				// Always set the join date when transitioning -> IN_GAME
 				setLastJoin(new Date());
-				calcGameTime();
 			}
 			else if ((State == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
 				// Leaving a game (for any reason)
@@ -181,13 +180,17 @@ public class HardcorePlayers {
 			setScore(player.getTotalExperience());
 			setLevel(player.getLevel());
 		}
-		public void calcGameTime() {
+		private void calcGameTime() {
 			Date d1 = getLastJoin();
 			Date d2 = getLastQuit();
+
+			TrueHardcore.instance.Debug("DATES: " + d1 + " / " + d2);
 			
 			// Only calculate game time if quit is after join
 			if (d2.after(d1)) {
 				int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
+				TrueHardcore.instance.Debug("DIFF: " + diff);
+				TrueHardcore.instance.Debug("NEW : " + (getGameTime() + diff));
 				setGameTime(getGameTime() + diff);
 				setModified(true);
 			}
