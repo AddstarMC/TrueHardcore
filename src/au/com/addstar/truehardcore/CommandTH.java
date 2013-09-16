@@ -136,25 +136,56 @@ public class CommandTH implements CommandExecutor {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.dump")) { return true; }
 			}
-			for (String key : plugin.HCPlayers.AllRecords().keySet()) {
-				HardcorePlayer hcp = plugin.HCPlayers.Get(key);
-				sender.sendMessage(Util.padRight(key, 30) + " " + hcp.getState());
+			if (args.length == 1) {
+				for (String key : plugin.HCPlayers.AllRecords().keySet()) {
+					HardcorePlayer hcp = plugin.HCPlayers.Get(key);
+					sender.sendMessage(Util.padRight(key, 30) + " " + hcp.getState());
+				}
+			}
+			else if (args.length == 3) {
+				HardcorePlayer hcp = plugin.HCPlayers.Get(args[2], args[1]);
+				if (hcp != null) {
+					sender.sendMessage(ChatColor.YELLOW + "Name: " + ChatColor.AQUA + hcp.getPlayerName());
+					sender.sendMessage(ChatColor.YELLOW + "World: " + ChatColor.AQUA + hcp.getWorld());
+					sender.sendMessage(ChatColor.YELLOW + "LastPos: " + ChatColor.AQUA + hcp.getLastPos());
+					sender.sendMessage(ChatColor.YELLOW + "LastJoin: " + ChatColor.AQUA + hcp.getLastJoin());
+					sender.sendMessage(ChatColor.YELLOW + "LastQuit: " + ChatColor.AQUA + hcp.getLastQuit());
+					sender.sendMessage(ChatColor.YELLOW + "GameStart: " + ChatColor.AQUA + hcp.getGameStart());
+					sender.sendMessage(ChatColor.YELLOW + "GameEnd: " + ChatColor.AQUA + hcp.getGameEnd());
+					sender.sendMessage(ChatColor.YELLOW + "GameTime: " + ChatColor.AQUA + hcp.getGameTime());
+					sender.sendMessage(ChatColor.YELLOW + "Level: " + ChatColor.AQUA + hcp.getLevel());
+					sender.sendMessage(ChatColor.YELLOW + "Exp: " + ChatColor.AQUA + hcp.getExp());
+					sender.sendMessage(ChatColor.YELLOW + "Score: " + ChatColor.AQUA + hcp.getScore());
+					sender.sendMessage(ChatColor.YELLOW + "TopScore: " + ChatColor.AQUA + hcp.getTopScore());
+					sender.sendMessage(ChatColor.YELLOW + "State: " + ChatColor.AQUA + hcp.getState());
+					sender.sendMessage(ChatColor.YELLOW + "DeathMsg: " + ChatColor.AQUA + hcp.getDeathMsg());
+					sender.sendMessage(ChatColor.YELLOW + "DeathPos: " + ChatColor.AQUA + hcp.getDeathPos());
+					sender.sendMessage(ChatColor.YELLOW + "Deaths: " + ChatColor.AQUA + hcp.getDeaths());
+					sender.sendMessage(ChatColor.YELLOW + "Modified: " + ChatColor.AQUA + hcp.isModified());
+				}
 			}
 		}
 		else if (action.endsWith("LIST")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.list")) { return true; }
 			}
-			
+
+			sender.sendMessage(ChatColor.GREEN + "Players currently in hardcore worlds:");
+
+			boolean Playing = false;
 			for (String w : plugin.HardcoreWorlds) {
 				World world = plugin.getServer().getWorld(w);
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();
 					for (Player p : world.getPlayers()) {
+						Playing = true;
 						players.add(p.getName());
 					}
 					sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
 				}
+			}
+			if (!Playing) {
+				sender.sendMessage(ChatColor.RED + "None");
 			}
 		}
 		else if (action.equals("SAVE")) {

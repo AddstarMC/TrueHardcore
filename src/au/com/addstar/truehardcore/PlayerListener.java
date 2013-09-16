@@ -24,6 +24,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -231,9 +232,11 @@ public class PlayerListener implements Listener {
 	public void onEntityDeath(EntityDeathEvent event) {
 		Entity ent = event.getEntity();
 		if (!plugin.IsHardcoreWorld(ent.getWorld())) { return; }
+		if (!(ent.getLastDamageCause() instanceof EntityDamageByEntityEvent)) { return; }
 
-		EntityDamageEvent cause = ent.getLastDamageCause();
-		Entity damager = cause.getEntity();
+		// Find out who did the last damage
+		EntityDamageByEntityEvent cause = (EntityDamageByEntityEvent) ent.getLastDamageCause();
+		Entity damager = cause.getDamager();
 
 		if (damager instanceof Player) {
 			Player killer = (Player) damager;

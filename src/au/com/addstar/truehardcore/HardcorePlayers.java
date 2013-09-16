@@ -26,20 +26,20 @@ public class HardcorePlayers {
 		private String PlayerName;
 		private String World;
 		private Location LastPos;
-		private Date LastJoin = new Date();
-		private Date LastQuit = null;
-		private Date GameStart = new Date();
-		private Date GameEnd = null;
-		private Integer GameTime = 0;
-		private Integer Level = 0;
-		private float Exp = 0;
-		private Integer Score = 0;
-		private Integer TopScore = 0;
+		private Date LastJoin;
+		private Date LastQuit;
+		private Date GameStart;
+		private Date GameEnd;
+		private Integer GameTime;
+		private Integer Level;
+		private float Exp;
+		private Integer Score;
+		private Integer TopScore;
 		private PlayerState State = PlayerState.NOT_IN_GAME;
-		private String DeathMsg = "";
+		private String DeathMsg;
 		private Location DeathPos;
-		private Integer Deaths = 0;
-		private boolean Modified = false;
+		private Integer Deaths;
+		private boolean Modified;
 		
 		public Integer getDeaths() {
 			return Deaths;
