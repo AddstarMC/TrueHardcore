@@ -200,33 +200,37 @@ public class HardcorePlayers {
 		}
 	}
 	
-	// TODO: Add sanity checks
 	public HardcorePlayer NewPlayer(String world, String name) {
 		HardcorePlayer hcp = new HardcorePlayer();
-		hcp.setPlayerName(name.toLowerCase());
-		hcp.setWorld(world);
-		AddPlayer(world, name.toLowerCase(), hcp);
+		if (hcp != null) {
+			hcp.setPlayerName(name.toLowerCase());
+			hcp.setWorld(world);
+			AddPlayer(world, name.toLowerCase(), hcp);
+		}
 		return hcp;
 	}
 
-	// TODO: Add sanity checks
 	public HardcorePlayer Get(String world, String name) {
 		String key = world + "/" + name.toLowerCase();
-		HardcorePlayer hcp = Players.get(key);
-		return hcp;
+		if (Players.containsKey(key)) {
+			HardcorePlayer hcp = Players.get(key);
+			return hcp;
+		}
+		return null;
 	}
 	
-	// TODO: Add sanity checks
 	public HardcorePlayer Get(World world, Player player) {
+		if ((world == null) || (player == null)) { return null; }
 		return Get(world.getName(), player.getName());
 	}
 
-	// TODO: Add sanity checks
 	public HardcorePlayer Get(Player player) {
+		if (player == null) { return null; }
 		return Get(player.getLocation().getWorld().getName(), player.getName());
 	}
 	
 	public HardcorePlayer Get(String key) {
+		if (Players.containsKey(key)) { return null; }
 		return Players.get(key);
 	}
 	

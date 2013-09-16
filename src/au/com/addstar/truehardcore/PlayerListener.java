@@ -180,7 +180,6 @@ public class PlayerListener implements Listener {
 	/*
 	 * Handle teleports into or out of hardcore worlds
 	 * Prevent "in-game" players from teleporting out of the world
-	 * TODO: Prevent anyone from teleporting in
 	 */
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
