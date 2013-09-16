@@ -19,10 +19,13 @@ package au.com.addstar.truehardcore;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -49,7 +52,7 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void onPlayerDeath(PlayerDeathEvent event) {
 		final Player player = event.getEntity();
-		
+
 		if (plugin.IsHardcoreWorld(player.getWorld())) {
 			HardcorePlayer hcp = HCPlayers.Get(player);
 			if (hcp == null) { return; }
@@ -64,10 +67,8 @@ public class PlayerListener implements Listener {
 	 * Handle player is kicked inside the hardcore world
 	 * Change their player state if they were "in-game" 
 	 */
-	@EventHandler
+	@EventHandler(ignoreCancelled=true)
 	public void onPlayerKick(PlayerKickEvent event) {
-		if (event.isCancelled()) { return; }
-
 		final Player player = event.getPlayer();
 		if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
 
@@ -181,10 +182,8 @@ public class PlayerListener implements Listener {
 	 * Prevent "in-game" players from teleporting out of the world
 	 * TODO: Prevent anyone from teleporting in
 	 */
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled=true)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
-		if (event.isCancelled()) { return; }
-
 		final Player player = event.getPlayer();
 		final Location from = event.getFrom();
 		final Location to   = event.getTo();
@@ -225,6 +224,25 @@ public class PlayerListener implements Listener {
 					plugin.Debug(player.getName() + "teleport into hardcore was cancelled!");
 					player.sendMessage(ChatColor.RED + "You are not allowed to teleport to a hardcore world.");
 				}
+			}
+		}
+	}
+
+	@EventHandler(ignoreCancelled=true)
+	public void onEntityDeath(EntityDeathEvent event) {
+		Entity ent = event.getEntity();
+		if (!plugin.IsHardcoreWorld(ent.getWorld())) { return; }
+
+		EntityDamageEvent cause = ent.getLastDamageCause();
+		Entity damager = cause.getEntity();
+
+		if (damager instanceof Player) {
+			Player killer = (Player) damager;
+			if (ent instanceof Player) {
+				Player killed = (Player) ent;
+				plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
+			} else {
+				plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
 			}
 		}
 	}

@@ -131,10 +131,8 @@ public final class TrueHardcore extends JavaPlugin {
 	        debugfh.setFormatter(formatter);
 	        debuglog.addHandler(debugfh);
 		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}  
 
@@ -382,13 +380,13 @@ public final class TrueHardcore extends JavaPlugin {
 		if (hcp != null) {
 			if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
 				// Check last death time
-				Date d = new Date();
-				long diff = (d.getTime() - hcp.getGameEnd().getTime()) / 1000;
+				Date now = new Date();
+				long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
 				long wait = (DeathBan - diff);
-				//Debug("NOW: " + d.getTime());
-				//Debug("DIE: " + hcp.getGameEnd().getTime());
-				//Debug("DIFF: " + diff);
-				//Debug("WAIT: " + wait);
+				Debug("NOW: " + now.getTime());
+				Debug("DIE: " + hcp.getGameEnd().getTime());
+				Debug("DIFF: " + diff);
+				Debug("WAIT: " + wait);
 				
 				// TODO: FIX! Seems to do 5 mins from when plugin loads (date problem?)
 				if (wait > 0) {
