@@ -587,15 +587,23 @@ public final class TrueHardcore extends JavaPlugin {
 	public void SavePlayer(HardcorePlayer hcp) {
 		Debug("Saving data for " + hcp.getPlayerName());
 
+		// CowKills, PigKills, SheepKills, ChickenKills;
+		// CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
+		// OtherKills, PlayerKills;
+
 		String query = "INSERT INTO `truehardcore`.`players` \n" +
 				"(`player`, `world`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`, " +
-				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`) \n" +
+				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`\n" +
+				"`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
+				"`spiderkills`, `enderkills`, `slimekills`, `otherkills`, `playerkills`)\n" +
 				
 				"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE \n" +
 				
-				"`lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?, " +
-				"`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?";				
-		
+				"`lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
+				"`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?,\n" +
+				"`cowkills`=?, `pigkills`=?, `sheepkills`=?, `chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?,\n" +
+				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `otherkills`=?, `playerkills`=?";
+				
 		String[] values = { 
 				hcp.getPlayerName().toLowerCase(), 
 				hcp.getLastPos().getWorld().getName(),
