@@ -95,7 +95,6 @@ public class Util {
 		if ((mysqldate == "") || (mysqldate == null) || (mysqldate == "0000-00-00 00:00:00")) {
 			return null;
 		}
-
 		
 		SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		try {

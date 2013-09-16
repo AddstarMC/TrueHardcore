@@ -165,7 +165,7 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 		}
-		else if (action.endsWith("LIST")) {
+		else if (action.equals("LIST") || action.equals("WHO")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.list")) { return true; }
 			}
