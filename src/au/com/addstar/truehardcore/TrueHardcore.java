@@ -593,7 +593,7 @@ public final class TrueHardcore extends JavaPlugin {
 
 		String query = "INSERT INTO `truehardcore`.`players` \n" +
 				"(`player`, `world`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
-				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`\n" +
+				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
 				"`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
 				"`spiderkills`, `enderkills`, `slimekills`, `otherkills`, `playerkills`)\n\n" +
 				
