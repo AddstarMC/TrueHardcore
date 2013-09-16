@@ -430,6 +430,7 @@ public final class TrueHardcore extends JavaPlugin {
 						hcp.setSpiderKills(0);
 						hcp.setEnderKills(0);
 						hcp.setSlimeKills(0);
+						hcp.setMooshKills(0);
 						hcp.setOtherKills(0);
 						hcp.setPlayerKills(0);
 						hcp.updatePlayer(player);
@@ -594,14 +595,14 @@ public final class TrueHardcore extends JavaPlugin {
 				"(`player`, `world`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
 				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
 				"`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
-				"`spiderkills`, `enderkills`, `slimekills`, `otherkills`, `playerkills`)\n\n" +
+				"`spiderkills`, `enderkills`, `slimekills`, `mooshkills`, `otherkills`, `playerkills`)\n\n" +
 				
-				"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
+				"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
 				
 				"`lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
 				"`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?,\n" +
 				"`cowkills`=?, `pigkills`=?, `sheepkills`=?, `chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?,\n" +
-				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `otherkills`=?, `playerkills`=?";
+				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
 				
 		String[] values = { 
 				hcp.getPlayerName().toLowerCase(), 
@@ -631,6 +632,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getSpiderKills()),
 				String.valueOf(hcp.getEnderKills()),
 				String.valueOf(hcp.getSlimeKills()),
+				String.valueOf(hcp.getMooshKills()),
 				String.valueOf(hcp.getOtherKills()),
 				String.valueOf(hcp.getPlayerKills()),
 
@@ -659,6 +661,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getSpiderKills()),
 				String.valueOf(hcp.getEnderKills()),
 				String.valueOf(hcp.getSlimeKills()),
+				String.valueOf(hcp.getMooshKills()),
 				String.valueOf(hcp.getOtherKills()),
 				String.valueOf(hcp.getPlayerKills())
 		};
@@ -743,6 +746,7 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setSpiderKills(res.getInt("spiderkills"));
 					hcp.setEnderKills(res.getInt("enderkills"));
 					hcp.setSlimeKills(res.getInt("slimekills"));
+					hcp.setMooshKills(res.getInt("mooshkills"));
 					hcp.setOtherKills(res.getInt("otherkills"));
 					hcp.setPlayerKills(res.getInt("playerkills"));
 					hcp.setModified(false);

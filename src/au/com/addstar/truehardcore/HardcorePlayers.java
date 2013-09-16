@@ -39,8 +39,8 @@ public class HardcorePlayers {
 		private String DeathMsg;
 		private Location DeathPos;
 		private Integer Deaths = 0;
-		private Integer CowKills=0, PigKills=0, SheepKills=0, ChickenKills=0;
-		private Integer CreeperKills=0, ZombieKills=0, SkeletonKills=0, SpiderKills=0, EnderKills=0, SlimeKills=0;
+		private Integer CowKills=0, PigKills=0, SheepKills=0, ChickenKills=0, CreeperKills=0;
+		private Integer ZombieKills=0, SkeletonKills=0, SpiderKills=0, EnderKills=0, SlimeKills=0, MooshKills=0;
 		private Integer OtherKills=0, PlayerKills=0;
 		private boolean Modified = false;
 		private boolean LoadDataOnly = false;
@@ -258,6 +258,12 @@ public class HardcorePlayers {
 		}
 		public void setSlimeKills(Integer slimeKills) {
 			SlimeKills = slimeKills;
+		}
+		public Integer getMooshKills() {
+			return MooshKills;
+		}
+		public void setMooshKills(Integer mooshKills) {
+			MooshKills = mooshKills;
 		}
 		public Integer getPlayerKills() {
 			return PlayerKills;
