@@ -725,7 +725,6 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setDeathMsg(res.getString("deathmsg"));
 					hcp.setDeathPos(Util.Str2Loc(w, res.getString("deathpos")));
 					hcp.setDeaths(res.getInt("deaths"));
-					hcp.setChickenKills(res.getInt(""));
 					hcp.setCowKills(res.getInt("cowkills"));
 					hcp.setPigKills(res.getInt("pigkills"));
 					hcp.setSheepKills(res.getInt("sheepkills"));
