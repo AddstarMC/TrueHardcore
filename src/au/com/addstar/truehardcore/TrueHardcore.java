@@ -711,6 +711,7 @@ public final class TrueHardcore extends JavaPlugin {
 					DebugLog("Loading: " + world + "/" + player);
 					
 					HardcorePlayer hcp = HCPlayers.NewPlayer(world, player);
+					hcp.setLoadDataOnly(true);
 					hcp.setLastPos(Util.Str2Loc(w, res.getString("lastpos")));
 					hcp.setLastJoin(Util.Mysql2Date(res.getString("lastjoin")));
 					hcp.setLastQuit(Util.Mysql2Date(res.getString("lastquit")));
@@ -738,6 +739,7 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setOtherKills(res.getInt("otherkills"));
 					hcp.setPlayerKills(res.getInt("playerkills"));
 					hcp.setModified(false);
+					hcp.setLoadDataOnly(false);
 				}
 			}
 		}

@@ -43,48 +43,62 @@ public class HardcorePlayers {
 		private Integer CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
 		private Integer OtherKills, PlayerKills;
 		private boolean Modified;
+		private boolean LoadDataOnly = false;
+		
+		public boolean isLoadDataOnly() {
+			return LoadDataOnly;
+		}
+		public void setLoadDataOnly(boolean loadDataOnly) {
+			LoadDataOnly = loadDataOnly;
+		}
 		
 		public String getPlayerName() {
 			return PlayerName;
 		}
 		public void setPlayerName(String playerName) {
-			setModified(true);
 			PlayerName = playerName;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public String getWorld() {
 			return World;
 		}
 		public void setWorld(String world) {
-			setModified(true);
 			World = world;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Location getLastPos() {
 			return LastPos;
 		}
 		public void setLastPos(Location lastPos) {
-			setModified(true);
 			LastPos = lastPos;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Date getLastJoin() {
 			return LastJoin;
 		}
 		public void setLastJoin(Date lastJoin) {
-			setModified(true);
 			LastJoin = lastJoin;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Date getLastQuit() {
 			return LastQuit;
 		}
 		public void setLastQuit(Date lastQuit) {
-			setModified(true);
 			LastQuit = lastQuit;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Date getGameStart() {
 			return GameStart;
 		}
 		public void setGameStart(Date gameStart) {
-			setModified(true);
 			GameStart = gameStart;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Date getGameEnd() {
 			TrueHardcore.instance.DebugLog("GET GAMEEND: " + GameEnd);
@@ -92,28 +106,32 @@ public class HardcorePlayers {
 		}
 		public void setGameEnd(Date gameEnd) {
 			TrueHardcore.instance.DebugLog("SET GAMEEND: " + gameEnd);
-			setModified(true);
 			GameEnd = gameEnd;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getGameTime() {
 			return GameTime;
 		}
 		public void setGameTime(Integer gameTime) {
-			setModified(true);
 			GameTime = gameTime;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getLevel() {
 			return Level;
 		}
 		public void setLevel(Integer level) {
-			setModified(true);
 			Level = level;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public float getExp() {
 			return Exp;
 		}
 		public void setExp(float exp) {
 			setModified(true);
+			if (LoadDataOnly) { return; }
 			Exp = exp;
 		}
 		public Integer getScore() {
@@ -121,6 +139,7 @@ public class HardcorePlayers {
 		}
 		public void setScore(Integer score) {
 			setModified(true);
+			if (LoadDataOnly) { return; }
 			Score = score;
 		}
 		public Integer getTopScore() {
@@ -128,29 +147,32 @@ public class HardcorePlayers {
 		}
 		public void setTopScore(Integer topScore) {
 			setModified(true);
+			if (LoadDataOnly) { return; }
 			TopScore = topScore;
 		}
 		public PlayerState getState() {
 			return State;
 		}
 		public void setState(PlayerState state) {
-			if ((state == PlayerState.DEAD) && (State != PlayerState.DEAD)) {
-				// Player has died
-				setGameEnd(new Date());
-				setLastQuit(new Date());
-			}
-			else if ((state == PlayerState.IN_GAME) && (State != PlayerState.IN_GAME)) {
-				// Joining a game
-				if (State != PlayerState.ALIVE) {
-					// Starting a new game
-					setGameStart(new Date());
+			if (!LoadDataOnly) {
+				if ((state == PlayerState.DEAD) && (State != PlayerState.DEAD)) {
+					// Player has died
+					setGameEnd(new Date());
+					setLastQuit(new Date());
 				}
-				// Always set the join date when transitioning -> IN_GAME
-				setLastJoin(new Date());
-			}
-			else if ((State == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
-				// Leaving a game (for any reason)
-				setLastQuit(new Date());
+				else if ((state == PlayerState.IN_GAME) && (State != PlayerState.IN_GAME)) {
+					// Joining a game
+					if (State != PlayerState.ALIVE) {
+						// Starting a new game
+						setGameStart(new Date());
+					}
+					// Always set the join date when transitioning -> IN_GAME
+					setLastJoin(new Date());
+				}
+				else if ((State == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
+					// Leaving a game (for any reason)
+					setLastQuit(new Date());
+				}
 			}
 			State = state;
 		}
@@ -158,22 +180,25 @@ public class HardcorePlayers {
 			return DeathMsg;
 		}
 		public void setDeathMsg(String deathMsg) {
-			setModified(true);
 			DeathMsg = deathMsg;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Location getDeathPos() {
 			return DeathPos;
 		}
 		public void setDeathPos(Location deathPos) {
-			setModified(true);
 			DeathPos = deathPos;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getDeaths() {
 			return Deaths;
 		}
 		public void setDeaths(Integer deaths) {
-			setModified(true);
 			Deaths = deaths;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 
 		public Integer getCowKills() {
@@ -283,8 +308,10 @@ public class HardcorePlayers {
 	public HardcorePlayer NewPlayer(String world, String name) {
 		HardcorePlayer hcp = new HardcorePlayer();
 		if (hcp != null) {
+			hcp.LoadDataOnly = true;
 			hcp.setPlayerName(name.toLowerCase());
 			hcp.setWorld(world);
+			hcp.LoadDataOnly = false;
 			AddPlayer(world, name.toLowerCase(), hcp);
 		}
 		return hcp;
