@@ -145,23 +145,35 @@ public class CommandTH implements CommandExecutor {
 			else if (args.length == 3) {
 				HardcorePlayer hcp = plugin.HCPlayers.Get(args[2], args[1]);
 				if (hcp != null) {
-					sender.sendMessage(ChatColor.YELLOW + "Name: " + ChatColor.AQUA + hcp.getPlayerName());
-					sender.sendMessage(ChatColor.YELLOW + "World: " + ChatColor.AQUA + hcp.getWorld());
-					sender.sendMessage(ChatColor.YELLOW + "LastPos: " + ChatColor.AQUA + hcp.getLastPos());
-					sender.sendMessage(ChatColor.YELLOW + "LastJoin: " + ChatColor.AQUA + hcp.getLastJoin());
-					sender.sendMessage(ChatColor.YELLOW + "LastQuit: " + ChatColor.AQUA + hcp.getLastQuit());
-					sender.sendMessage(ChatColor.YELLOW + "GameStart: " + ChatColor.AQUA + hcp.getGameStart());
-					sender.sendMessage(ChatColor.YELLOW + "GameEnd: " + ChatColor.AQUA + hcp.getGameEnd());
-					sender.sendMessage(ChatColor.YELLOW + "GameTime: " + ChatColor.AQUA + hcp.getGameTime());
-					sender.sendMessage(ChatColor.YELLOW + "Level: " + ChatColor.AQUA + hcp.getLevel());
-					sender.sendMessage(ChatColor.YELLOW + "Exp: " + ChatColor.AQUA + hcp.getExp());
-					sender.sendMessage(ChatColor.YELLOW + "Score: " + ChatColor.AQUA + hcp.getScore());
-					sender.sendMessage(ChatColor.YELLOW + "TopScore: " + ChatColor.AQUA + hcp.getTopScore());
-					sender.sendMessage(ChatColor.YELLOW + "State: " + ChatColor.AQUA + hcp.getState());
-					sender.sendMessage(ChatColor.YELLOW + "DeathMsg: " + ChatColor.AQUA + hcp.getDeathMsg());
-					sender.sendMessage(ChatColor.YELLOW + "DeathPos: " + ChatColor.AQUA + hcp.getDeathPos());
-					sender.sendMessage(ChatColor.YELLOW + "Deaths: " + ChatColor.AQUA + hcp.getDeaths());
-					sender.sendMessage(ChatColor.YELLOW + "Modified: " + ChatColor.AQUA + hcp.isModified());
+					sender.sendMessage(ChatColor.YELLOW + "Player Name    : " + ChatColor.AQUA + hcp.getPlayerName());
+					sender.sendMessage(ChatColor.YELLOW + "World          : " + ChatColor.AQUA + hcp.getWorld());
+					sender.sendMessage(ChatColor.YELLOW + "LastPos        : " + ChatColor.AQUA + hcp.getLastPos());
+					sender.sendMessage(ChatColor.YELLOW + "LastJoin       : " + ChatColor.AQUA + hcp.getLastJoin());
+					sender.sendMessage(ChatColor.YELLOW + "LastQuit       : " + ChatColor.AQUA + hcp.getLastQuit());
+					sender.sendMessage(ChatColor.YELLOW + "GameStart      : " + ChatColor.AQUA + hcp.getGameStart());
+					sender.sendMessage(ChatColor.YELLOW + "GameEnd        : " + ChatColor.AQUA + hcp.getGameEnd());
+					sender.sendMessage(ChatColor.YELLOW + "GameTime       : " + ChatColor.AQUA + hcp.getGameTime());
+					sender.sendMessage(ChatColor.YELLOW + "Level          : " + ChatColor.AQUA + hcp.getLevel());
+					sender.sendMessage(ChatColor.YELLOW + "Exp            : " + ChatColor.AQUA + hcp.getExp());
+					sender.sendMessage(ChatColor.YELLOW + "Score          : " + ChatColor.AQUA + hcp.getScore());
+					sender.sendMessage(ChatColor.YELLOW + "TopScore       : " + ChatColor.AQUA + hcp.getTopScore());
+					sender.sendMessage(ChatColor.YELLOW + "State          : " + ChatColor.AQUA + hcp.getState());
+					sender.sendMessage(ChatColor.YELLOW + "DeathMsg       : " + ChatColor.AQUA + hcp.getDeathMsg());
+					sender.sendMessage(ChatColor.YELLOW + "DeathPos       : " + ChatColor.AQUA + hcp.getDeathPos());
+					sender.sendMessage(ChatColor.YELLOW + "Deaths         : " + ChatColor.AQUA + hcp.getDeaths());
+					sender.sendMessage(ChatColor.YELLOW + "Modified       : " + ChatColor.AQUA + hcp.isModified());
+					sender.sendMessage(ChatColor.YELLOW + "Cow Kills      : " + ChatColor.AQUA + hcp.getCowKills());
+					sender.sendMessage(ChatColor.YELLOW + "Pig Kills      : " + ChatColor.AQUA + hcp.getPigKills());
+					sender.sendMessage(ChatColor.YELLOW + "Sheep Kills    : " + ChatColor.AQUA + hcp.getSheepKills());
+					sender.sendMessage(ChatColor.YELLOW + "Chicken Kills  : " + ChatColor.AQUA + hcp.getChickenKills());
+					sender.sendMessage(ChatColor.YELLOW + "Creeper Kills  : " + ChatColor.AQUA + hcp.getCreeperKills());
+					sender.sendMessage(ChatColor.YELLOW + "Zombie Kills   : " + ChatColor.AQUA + hcp.getZombieKills());
+					sender.sendMessage(ChatColor.YELLOW + "Skeleton Kills : " + ChatColor.AQUA + hcp.getSkeletonKills());
+					sender.sendMessage(ChatColor.YELLOW + "Spider Kills   : " + ChatColor.AQUA + hcp.getSpiderKills());
+					sender.sendMessage(ChatColor.YELLOW + "Ender Kills    : " + ChatColor.AQUA + hcp.getEnderKills());
+					sender.sendMessage(ChatColor.YELLOW + "Slime Kills    : " + ChatColor.AQUA + hcp.getSlimeKills());
+					sender.sendMessage(ChatColor.YELLOW + "Other Kills    : " + ChatColor.AQUA + hcp.getOtherKills());
+					sender.sendMessage(ChatColor.YELLOW + "Player Kills   : " + ChatColor.AQUA + hcp.getPlayerKills());
 				}
 			}
 		}
@@ -189,22 +201,46 @@ public class CommandTH implements CommandExecutor {
 			}
 		}
 		else if (action.equals("STATS")) {
-			if (sender instanceof Player) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.stats")) { return true; }
-			}
-			
 			HardcorePlayer hcp = null;
 			if (args.length == 1) {
-				hcp = plugin.HCPlayers.Get(sender.getName());
+				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.stats")) { return true; }
+
+					Player player = (Player) sender;
+					hcp = plugin.HCPlayers.Get(player);
+					if (hcp == null) {
+						sender.sendMessage(ChatColor.RED + "You must be in the hardcore world to use this command");
+					}
+				} else {
+					sender.sendMessage(ChatColor.RED + "Usage: /th info <player> [world]");
+				}
+			}
+			else if (args.length == 2) {
+				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.stats.other")) { return true; }
+				}
+				Player player = (Player) plugin.getServer().getPlayer(args[1]);
+				if (player != null) {
+					hcp = plugin.HCPlayers.Get(player);
+					if (!plugin.IsHardcoreWorld(player.getWorld())) {
+						sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
+					}
+				} else {
+					sender.sendMessage(ChatColor.RED + "Unknown player");
+				}
 			}
 			else if (args.length == 3) {
 				if (sender instanceof Player) {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.stats.other")) { return true; }
 				}
 				hcp = plugin.HCPlayers.Get(args[2], args[1]);
+				if (hcp == null) {
+					sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
+				}
 			}
 			
 			if (hcp != null) {
+				sender.sendMessage(ChatColor.GREEN + "Hardcore player statistics:");
 				sender.sendMessage(ChatColor.YELLOW + "Cow Kills      : " + ChatColor.AQUA + hcp.getCowKills());
 				sender.sendMessage(ChatColor.YELLOW + "Pig Kills      : " + ChatColor.AQUA + hcp.getPigKills());
 				sender.sendMessage(ChatColor.YELLOW + "Sheep Kills    : " + ChatColor.AQUA + hcp.getSheepKills());
