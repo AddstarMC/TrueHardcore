@@ -383,10 +383,10 @@ public final class TrueHardcore extends JavaPlugin {
 				Date now = new Date();
 				long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
 				long wait = (DeathBan - diff);
-				Debug("NOW: " + now.getTime());
-				Debug("DIE: " + hcp.getGameEnd().getTime());
-				Debug("DIFF: " + diff);
-				Debug("WAIT: " + wait);
+				DebugLog("NOW: " + now.getTime());
+				DebugLog("DIE: " + hcp.getGameEnd().getTime());
+				DebugLog("DIFF: " + diff);
+				DebugLog("WAIT: " + wait);
 				
 				// TODO: FIX! Seems to do 5 mins from when plugin loads (date problem?)
 				if (wait > 0) {
