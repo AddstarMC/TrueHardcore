@@ -30,19 +30,19 @@ public class HardcorePlayers {
 		private Date LastQuit;
 		private Date GameStart;
 		private Date GameEnd;
-		private Integer GameTime;
-		private Integer Level;
-		private float Exp;
-		private Integer Score;
-		private Integer TopScore;
+		private Integer GameTime = 0;
+		private Integer Level = 0;
+		private float Exp = 0;
+		private Integer Score = 0;
+		private Integer TopScore = 0;
 		private PlayerState State = PlayerState.NOT_IN_GAME;
 		private String DeathMsg;
 		private Location DeathPos;
-		private Integer Deaths;
-		private Integer CowKills, PigKills, SheepKills, ChickenKills;
-		private Integer CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
-		private Integer OtherKills, PlayerKills;
-		private boolean Modified;
+		private Integer Deaths = 0;
+		private Integer CowKills=0, PigKills=0, SheepKills=0, ChickenKills=0;
+		private Integer CreeperKills=0, ZombieKills=0, SkeletonKills=0, SpiderKills=0, EnderKills=0, SlimeKills=0;
+		private Integer OtherKills=0, PlayerKills=0;
+		private boolean Modified = false;
 		private boolean LoadDataOnly = false;
 		
 		public boolean isLoadDataOnly() {
