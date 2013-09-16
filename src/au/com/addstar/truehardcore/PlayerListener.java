@@ -240,11 +240,56 @@ public class PlayerListener implements Listener {
 
 		if (damager instanceof Player) {
 			Player killer = (Player) damager;
-			if (ent instanceof Player) {
-				Player killed = (Player) ent;
-				plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
+			HardcorePlayer hcp = HCPlayers.Get(killer.getWorld().getName(), killer.getName());
+			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
+				if (ent instanceof Player) {
+					Player killed = (Player) ent;
+					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
+					hcp.setPlayerKills(hcp.getPlayerKills()+1);
+				} else {
+					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
+					switch (ent.getType()) {
+					case COW:
+						hcp.setCowKills(hcp.getCowKills()+1);
+						break;
+					case PIG:
+						hcp.setPigKills(hcp.getPigKills()+1);
+						break;
+					case SHEEP:
+						hcp.setSheepKills(hcp.getSheepKills()+1);
+						break;
+					case CHICKEN:
+						hcp.setChickenKills(hcp.getChickenKills()+1);
+						break;
+					case CREEPER:
+						hcp.setCreeperKills(hcp.getCreeperKills()+1);
+						break;
+					case ZOMBIE:
+						hcp.setZombieKills(hcp.getZombieKills()+1);
+						break;
+					case SKELETON:
+						hcp.setSkeletonKills(hcp.getSkeletonKills()+1);
+						break;
+					case SPIDER:
+					case CAVE_SPIDER:
+						hcp.setSpiderKills(hcp.getSpiderKills()+1);
+						break;
+					case ENDERMAN:
+						hcp.setEnderKills(hcp.getEnderKills()+1);
+						break;
+					case SLIME:
+						hcp.setSlimeKills(hcp.getSlimeKills()+1);
+						break;
+					case PLAYER:
+						hcp.setPlayerKills(hcp.getPlayerKills()+1);
+						break;
+					default:
+						hcp.setOtherKills(hcp.getOtherKills()+1);
+						break;
+					}
+				}
 			} else {
-				plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
+				plugin.DebugLog("Ignoring hardcore death: " + killer.getName() + " killed " + ent.getType());
 			}
 		}
 	}

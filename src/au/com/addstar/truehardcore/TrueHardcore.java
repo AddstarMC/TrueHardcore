@@ -420,6 +420,19 @@ public final class TrueHardcore extends JavaPlugin {
 					//Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 					if (NewSpawn(player, spawn)) {
 						hcp.setGameTime(0);
+						hcp.setChickenKills(0);
+						hcp.setCowKills(0);
+						hcp.setPigKills(0);
+						hcp.setSheepKills(0);
+						hcp.setChickenKills(0);
+						hcp.setCreeperKills(0);
+						hcp.setZombieKills(0);
+						hcp.setSkeletonKills(0);
+						hcp.setSpiderKills(0);
+						hcp.setEnderKills(0);
+						hcp.setSlimeKills(0);
+						hcp.setOtherKills(0);
+						hcp.setPlayerKills(0);
 						hcp.updatePlayer(player);
 						SavePlayer(hcp);
 						return true;
@@ -600,7 +613,20 @@ public final class TrueHardcore extends JavaPlugin {
 				hcp.getDeathMsg(),
 				Util.Loc2Str(hcp.getDeathPos()),
 				String.valueOf(hcp.getDeaths()),
-				
+
+				String.valueOf(hcp.getCowKills()),
+				String.valueOf(hcp.getPigKills()),
+				String.valueOf(hcp.getSheepKills()),
+				String.valueOf(hcp.getChickenKills()),
+				String.valueOf(hcp.getCreeperKills()),
+				String.valueOf(hcp.getZombieKills()),
+				String.valueOf(hcp.getSkeletonKills()),
+				String.valueOf(hcp.getSpiderKills()),
+				String.valueOf(hcp.getEnderKills()),
+				String.valueOf(hcp.getSlimeKills()),
+				String.valueOf(hcp.getOtherKills()),
+				String.valueOf(hcp.getPlayerKills()),
+
 				Util.Loc2Str(hcp.getLastPos()),			// REPEATED FOR UPDATE!
 				Util.Date2Mysql(hcp.getLastJoin()),		//   |
 				Util.Date2Mysql(hcp.getLastQuit()),		//   v
@@ -614,7 +640,20 @@ public final class TrueHardcore extends JavaPlugin {
 				hcp.getState().toString(),
 				hcp.getDeathMsg(),
 				Util.Loc2Str(hcp.getDeathPos()),
-				String.valueOf(hcp.getDeaths())
+				String.valueOf(hcp.getDeaths()),
+				
+				String.valueOf(hcp.getCowKills()),
+				String.valueOf(hcp.getPigKills()),
+				String.valueOf(hcp.getSheepKills()),
+				String.valueOf(hcp.getChickenKills()),
+				String.valueOf(hcp.getCreeperKills()),
+				String.valueOf(hcp.getZombieKills()),
+				String.valueOf(hcp.getSkeletonKills()),
+				String.valueOf(hcp.getSpiderKills()),
+				String.valueOf(hcp.getEnderKills()),
+				String.valueOf(hcp.getSlimeKills()),
+				String.valueOf(hcp.getOtherKills()),
+				String.valueOf(hcp.getPlayerKills())
 		};
 
 		try {
@@ -686,6 +725,19 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setDeathMsg(res.getString("deathmsg"));
 					hcp.setDeathPos(Util.Str2Loc(w, res.getString("deathpos")));
 					hcp.setDeaths(res.getInt("deaths"));
+					hcp.setChickenKills(res.getInt(""));
+					hcp.setCowKills(res.getInt("cowkills"));
+					hcp.setPigKills(res.getInt("pigkills"));
+					hcp.setSheepKills(res.getInt("sheepkills"));
+					hcp.setChickenKills(res.getInt("chickenkills"));
+					hcp.setCreeperKills(res.getInt("creeperkills"));
+					hcp.setZombieKills(res.getInt("zombiekills"));
+					hcp.setSkeletonKills(res.getInt("skeletonkills"));
+					hcp.setSpiderKills(res.getInt("spiderkills"));
+					hcp.setEnderKills(res.getInt("enderkills"));
+					hcp.setSlimeKills(res.getInt("slimekills"));
+					hcp.setOtherKills(res.getInt("otherkills"));
+					hcp.setPlayerKills(res.getInt("playerkills"));
 					hcp.setModified(false);
 				}
 			}

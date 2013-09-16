@@ -39,15 +39,11 @@ public class HardcorePlayers {
 		private String DeathMsg;
 		private Location DeathPos;
 		private Integer Deaths;
+		private Integer CowKills, PigKills, SheepKills, ChickenKills;
+		private Integer CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
+		private Integer OtherKills, PlayerKills;
 		private boolean Modified;
 		
-		public Integer getDeaths() {
-			return Deaths;
-		}
-		public void setDeaths(Integer deaths) {
-			setModified(true);
-			Deaths = deaths;
-		}
 		public String getPlayerName() {
 			return PlayerName;
 		}
@@ -172,6 +168,88 @@ public class HardcorePlayers {
 			setModified(true);
 			DeathPos = deathPos;
 		}
+		public Integer getDeaths() {
+			return Deaths;
+		}
+		public void setDeaths(Integer deaths) {
+			setModified(true);
+			Deaths = deaths;
+		}
+
+		public Integer getCowKills() {
+			return CowKills;
+		}
+		public void setCowKills(Integer cowKills) {
+			CowKills = cowKills;
+		}
+		public Integer getPigKills() {
+			return PigKills;
+		}
+		public void setPigKills(Integer pigKills) {
+			PigKills = pigKills;
+		}
+		public Integer getSheepKills() {
+			return SheepKills;
+		}
+		public void setSheepKills(Integer sheepKills) {
+			SheepKills = sheepKills;
+		}
+		public Integer getChickenKills() {
+			return ChickenKills;
+		}
+		public void setChickenKills(Integer chickenKills) {
+			ChickenKills = chickenKills;
+		}
+		public Integer getCreeperKills() {
+			return CreeperKills;
+		}
+		public void setCreeperKills(Integer creeperKills) {
+			CreeperKills = creeperKills;
+		}
+		public Integer getZombieKills() {
+			return ZombieKills;
+		}
+		public void setZombieKills(Integer zombieKills) {
+			ZombieKills = zombieKills;
+		}
+		public Integer getSkeletonKills() {
+			return SkeletonKills;
+		}
+		public void setSkeletonKills(Integer skeletonKills) {
+			SkeletonKills = skeletonKills;
+		}
+		public Integer getSpiderKills() {
+			return SpiderKills;
+		}
+		public void setSpiderKills(Integer spiderKills) {
+			SpiderKills = spiderKills;
+		}
+		public Integer getEnderKills() {
+			return EnderKills;
+		}
+		public void setEnderKills(Integer enderKills) {
+			EnderKills = enderKills;
+		}
+		public Integer getSlimeKills() {
+			return SlimeKills;
+		}
+		public void setSlimeKills(Integer slimeKills) {
+			SlimeKills = slimeKills;
+		}
+		public Integer getPlayerKills() {
+			return PlayerKills;
+		}
+		public void setPlayerKills(Integer playerKills) {
+			PlayerKills = playerKills;
+		}
+		public Integer getOtherKills() {
+			return OtherKills;
+		}
+		public void setOtherKills(Integer otherKills) {
+			OtherKills = otherKills;
+		}
+
+		
 		public void updatePlayer(Player player) {
 			setModified(true);
 			setExp(player.getExp());
