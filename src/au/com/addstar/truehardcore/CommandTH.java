@@ -200,7 +200,7 @@ public class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.RED + "None");
 			}
 		}
-		else if (action.equals("STATS")) {
+		else if (action.equals("STATS") || action.equals("KILLS")) {
 			HardcorePlayer hcp = null;
 			if (args.length == 1) {
 				if (sender instanceof Player) {
