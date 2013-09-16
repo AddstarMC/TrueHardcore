@@ -26,4 +26,8 @@ permissions:
     description:
   truehardcore.save:
     description:
+  truehardcore.stats:
+    description:
+  truehardcore.stats.other:
+    description:
   

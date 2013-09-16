@@ -188,6 +188,37 @@ public class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.RED + "None");
 			}
 		}
+		else if (action.equals("STATS")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.stats")) { return true; }
+			}
+			
+			HardcorePlayer hcp = null;
+			if (args.length == 1) {
+				hcp = plugin.HCPlayers.Get(sender.getName());
+			}
+			else if (args.length == 3) {
+				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.stats.other")) { return true; }
+				}
+				hcp = plugin.HCPlayers.Get(args[2], args[1]);
+			}
+			
+			if (hcp != null) {
+				sender.sendMessage(ChatColor.YELLOW + "Cow Kills      : " + ChatColor.AQUA + hcp.getCowKills());
+				sender.sendMessage(ChatColor.YELLOW + "Pig Kills      : " + ChatColor.AQUA + hcp.getPigKills());
+				sender.sendMessage(ChatColor.YELLOW + "Sheep Kills    : " + ChatColor.AQUA + hcp.getSheepKills());
+				sender.sendMessage(ChatColor.YELLOW + "Chicken Kills  : " + ChatColor.AQUA + hcp.getChickenKills());
+				sender.sendMessage(ChatColor.YELLOW + "Creeper Kills  : " + ChatColor.AQUA + hcp.getCreeperKills());
+				sender.sendMessage(ChatColor.YELLOW + "Zombie Kills   : " + ChatColor.AQUA + hcp.getZombieKills());
+				sender.sendMessage(ChatColor.YELLOW + "Skeleton Kills : " + ChatColor.AQUA + hcp.getSkeletonKills());
+				sender.sendMessage(ChatColor.YELLOW + "Spider Kills   : " + ChatColor.AQUA + hcp.getSpiderKills());
+				sender.sendMessage(ChatColor.YELLOW + "Ender Kills    : " + ChatColor.AQUA + hcp.getEnderKills());
+				sender.sendMessage(ChatColor.YELLOW + "Slime Kills    : " + ChatColor.AQUA + hcp.getSlimeKills());
+				sender.sendMessage(ChatColor.YELLOW + "Other Kills    : " + ChatColor.AQUA + hcp.getOtherKills());
+				sender.sendMessage(ChatColor.YELLOW + "Player Kills   : " + ChatColor.AQUA + hcp.getPlayerKills());
+			}
+		}
 		else if (action.equals("SAVE")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.save")) { return true; }
@@ -198,6 +229,9 @@ public class CommandTH implements CommandExecutor {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
 			sender.sendMessage(ChatColor.AQUA + "/th play   " + ChatColor.YELLOW + ": Start or resume your hardcore game");
 			sender.sendMessage(ChatColor.AQUA + "/th leave  " + ChatColor.YELLOW + ": Leave the hardcore game (progress is saved)");
+			sender.sendMessage(ChatColor.AQUA + "/th list   " + ChatColor.YELLOW + ": List the current hardcore players");
+			sender.sendMessage(ChatColor.AQUA + "/th info   " + ChatColor.YELLOW + ": Display your current game information");
+			sender.sendMessage(ChatColor.AQUA + "/th stats  " + ChatColor.YELLOW + ": Display kill statistics");
 		}
 		
 		return true;
