@@ -91,9 +91,11 @@ public class HardcorePlayers {
 			GameStart = gameStart;
 		}
 		public Date getGameEnd() {
+			TrueHardcore.instance.DebugLog("GET GAMEEND: " + GameEnd);
 			return GameEnd;
 		}
 		public void setGameEnd(Date gameEnd) {
+			TrueHardcore.instance.DebugLog("SET GAMEEND: " + gameEnd);
 			setModified(true);
 			GameEnd = gameEnd;
 		}
