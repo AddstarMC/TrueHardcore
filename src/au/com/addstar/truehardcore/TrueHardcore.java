@@ -699,7 +699,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public void SaveAllPlayers() {
 		for (String key : HCPlayers.AllRecords().keySet()) {
 			HardcorePlayer hcp = HCPlayers.Get(key);
-			if (hcp.isModified()) {
+			if ((hcp != null) && (hcp.isModified())) {
 				SavePlayer(hcp);
 			}
 		}
