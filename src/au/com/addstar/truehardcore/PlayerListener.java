@@ -281,7 +281,7 @@ public class PlayerListener implements Listener {
 						hcp.setSlimeKills(hcp.getSlimeKills()+1);
 						break;
 					case MUSHROOM_COW:
-						hcp.setSlimeKills(hcp.getMooshKills()+1);
+						hcp.setMooshKills(hcp.getMooshKills()+1);
 						break;
 					case PLAYER:
 						hcp.setPlayerKills(hcp.getPlayerKills()+1);
