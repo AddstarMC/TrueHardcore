@@ -128,25 +128,25 @@ public class HardcorePlayers {
 			return Exp;
 		}
 		public void setExp(float exp) {
-			setModified(true);
-			if (LoadDataOnly) { return; }
 			Exp = exp;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getScore() {
 			return Score;
 		}
 		public void setScore(Integer score) {
-			setModified(true);
-			if (LoadDataOnly) { return; }
 			Score = score;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getTopScore() {
 			return TopScore;
 		}
 		public void setTopScore(Integer topScore) {
-			setModified(true);
-			if (LoadDataOnly) { return; }
 			TopScore = topScore;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public PlayerState getState() {
 			return State;
