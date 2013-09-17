@@ -30,4 +30,6 @@ permissions:
     description:
   truehardcore.stats.other:
     description:
+  truehardcore.reload:
+    description:
   

@@ -233,6 +233,8 @@ public final class TrueHardcore extends JavaPlugin {
         getServer().getScheduler().cancelTasks(this);
 		SaveAllPlayers();
 		
+		// TODO: force leave all players
+		
 		Log(pdfFile.getName() + " has been disabled!");
 		debugfh.close();
 	}
@@ -417,7 +419,7 @@ public final class TrueHardcore extends JavaPlugin {
 				//DebugLog("WAIT: " + wait);
 				
 				if (wait > 0) {
-					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + (int) Math.ceil(wait / 60.0) + " minutes to play hardcore again.");
+					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " minutes to play hardcore again.");
 					return false;
 				}
 			}

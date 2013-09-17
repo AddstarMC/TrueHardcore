@@ -204,78 +204,104 @@ public class HardcorePlayers {
 		}
 		public void setCowKills(Integer cowKills) {
 			CowKills = cowKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getPigKills() {
 			return PigKills;
 		}
 		public void setPigKills(Integer pigKills) {
 			PigKills = pigKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getSheepKills() {
 			return SheepKills;
 		}
 		public void setSheepKills(Integer sheepKills) {
 			SheepKills = sheepKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getChickenKills() {
 			return ChickenKills;
 		}
 		public void setChickenKills(Integer chickenKills) {
 			ChickenKills = chickenKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getCreeperKills() {
 			return CreeperKills;
 		}
 		public void setCreeperKills(Integer creeperKills) {
 			CreeperKills = creeperKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getZombieKills() {
 			return ZombieKills;
 		}
 		public void setZombieKills(Integer zombieKills) {
 			ZombieKills = zombieKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getSkeletonKills() {
 			return SkeletonKills;
 		}
 		public void setSkeletonKills(Integer skeletonKills) {
 			SkeletonKills = skeletonKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getSpiderKills() {
 			return SpiderKills;
 		}
 		public void setSpiderKills(Integer spiderKills) {
 			SpiderKills = spiderKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getEnderKills() {
 			return EnderKills;
 		}
 		public void setEnderKills(Integer enderKills) {
 			EnderKills = enderKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getSlimeKills() {
 			return SlimeKills;
 		}
 		public void setSlimeKills(Integer slimeKills) {
 			SlimeKills = slimeKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getMooshKills() {
 			return MooshKills;
 		}
 		public void setMooshKills(Integer mooshKills) {
 			MooshKills = mooshKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getPlayerKills() {
 			return PlayerKills;
 		}
 		public void setPlayerKills(Integer playerKills) {
 			PlayerKills = playerKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 		public Integer getOtherKills() {
 			return OtherKills;
 		}
 		public void setOtherKills(Integer otherKills) {
 			OtherKills = otherKills;
+			if (LoadDataOnly) { return; }
+			setModified(true);
 		}
 
 		
@@ -286,9 +312,10 @@ public class HardcorePlayers {
 			setScore(player.getTotalExperience());
 			setLevel(player.getLevel());
 		}
-		public void calcGameTime() {
-			Date d1 = getLastJoin();
-			Date d2 = getLastQuit();
+		
+		public Integer TimeDiff(Date d1, Date d2) {
+			//Date d1 = getLastJoin();
+			//Date d2 = getLastQuit();
 
 			TrueHardcore.instance.DebugLog("DATES: " + d1 + " / " + d2);
 			
@@ -297,10 +324,17 @@ public class HardcorePlayers {
 				int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
 				TrueHardcore.instance.DebugLog("DIFF: " + diff);
 				TrueHardcore.instance.DebugLog("NEW : " + (getGameTime() + diff));
+				return diff;
+			}
+			return null;
+		}
+		public void calcGameTime() {
+			Integer diff = TimeDiff(getLastJoin(), getLastQuit());
+			if (diff != null) {
 				setGameTime(getGameTime() + diff);
-				setModified(true);
 			}
 		}
+		
 		public boolean isModified() {
 			return Modified;
 		}

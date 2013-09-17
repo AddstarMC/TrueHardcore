@@ -18,6 +18,7 @@ package au.com.addstar.truehardcore;
 */
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
@@ -28,6 +29,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
+import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
 
 public class CommandTH implements CommandExecutor {
 	private TrueHardcore plugin;
@@ -122,10 +124,19 @@ public class CommandTH implements CommandExecutor {
 			}
 			
 			if (hcp != null) {
+				Integer gt;
+				if (hcp.getState() == PlayerState.IN_GAME) {
+					gt = (hcp.getGameTime() + hcp.TimeDiff(hcp.getLastJoin(), new Date()));
+				} else {
+					gt = hcp.getGameTime();
+				}
+				String gametime = Util.Long2Time(gt);
+
 				sender.sendMessage(ChatColor.GREEN + "Hardcore player information:");
 				sender.sendMessage(ChatColor.YELLOW + "Player: "        + ChatColor.AQUA + hcp.getPlayerName());
 				sender.sendMessage(ChatColor.YELLOW + "World: "         + ChatColor.AQUA + hcp.getWorld());
 				sender.sendMessage(ChatColor.YELLOW + "State: "         + ChatColor.AQUA + hcp.getState());
+				sender.sendMessage(ChatColor.YELLOW + "Game Time: "     + ChatColor.AQUA + gametime);
 				sender.sendMessage(ChatColor.YELLOW + "Current Level: " + ChatColor.AQUA + hcp.getLevel());
 				sender.sendMessage(ChatColor.YELLOW + "Total Score: "   + ChatColor.AQUA + hcp.getScore());
 				sender.sendMessage(ChatColor.YELLOW + "Total Deaths: "  + ChatColor.AQUA + hcp.getDeaths());
@@ -261,6 +272,7 @@ public class CommandTH implements CommandExecutor {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.save")) { return true; }
 			}
+			plugin.Debug("Saving buffered data...");
 			plugin.SaveAllPlayers();
 		}
 		else if (action.equals("RELOAD")) {

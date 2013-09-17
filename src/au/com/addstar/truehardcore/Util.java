@@ -81,6 +81,29 @@ public class Util {
 		return null;
 	}
 	
+	public static String Long2Time(long time) {
+		long diffSeconds = time / 1000 % 60;
+		long diffMinutes = time / (60 * 1000) % 60;
+		long diffHours = time / (60 * 60 * 1000) % 24;
+		long diffDays = time / (24 * 60 * 60 * 1000);
+		
+		String result;
+		if (diffDays > 0) {
+			result = diffDays + "d " + diffHours + "h " + diffMinutes + "m " + diffSeconds + "s"; 
+		} else {
+			if (diffHours > 0) {
+				result = diffHours + "h " + diffMinutes + "m " + diffSeconds + "s";
+			} else {
+				if (diffMinutes > 0) {
+					result = diffMinutes + "m " + diffSeconds + "s";
+				} else {
+					result = diffSeconds + "s";
+				}
+			}
+		}
+		return result;
+	}
+	
 	// TODO: add exception checking
 	public static String Date2Mysql(Date date) {
 		if (date == null) { return null; }
