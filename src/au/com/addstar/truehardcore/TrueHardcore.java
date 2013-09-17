@@ -471,6 +471,7 @@ public final class TrueHardcore extends JavaPlugin {
 						hcp.setPlayerKills(0);
 						hcp.updatePlayer(player);
 						SavePlayer(hcp);
+						UnvanishPlayer(player);
 						return true;
 					} else {
 						return false;
@@ -489,6 +490,7 @@ public final class TrueHardcore extends JavaPlugin {
 			Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 			JoinGame(world, player);
 			SavePlayer(hcp);
+			UnvanishPlayer(player);
 			player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
 			return true;
 		}
