@@ -425,7 +425,7 @@ public final class TrueHardcore extends JavaPlugin {
 				//DebugLog("WAIT: " + wait);
 				
 				if (wait > 0) {
-					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " minutes to play hardcore again.");
+					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " to play hardcore again.");
 					return false;
 				}
 			}
