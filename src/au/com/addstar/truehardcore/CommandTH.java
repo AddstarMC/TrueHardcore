@@ -263,6 +263,12 @@ public class CommandTH implements CommandExecutor {
 			}
 			plugin.SaveAllPlayers();
 		}
+		else if (action.equals("RELOAD")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.reload")) { return true; }
+			}
+			plugin.LoadWhiteList();
+		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
 			sender.sendMessage(ChatColor.AQUA + "/th play   " + ChatColor.YELLOW + ": Start or resume your hardcore game");
