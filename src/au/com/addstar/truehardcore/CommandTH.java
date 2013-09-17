@@ -124,6 +124,7 @@ public class CommandTH implements CommandExecutor {
 			}
 			
 			if (hcp != null) {
+				plugin.DebugLog("GAMETIME: " + hcp.getGameTime());
 				Integer gt;
 				if (hcp.getState() == PlayerState.IN_GAME) {
 					gt = (hcp.getGameTime() + hcp.TimeDiff(hcp.getLastJoin(), new Date()));

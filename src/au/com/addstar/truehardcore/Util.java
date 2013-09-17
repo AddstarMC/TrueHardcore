@@ -86,7 +86,8 @@ public class Util {
 		long diffMinutes = time / (60 * 1000) % 60;
 		long diffHours = time / (60 * 60 * 1000) % 24;
 		long diffDays = time / (24 * 60 * 60 * 1000);
-		
+
+		TrueHardcore.instance.DebugLog("TIME: " + time);		
 		TrueHardcore.instance.DebugLog("DAYS: " + diffDays);
 		TrueHardcore.instance.DebugLog("HOURS: " + diffHours);
 		TrueHardcore.instance.DebugLog("MINS: " + diffMinutes);
