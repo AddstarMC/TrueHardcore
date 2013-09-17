@@ -22,14 +22,9 @@ permissions:
     description: 
   truehardcore.info.other:
     description:
-  truehardcore.dump:
-    description:
-  truehardcore.save:
+  truehardcore.admin:
     description:
   truehardcore.stats:
     description:
   truehardcore.stats.other:
-    description:
-  truehardcore.reload:
-    description:
-  
+    description:  

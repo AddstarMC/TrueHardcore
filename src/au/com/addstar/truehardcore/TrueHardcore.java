@@ -82,6 +82,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public int DeathBan;
 	public int SpawnProtection;
 	public int SpawnDistance;
+	public boolean GameEnabled = true;
 	
 	private static final Logger logger = Logger.getLogger("Minecraft");
 	private static final Logger debuglog = Logger.getLogger("DebugLog");
@@ -97,7 +98,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public String DBName;
 	public String DBUser;
 	public String DBPass;
-	
+
 	private Boolean LWCHooked = false;
 	private Boolean LBHooked = false;
 	private Boolean WBHooked = false;
@@ -403,6 +404,11 @@ public final class TrueHardcore extends JavaPlugin {
 	public boolean PlayGame(String world, Player player) {
 		if (!IsOnWhiteList(world, player.getName())) {
 			player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
+			return false;
+		}
+
+		if (!GameEnabled) {
+			player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
 			return false;
 		}
 		

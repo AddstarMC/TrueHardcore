@@ -145,7 +145,7 @@ public class CommandTH implements CommandExecutor {
 		}
 		else if (action.equals("DUMP")) {
 			if (sender instanceof Player) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.dump")) { return true; }
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			if (args.length == 1) {
 				for (String key : plugin.HCPlayers.AllRecords().keySet()) {
@@ -270,16 +270,30 @@ public class CommandTH implements CommandExecutor {
 		}
 		else if (action.equals("SAVE")) {
 			if (sender instanceof Player) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.save")) { return true; }
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			plugin.Debug("Saving buffered data...");
 			plugin.SaveAllPlayers();
 		}
 		else if (action.equals("RELOAD")) {
 			if (sender instanceof Player) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.reload")) { return true; }
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			plugin.LoadWhiteList();
+		}
+		else if (action.equals("DISABLE")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+			}
+			plugin.GameEnabled = false;
+			sender.sendMessage(ChatColor.RED + "TrueHardcore has been disabled.");
+		}
+		else if (action.equals("ENABLE")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+			}
+			plugin.GameEnabled = true;
+			sender.sendMessage(ChatColor.GREEN + "TrueHardcore has been enabled.");
 		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
