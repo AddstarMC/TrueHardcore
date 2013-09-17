@@ -3,8 +3,10 @@ debug: true
 
 # Which worlds are hardcore worlds
 worlds:
-  - hardcore1
-  - hardcore2
+  hardcore1:
+    greeting: "&f[&cHardcore1&f] &cLWC chest protection, no PVP and no raiding"  
+  hardcore2:
+    greeting: "&f[&cHardcore2&f] &cPVP and raiding are encouraged here!" 
 
 # How far away should players be spawned from their previous death point
 spawn-distance: 4000

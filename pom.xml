@@ -101,6 +101,11 @@
     	<artifactId>worldborder</artifactId>
     	<version>1.7.5</version>
     </dependency>
+    <dependency>
+    	<groupId>org.kitteh</groupId>
+    	<artifactId>vanish</artifactId>
+    	<version>3.18.2</version>
+    </dependency>
   </dependencies>
 
   <build>

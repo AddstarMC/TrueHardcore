@@ -22,7 +22,9 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
@@ -32,6 +34,7 @@ import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 import net.milkbowl.vault.permission.Permission;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -48,6 +51,10 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.kitteh.vanish.VanishManager;
+import org.kitteh.vanish.VanishPlugin;
+import org.kitteh.vanish.staticaccess.VanishNoPacket;
+import org.kitteh.vanish.staticaccess.VanishNotLoadedException;
 
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
@@ -94,15 +101,17 @@ public final class TrueHardcore extends JavaPlugin {
 	private Boolean LWCHooked = false;
 	private Boolean LBHooked = false;
 	private Boolean WBHooked = false;
+	private Boolean VNPHooked = false;
 	private LWC lwc;
 	private LogBlock logblock;
 	private WorldBorder wb;
+	private VanishManager vnp;
 
 	public HardcorePlayers HCPlayers = new HardcorePlayers();
 
-	// List of ALL players who have played hardcore
-	public List<String> AllHardcorePlayers = new ArrayList<String>();
-
+	// List of ALL players who are allowed to enter a hardcore world
+	public Map<String, List<String>> WhiteList = new HashMap<String, List<String>>();
+	
 	public String Header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore" + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
 	
 	private final List<Material> SpawnBlocks = Arrays.asList(
@@ -178,6 +187,19 @@ public final class TrueHardcore extends JavaPlugin {
     		Log("WorldBorder not found! Spawning will not be limited...");
     	}
 
+    	p = pm.getPlugin("VanishNoPacket");
+    	if (p != null && p instanceof VanishPlugin) {
+    		try {
+				vnp = VanishNoPacket.getManager();
+	    		VNPHooked = true;
+			} catch (VanishNotLoadedException e) {
+				e.printStackTrace();
+			}
+    		Log("VanishNoPacket found, hooking it.");
+    	} else {
+    		Log("VanishNoPacket not found! Will not auto-unvanish...");
+    	}
+
     	// Read (or initialise) plugin config file
 		cfg.LoadConfig(getConfig());
 
@@ -190,6 +212,7 @@ public final class TrueHardcore extends JavaPlugin {
 			Log("Successfully connected to the database.");
 			Log("Loading players from database...");
 			LoadAllPlayers();
+			LoadWhiteList();
 		} else {
 			Log(pdfFile.getName() + " " + pdfFile.getVersion() + " could not be enabled!");
 			this.setEnabled(false);
@@ -376,6 +399,11 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean PlayGame(String world, Player player) {
+		if (!IsOnWhiteList(world, player.getName())) {
+			player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
+			return false;
+		}
+		
 		HardcorePlayer hcp = HCPlayers.Get(world, player.getName());
 		if (hcp != null) {
 			if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
@@ -776,5 +804,45 @@ public final class TrueHardcore extends JavaPlugin {
 	public void SendToLobby(Player player) {
 		Location loc = getServer().getWorld("games").getSpawnLocation();
 		player.teleport(loc);
+	}
+	
+	public boolean IsOnWhiteList(String world, String player) {
+		if (WhiteList.containsKey(player)) {
+			List<String> worlds = WhiteList.get(player);
+			if ((worlds != null) && (worlds.size() > 0)) {
+				for (String w : worlds) {
+					if ((w.equals(world)) || (w.equals("*"))) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public void LoadWhiteList() {
+		Debug("Loading player whitelist...");
+		String query = "SELECT * FROM `whitelist`";
+		try {
+			WhiteList.clear();
+			ResultSet res = dbcon.PreparedQuery(query, null);
+			if (res != null) {
+				while (res.next()) {
+					String player = res.getString("player");
+					List<String> worlds = Arrays.asList(StringUtils.split(res.getString("worlds"), ","));
+					WhiteList.put(player, worlds);
+				}
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void UnvanishPlayer(Player player) {
+		if ((VNPHooked) && (vnp.isVanished(player))) {
+			Debug("Unvanishing " + player.getName());
+			vnp.toggleVanish(player);
+		}
 	}
 }
