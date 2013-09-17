@@ -82,10 +82,10 @@ public class Util {
 	}
 	
 	public static String Long2Time(long time) {
-		long diffSeconds = time / 1000 % 60;
-		long diffMinutes = time / (60 * 1000) % 60;
-		long diffHours = time / (60 * 60 * 1000) % 24;
-		long diffDays = time / (24 * 60 * 60 * 1000);
+		long diffSeconds = (time % 60);
+		long diffMinutes = ((time / 60) % 60);
+		long diffHours = ((time / (60 * 60)) % 24);
+		long diffDays = (time / (24 * 60 * 60));
 
 		TrueHardcore.instance.DebugLog("TIME: " + time);		
 		TrueHardcore.instance.DebugLog("DAYS: " + diffDays);
