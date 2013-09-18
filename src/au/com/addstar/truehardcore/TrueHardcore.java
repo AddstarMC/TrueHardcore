@@ -653,7 +653,7 @@ public final class TrueHardcore extends JavaPlugin {
 		String[] values = { 
 				hcp.getPlayerName().toLowerCase(), 
 				hcp.getLastPos().getWorld().getName(),
-				Util.Loc2Str(hcp.getLastPos()),
+				Util.Loc2Str(hcp.getLastPos(), false),
 				Util.Date2Mysql(hcp.getLastJoin()),
 				Util.Date2Mysql(hcp.getLastQuit()),
 				Util.Date2Mysql(hcp.getGameStart()),
@@ -665,7 +665,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getTopScore()),
 				hcp.getState().toString(),
 				hcp.getDeathMsg(),
-				Util.Loc2Str(hcp.getDeathPos()),
+				Util.Loc2Str(hcp.getDeathPos(), false),
 				String.valueOf(hcp.getDeaths()),
 
 				String.valueOf(hcp.getCowKills()),
@@ -682,7 +682,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getOtherKills()),
 				String.valueOf(hcp.getPlayerKills()),
 
-				Util.Loc2Str(hcp.getLastPos()),			// REPEATED FOR UPDATE!
+				Util.Loc2Str(hcp.getLastPos(), false),			// REPEATED FOR UPDATE!
 				Util.Date2Mysql(hcp.getLastJoin()),		//   |
 				Util.Date2Mysql(hcp.getLastQuit()),		//   v
 				Util.Date2Mysql(hcp.getGameStart()),
@@ -694,7 +694,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getTopScore()),
 				hcp.getState().toString(),
 				hcp.getDeathMsg(),
-				Util.Loc2Str(hcp.getDeathPos()),
+				Util.Loc2Str(hcp.getDeathPos(), false),
 				String.valueOf(hcp.getDeaths()),
 				
 				String.valueOf(hcp.getCowKills()),
