@@ -169,6 +169,7 @@ public class CommandTH implements CommandExecutor {
 					sender.sendMessage(ChatColor.YELLOW + "Score          : " + ChatColor.AQUA + hcp.getScore());
 					sender.sendMessage(ChatColor.YELLOW + "TopScore       : " + ChatColor.AQUA + hcp.getTopScore());
 					sender.sendMessage(ChatColor.YELLOW + "State          : " + ChatColor.AQUA + hcp.getState());
+					sender.sendMessage(ChatColor.YELLOW + "GodMode        : " + ChatColor.AQUA + hcp.isGodMode());
 					sender.sendMessage(ChatColor.YELLOW + "DeathMsg       : " + ChatColor.AQUA + hcp.getDeathMsg());
 					sender.sendMessage(ChatColor.YELLOW + "DeathPos       : " + ChatColor.AQUA + hcp.getDeathPos());
 					sender.sendMessage(ChatColor.YELLOW + "Deaths         : " + ChatColor.AQUA + hcp.getDeaths());

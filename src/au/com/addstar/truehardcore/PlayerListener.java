@@ -172,7 +172,7 @@ public class PlayerListener implements Listener {
 		HardcorePlayer hcp = HCPlayers.Get(player.getWorld(), event.getPlayer());
 		if ((hcp == null) || (hcp.getState() != PlayerState.DEAD)) { return; }
 		
-		HardcoreWorld hcw = plugin.HardcoreWorlds.get(player.getWorld());
+		HardcoreWorld hcw = plugin.HardcoreWorlds.get(player.getWorld().getName());
 
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
@@ -180,6 +180,7 @@ public class PlayerListener implements Listener {
 		plugin.Debug("Sending " + player.getName() + " to lobby");
 		Location loc = plugin.getServer().getWorld("games").getSpawnLocation();
 		event.setRespawnLocation(loc);
+
 		player.sendMessage(ChatColor.RED + "You are now banned from " + player.getWorld().getName() + " for " + Util.Long2Time(hcw.getBantime()) + "!");
 	}
 
