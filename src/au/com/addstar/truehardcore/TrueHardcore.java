@@ -406,7 +406,7 @@ public final class TrueHardcore extends JavaPlugin {
 			return false;
 		}
 
-		if (!GameEnabled) {
+		if ((!GameEnabled) && (!player.isOp())) {
 			player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
 			return false;
 		}
