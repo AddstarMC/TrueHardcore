@@ -213,8 +213,11 @@ public class CommandTH implements CommandExecutor {
 				if (args[1].toUpperCase() == "EXIT") {
 					World world = plugin.getServer().getWorld(args[2]);
 					if ((world != null) && (plugin.IsHardcoreWorld(world))) {
+						HardcoreWorld hcw = plugin.HardcoreWorlds.get(world.getName());
 						Player player = (Player) sender;
-						plugin.Config().set("worlds." + world.getName() + ".exit", player.getLocation().toVector());
+						hcw.setExitPos(player.getLocation());
+						plugin.Config().set("worlds." + world.getName() + ".exitpos", Util.Loc2Str(player.getLocation(), true));
+						plugin.saveConfig();
 					}
 				}
 			}

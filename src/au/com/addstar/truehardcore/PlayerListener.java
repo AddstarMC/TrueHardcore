@@ -126,14 +126,19 @@ public class PlayerListener implements Listener {
 
 		// Check if player is resuming a game or somehow stuck in the world but not playing
 		HardcorePlayer hcp = HCPlayers.Get(player);
-		if (hcp == null) { return; }
+		if (hcp == null) {
+			plugin.Warn(player.getName() + " joined in hardcore world with no player record!");
+			plugin.SendToLobby(player, null);
+			return;
+		}
+		
 		if (hcp.getState() == PlayerState.ALIVE) {
 			// Mark the player as in game
 			hcp.setState(PlayerState.IN_GAME);
 			plugin.SavePlayer(hcp);
 		} else {
 			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
-			plugin.SendToLobby(player);
+			plugin.SendToLobby(player, hcp.getWorld());
 		}
 	}
 

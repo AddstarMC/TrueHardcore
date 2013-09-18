@@ -624,7 +624,7 @@ public final class TrueHardcore extends JavaPlugin {
 			hcp.updatePlayer(player);
 			hcp.calcGameTime();
 			SavePlayer(hcp);
-			SendToLobby(player);
+			SendToLobby(player, hcp.getWorld());
 		} else {
 			player.sendMessage(ChatColor.RED + "You are not currently in a hardcore game.");
 		}
@@ -819,8 +819,17 @@ public final class TrueHardcore extends JavaPlugin {
 		return HardcoreWorlds.containsKey(world.getName());
 	}
 	
-	public void SendToLobby(Player player) {
-		Location loc = getServer().getWorld("games").getSpawnLocation();
+	public void SendToLobby(Player player, String world) {
+		Location loc = null;
+		if (world != null) {
+			HardcoreWorld hcw = HardcoreWorlds.get(world);
+			loc = hcw.getExitPos();
+		}
+		
+		if (loc == null) {
+			loc = getServer().getWorld("games").getSpawnLocation();
+		}
+		
 		player.teleport(loc);
 	}
 	

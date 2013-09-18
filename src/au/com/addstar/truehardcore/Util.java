@@ -4,7 +4,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -53,13 +52,17 @@ public class Util {
 	    return String.format("%1$" + n + "s", s);  
 	}
 
-	public static String Loc2Str(Location loc) {
+	public static String Loc2Str(Location loc, boolean IncludeWorld) {
 		if (loc == null) { return null; }
 		String result = loc.getX() + "," + 
 						loc.getY() + "," +
 						loc.getZ() + "," +
 						loc.getPitch() + "," +
 						loc.getYaw();
+		
+		if (IncludeWorld) {
+			result = loc.getWorld().getName() + "," + result;
+		}
 		return result; 
 	}
 	
@@ -68,7 +71,17 @@ public class Util {
 
 		Location loc;
 		String[] parts = input.split(",");
-		if (parts.length == 5) {
+
+		if (world == null) {
+			world = TrueHardcore.instance.getServer().getWorld(parts[0]);
+			loc = new Location(world,
+					Double.parseDouble(parts[1]),
+					Double.parseDouble(parts[2]),
+					Double.parseDouble(parts[3]),
+					Float.parseFloat(parts[4]),
+					Float.parseFloat(parts[5]));
+		}
+		else if (parts.length == 5) {
 			loc = new Location(world,
 					Double.parseDouble(parts[0]),
 					Double.parseDouble(parts[1]),
@@ -190,4 +203,6 @@ public class Util {
 		}
 		return false;
 	}
+	
+	
 }

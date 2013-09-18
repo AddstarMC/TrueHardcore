@@ -1,5 +1,6 @@
 package au.com.addstar.truehardcore;
 
+import org.bukkit.Location;
 import org.bukkit.World;
 
 public class HardcoreWorld {
@@ -12,6 +13,7 @@ public class HardcoreWorld {
 	private Integer bantime;
 	private Integer spawndistance;
 	private Integer spawnprotection;
+	private Location exitpos;
 
 	public World getWorld() {
 		return world;
@@ -50,5 +52,11 @@ public class HardcoreWorld {
 
 	public void setSpawnProtection(Integer spawnprotection) {
 		this.spawnprotection = spawnprotection;
+	}
+	public Location getExitPos() {
+		return exitpos;
+	}
+	public void setExitPos(Location exitpos) {
+		this.exitpos = exitpos;
 	}
 }
