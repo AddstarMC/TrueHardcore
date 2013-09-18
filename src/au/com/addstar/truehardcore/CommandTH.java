@@ -202,6 +202,7 @@ public class CommandTH implements CommandExecutor {
 					sender.sendMessage(ChatColor.YELLOW + "Ban Time   : " + ChatColor.AQUA + hcw.getBantime());
 					sender.sendMessage(ChatColor.YELLOW + "Distance   : " + ChatColor.AQUA + hcw.getSpawnDistance());
 					sender.sendMessage(ChatColor.YELLOW + "Protection : " + ChatColor.AQUA + hcw.getSpawnProtection());
+					sender.sendMessage(ChatColor.YELLOW + "ExitPos    : " + ChatColor.AQUA + hcw.getExitPos());
 				}
 			}
 		}
@@ -214,11 +215,16 @@ public class CommandTH implements CommandExecutor {
 					World world = plugin.getServer().getWorld(args[2]);
 					if ((world != null) && (plugin.IsHardcoreWorld(world))) {
 						HardcoreWorld hcw = plugin.HardcoreWorlds.get(world.getName());
+						plugin.Debug("Setting ExitPos for " + hcw.getWorld().getName());
 						Player player = (Player) sender;
 						hcw.setExitPos(player.getLocation());
 						plugin.Config().set("worlds." + world.getName() + ".exitpos", Util.Loc2Str(player.getLocation(), true));
 						plugin.saveConfig();
+					} else {
+						sender.sendMessage(ChatColor.RED + "Not a valid hardcore world");
 					}
+				} else {
+					sender.sendMessage(ChatColor.RED + "Invalid option");
 				}
 			}
 		}
