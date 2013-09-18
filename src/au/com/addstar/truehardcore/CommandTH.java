@@ -197,7 +197,7 @@ public class CommandTH implements CommandExecutor {
 			sender.sendMessage(ChatColor.GREEN + "Players currently in hardcore worlds:");
 
 			boolean Playing = false;
-			for (String w : plugin.HardcoreWorlds) {
+			for (String w : plugin.HardcoreWorlds.keySet()) {
 				World world = plugin.getServer().getWorld(w);
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();

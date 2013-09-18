@@ -19,7 +19,6 @@ package au.com.addstar.truehardcore;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -77,11 +76,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public static Chat chat = null;
 	public boolean VaultEnabled = false;
 	public boolean DebugEnabled = false;
-	public List<String> HardcoreWorlds = null;
 	public List<String> RollbackCmds = null;
-	public int DeathBan;
-	public int SpawnProtection;
-	public int SpawnDistance;
 	public boolean GameEnabled = true;
 	
 	private static final Logger logger = Logger.getLogger("Minecraft");
@@ -108,6 +103,10 @@ public final class TrueHardcore extends JavaPlugin {
 	private WorldBorder wb;
 	private VanishManager vnp;
 
+	// Hardcore worlds
+	public Map<String, HardcoreWorld> HardcoreWorlds = new HashMap<String, HardcoreWorld>();
+	
+	// Data for ALL hardcore players 
 	public HardcorePlayers HCPlayers = new HardcorePlayers();
 
 	// List of ALL players who are allowed to enter a hardcore world
@@ -412,20 +411,21 @@ public final class TrueHardcore extends JavaPlugin {
 			return false;
 		}
 		
+		HardcoreWorld hcw = HardcoreWorlds.get(world);
 		HardcorePlayer hcp = HCPlayers.Get(world, player.getName());
 		if (hcp != null) {
 			if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
 				// Check last death time
 				Date now = new Date();
 				long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
-				long wait = (DeathBan - diff);
+				long wait = (hcw.getBantime() - diff);
 				//DebugLog("NOW: " + now.getTime());
 				//DebugLog("DIE: " + hcp.getGameEnd().getTime());
 				//DebugLog("DIFF: " + diff);
 				//DebugLog("WAIT: " + wait);
 				
 				if (wait > 0) {
-					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " to play hardcore again.");
+					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " to play " + hcw.getWorld().getName() + " again.");
 					return false;
 				}
 			}
@@ -439,14 +439,14 @@ public final class TrueHardcore extends JavaPlugin {
 				if (hcp == null) {
 					Debug("New hardcore player: " + player.getName());
 					hcp = HCPlayers.NewPlayer(world, player.getName());
-					spawn = GetNewLocation(w, 0, 0, SpawnDistance);
+					spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
 				}
 				else if (hcp.getDeathPos() == null) {
 					Warn("No previous position found for known " + player.getName());
-					spawn = GetNewLocation(w, 0, 0, SpawnDistance);
+					spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
 				} else {
 					Debug(player.getName() + " is restarting hardcore");
-					spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), SpawnDistance);
+					spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
 				}
 				
 				if (spawn != null) {
@@ -472,6 +472,10 @@ public final class TrueHardcore extends JavaPlugin {
 						hcp.updatePlayer(player);
 						SavePlayer(hcp);
 						UnvanishPlayer(player);
+						String greeting = HardcoreWorlds.get(world).getGreeting();
+						if ((greeting != null) && (!greeting.isEmpty())) {
+							player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
+						}
 						return true;
 					} else {
 						return false;
@@ -498,8 +502,9 @@ public final class TrueHardcore extends JavaPlugin {
 	
 	public boolean NewSpawn(Player player, Location spawn) {
 		HardcorePlayer hcp = HCPlayers.Get(spawn.getWorld(), player);
+		HardcoreWorld hcw = HardcoreWorlds.get(spawn.getWorld());
 		
-		player.setNoDamageTicks(SpawnProtection * 20);
+		player.setNoDamageTicks(hcw.getSpawnProtection() * 20);
 		if (player.teleport(spawn)) {
 			hcp.setState(PlayerState.IN_GAME);
 			player.setFallDistance(0);
@@ -808,7 +813,7 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsHardcoreWorld(World world) {
-		return (HardcoreWorlds.contains(world.getName()));
+		return HardcoreWorlds.containsKey(world.getName());
 	}
 	
 	public void SendToLobby(Player player) {

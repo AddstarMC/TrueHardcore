@@ -4,18 +4,15 @@ debug: true
 # Which worlds are hardcore worlds
 worlds:
   hardcore1:
-    greeting: "&f[&cHardcore1&f] &cLWC chest protection, no PVP and no raiding"  
+    greeting: "&f[&cHardcore1&f] &cLWC chest protection, no PVP and no raiding"
+    ban-time: 3600
+    spawn-distance: 5000
+    spawn-protection: 60
   hardcore2:
     greeting: "&f[&cHardcore2&f] &cPVP and raiding are encouraged here!"
-
-# How far away should players be spawned from their previous death point
-spawn-distance: 4000
-
-# How long should the player be banned from playing again after death (seconds)
-death-ban: 60
-
-# How long to protect the player after they spawn
-spawn-protection: 60
+    ban-time: 7200
+    spawn-distance: 4000
+    protection-time: 30
 
 # Database settings
 mysql:

@@ -18,7 +18,10 @@ package au.com.addstar.truehardcore;
 */
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class ConfigManager {
@@ -36,11 +39,31 @@ public class ConfigManager {
 		config.options().copyDefaults(true);
 
 		plugin.DebugEnabled = Config().getBoolean("debug");
-		plugin.HardcoreWorlds = (List<String>) Config().getList("worlds");
-		plugin.SpawnProtection = Config().getInt("spawn-protection");
-		plugin.SpawnDistance = Config().getInt("spawn-distance");
-		plugin.DeathBan = Config().getInt("death-ban");
 
+		// Get the list of worlds
+		Set<String> worlds = (Set<String>) Config().getConfigurationSection("worlds").getKeys(false);
+
+		// Load each world's settings
+		plugin.Debug("Loading worlds...");
+		if (worlds != null) {
+			for (String w : worlds) {
+				plugin.Debug("Found World: " + w);
+				World world = plugin.getServer().getWorld(w);
+				if (world != null) {
+					HardcoreWorld hcw = new HardcoreWorld();
+					hcw.setWorld(world);
+					hcw.setGreeting(Config().getString("worlds." + w + ".greeting"));
+					hcw.setBantime(Config().getInt("worlds." + w + ".ban-time", 43200));				// Default = 12h
+					hcw.setSpawnDistance(Config().getInt("worlds." + w + ".spawndistance", 5000));		// Default = 5000
+					hcw.setSpawnProtection(Config().getInt("worlds." + w + ".spawnprotection", 60));	// Default = 5000
+					plugin.HardcoreWorlds.put(world.getName(), hcw);
+				}
+			}
+		} else {
+			plugin.Warn("No worlds configured! Things will not work!");
+		}
+
+		// Database settings
 		plugin.DBHost = Config().getString("mysql.host", "localhost");
 		plugin.DBPort = Config().getString("mysql.port", "3306");
 		plugin.DBName = Config().getString("mysql.database", "truehardcore");
