@@ -197,7 +197,7 @@ public class CommandTH implements CommandExecutor {
 				for (String key : plugin.HardcoreWorlds.keySet()) {
 					HardcoreWorld hcw = plugin.HardcoreWorlds.get(key);
 					sender.sendMessage(ChatColor.YELLOW + "World Name : " + ChatColor.AQUA + hcw.getWorld().getName());
-					sender.sendMessage(ChatColor.YELLOW + "Greeting   : " + ChatColor.AQUA + hcw.getGreeting());
+					sender.sendMessage(ChatColor.YELLOW + "Greeting   : " + ChatColor.AQUA + ChatColor.translateAlternateColorCodes('&', hcw.getGreeting()));
 					sender.sendMessage(ChatColor.YELLOW + "Ban Time   : " + ChatColor.AQUA + hcw.getBantime());
 					sender.sendMessage(ChatColor.YELLOW + "Distance   : " + ChatColor.AQUA + hcw.getSpawnDistance());
 					sender.sendMessage(ChatColor.YELLOW + "Protection : " + ChatColor.AQUA + hcw.getSpawnProtection());
