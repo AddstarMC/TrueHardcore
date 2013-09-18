@@ -57,8 +57,8 @@ public class Util {
 		String result = loc.getX() + "," + 
 						loc.getY() + "," +
 						loc.getZ() + "," +
-						loc.getPitch() + "," +
-						loc.getYaw();
+						loc.getYaw() + "," +
+						loc.getPitch();
 		
 		if (IncludeWorld) {
 			result = loc.getWorld().getName() + "," + result;
