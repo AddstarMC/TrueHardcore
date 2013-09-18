@@ -211,7 +211,7 @@ public class CommandTH implements CommandExecutor {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			if (args.length == 3) {
-				if (args[1].toUpperCase() == "EXIT") {
+				if (args[1].toUpperCase().equals("EXIT")) {
 					World world = plugin.getServer().getWorld(args[2]);
 					if ((world != null) && (plugin.IsHardcoreWorld(world))) {
 						HardcoreWorld hcw = plugin.HardcoreWorlds.get(world.getName());
@@ -224,7 +224,7 @@ public class CommandTH implements CommandExecutor {
 						sender.sendMessage(ChatColor.RED + "Not a valid hardcore world");
 					}
 				} else {
-					sender.sendMessage(ChatColor.RED + "Invalid option");
+					sender.sendMessage(ChatColor.RED + "Invalid option \"" + args[1] + "\"");
 				}
 			}
 		}
