@@ -80,6 +80,7 @@ public class Util {
 					Double.parseDouble(parts[3]),
 					Float.parseFloat(parts[4]),
 					Float.parseFloat(parts[5]));
+			return loc;
 		}
 		else if (parts.length == 5) {
 			loc = new Location(world,
