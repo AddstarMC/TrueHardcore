@@ -139,7 +139,7 @@ public class Util {
 	
 	public static boolean GiveItemStack(Player player, ItemStack itemstack) {
 		PlayerInventory inventory = player.getInventory();
-		HashMap result = inventory.addItem(itemstack);
+		inventory.addItem(itemstack);
 		//TODO: Check "result" to ensure all items were given
 		return true;
 	}

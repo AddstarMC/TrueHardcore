@@ -473,6 +473,7 @@ public final class TrueHardcore extends JavaPlugin {
 						hcp.updatePlayer(player);
 						SavePlayer(hcp);
 						UnvanishPlayer(player);
+
 						String greeting = HardcoreWorlds.get(world).getGreeting();
 						if ((greeting != null) && (!greeting.isEmpty())) {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
@@ -496,15 +497,17 @@ public final class TrueHardcore extends JavaPlugin {
 			JoinGame(world, player);
 			SavePlayer(hcp);
 			UnvanishPlayer(player);
+			String greeting = HardcoreWorlds.get(world).getGreeting();
+			if ((greeting != null) && (!greeting.isEmpty())) {
+				player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
+			}
 			player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
-			SetProtected(hcp, hcw.getSpawnProtection());
 			return true;
 		}
 	}
 	
 	public boolean NewSpawn(Player player, Location spawn) {
 		HardcorePlayer hcp = HCPlayers.Get(spawn.getWorld(), player);
-		HardcoreWorld hcw = HardcoreWorlds.get(spawn.getWorld());
 		
 		if (player.teleport(spawn)) {
 			hcp.setState(PlayerState.IN_GAME);
@@ -524,11 +527,11 @@ public final class TrueHardcore extends JavaPlugin {
 			player.getEquipment().clear();
 			player.getInventory().clear();
 			player.setPassenger(null);
+			player.sendMessage(ChatColor.RED + "!!!! WARNING !!!! WARNING !!!!");
+			player.sendMessage(ChatColor.RED + "This plugin is highly experimental! Use at own risk!");
+			player.sendMessage(ChatColor.RED + "Please report ALL problems in detail.");
 			player.sendMessage(ChatColor.GREEN + "Welcome to TrueHardcore. Good luck on your adventure!");
 			player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
-			player.sendMessage(ChatColor.RED + "WARNING!!");
-			player.sendMessage(ChatColor.RED + "This plugin is highly experimental. You might die for no reason, have your hardcore world reset, get kicked off the server or even lose your entire survival inventory!");
-			player.sendMessage(ChatColor.RED + "Use of this plugin is at your own risk!");
 			return true;
 		} else {
 			Warn("Teleport failed!");

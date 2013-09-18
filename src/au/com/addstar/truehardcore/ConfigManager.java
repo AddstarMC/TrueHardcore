@@ -17,8 +17,6 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.World;
