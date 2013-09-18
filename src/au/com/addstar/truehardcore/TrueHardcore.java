@@ -454,6 +454,7 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setState(PlayerState.IN_GAME);
 					//Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 					if (NewSpawn(player, spawn)) {
+						SetProtected(hcp, hcw.getSpawnProtection());
 						hcp.setGameTime(0);
 						hcp.setChickenKills(0);
 						hcp.setCowKills(0);
@@ -496,6 +497,7 @@ public final class TrueHardcore extends JavaPlugin {
 			SavePlayer(hcp);
 			UnvanishPlayer(player);
 			player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
+			SetProtected(hcp, hcw.getSpawnProtection());
 			return true;
 		}
 	}
@@ -504,7 +506,6 @@ public final class TrueHardcore extends JavaPlugin {
 		HardcorePlayer hcp = HCPlayers.Get(spawn.getWorld(), player);
 		HardcoreWorld hcw = HardcoreWorlds.get(spawn.getWorld());
 		
-		player.setNoDamageTicks(hcw.getSpawnProtection() * 20);
 		if (player.teleport(spawn)) {
 			hcp.setState(PlayerState.IN_GAME);
 			player.setFallDistance(0);
@@ -528,7 +529,6 @@ public final class TrueHardcore extends JavaPlugin {
 			player.sendMessage(ChatColor.RED + "WARNING!!");
 			player.sendMessage(ChatColor.RED + "This plugin is highly experimental. You might die for no reason, have your hardcore world reset, get kicked off the server or even lose your entire survival inventory!");
 			player.sendMessage(ChatColor.RED + "Use of this plugin is at your own risk!");
-			player.sendMessage(ChatColor.YELLOW + "You are invincible for 60 seconds...");
 			return true;
 		} else {
 			Warn("Teleport failed!");
@@ -859,5 +859,41 @@ public final class TrueHardcore extends JavaPlugin {
 			Debug("Unvanishing " + player.getName());
 			vnp.toggleVanish(player);
 		}
+	}
+	
+	public boolean SetProtected(HardcorePlayer hcp, long seconds) {
+		if (hcp != null) {
+			if (hcp.isGodMode()) {
+				Debug(hcp.getPlayerName() + " already in god mode!");
+				return false;
+			}
+
+			final String world = hcp.getWorld();
+			final String pname = hcp.getPlayerName();
+			final Player player = getServer().getPlayer(pname);
+
+			hcp.setGodMode(true);
+			player.sendMessage(ChatColor.YELLOW + "You are now invincible for " + seconds + " seconds...");
+			
+            // Delay the broadcast so the player sees it as the last message on their screen
+            getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+                    @Override
+                    public void run() {
+                    	HardcorePlayer hcp = HCPlayers.Get(world, pname);
+                    	if (hcp != null) {
+                			hcp.setGodMode(false);
+                    		if (hcp.getState() == PlayerState.IN_GAME) {
+                    			player.sendMessage(ChatColor.RED + "Your invincibility has now worn off... Good luck!");
+                    		} else {
+                        		//Debug("Disable protection: Player " + pname + " is no longer in game");
+                    		}
+                    	} else {
+                    		//Debug("Disable protection: Player " + pname + " does not exist!");
+                    	}
+                    }
+            }, (seconds * 20)); 
+
+		}
+		return false;
 	}
 }

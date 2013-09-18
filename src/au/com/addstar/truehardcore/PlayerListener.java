@@ -168,14 +168,19 @@ public class PlayerListener implements Listener {
 		final Player player = event.getPlayer();
 		if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
 
+		// We only care about players who have played and are dead 
+		HardcorePlayer hcp = HCPlayers.Get(player.getWorld(), event.getPlayer());
+		if ((hcp == null) || (hcp.getState() != PlayerState.DEAD)) { return; }
+		
+		HardcoreWorld hcw = plugin.HardcoreWorlds.get(player.getWorld());
+
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
-		plugin.DebugLog("BED RESPAWN: " + event.isBedSpawn());
 		
 		plugin.Debug("Sending " + player.getName() + " to lobby");
 		Location loc = plugin.getServer().getWorld("games").getSpawnLocation();
 		event.setRespawnLocation(loc);
-		player.sendMessage(ChatColor.RED + "You are now banned from hardcore for " + (plugin.DeathBan / 60) + " minutes!");
+		player.sendMessage(ChatColor.RED + "You are now banned from " + player.getWorld().getName() + " for " + Util.Long2Time(hcw.getBantime()) + "!");
 	}
 
 	/*
@@ -226,6 +231,24 @@ public class PlayerListener implements Listener {
 				}
 			}
 		}
+	}
+	
+	/*
+	 * Handle any damage to players
+	 * Prevent player taking damage while in the "spawn protection" period
+	 */
+	@EventHandler(ignoreCancelled=true)
+	public void onPlayerDamage(EntityDamageEvent event) {
+		if (!(event.getEntity() instanceof Player)) { return; }
+		if (!plugin.IsHardcoreWorld(event.getEntity().getWorld())) { return; }
+
+		Player player = (Player) event.getEntity();
+		HardcorePlayer hcp = HCPlayers.Get(player.getWorld().getName(), player.getName());
+		
+		if ((hcp != null) && (hcp.isGodMode())) {
+			plugin.Debug(player.getName() + " protected from damage!");
+			event.setCancelled(true);
+	    }
 	}
 
 	@EventHandler(ignoreCancelled=true)

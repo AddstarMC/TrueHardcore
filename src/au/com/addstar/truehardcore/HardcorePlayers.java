@@ -43,6 +43,7 @@ public class HardcorePlayers {
 		private Integer OtherKills=0, PlayerKills=0;
 		private boolean Modified = false;
 		private boolean LoadDataOnly = false;
+		private boolean GodMode = false;
 		
 		public boolean isLoadDataOnly() {
 			return LoadDataOnly;
@@ -339,6 +340,12 @@ public class HardcorePlayers {
 		}
 		public void setModified(boolean modified) {
 			Modified = modified;
+		}
+		public boolean isGodMode() {
+			return GodMode;
+		}
+		public void setGodMode(boolean godMode) {
+			GodMode = godMode;
 		}
 	}
 	
