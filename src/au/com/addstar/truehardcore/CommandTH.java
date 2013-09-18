@@ -205,6 +205,20 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 		}
+		else if (action.equals("SET")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+			}
+			if (args.length == 3) {
+				if (args[1].toUpperCase() == "EXIT") {
+					World world = plugin.getServer().getWorld(args[2]);
+					if ((world != null) && (plugin.IsHardcoreWorld(world))) {
+						Player player = (Player) sender;
+						plugin.Config().set("worlds." + world.getName() + ".exit", player.getLocation().toVector());
+					}
+				}
+			}
+		}
 		else if (action.equals("LIST") || action.equals("WHO")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.list")) { return true; }
