@@ -295,9 +295,11 @@ public final class TrueHardcore extends JavaPlugin {
 	
 	public void DoPlayerDeath(final Player player, PlayerDeathEvent event) {
 		final TrueHardcore plugin = this;
-		final World world = player.getWorld();
+		final World realworld = player.getWorld();
+		
+		HardcorePlayer hcp = HCPlayers.Get(realworld, player);
+		final World world = getServer().getWorld(hcp.getWorld());
 
-		HardcorePlayer hcp = HCPlayers.Get(world, player);
 		hcp.setState(PlayerState.DEAD);
 		hcp.setDeathMsg(event.getDeathMessage());
 		hcp.setDeathPos(player.getLocation());
