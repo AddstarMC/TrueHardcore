@@ -511,6 +511,7 @@ public final class TrueHardcore extends JavaPlugin {
 		
 		if (player.teleport(spawn)) {
 			hcp.setState(PlayerState.IN_GAME);
+			hcp.setSpawnPos(spawn);
 			player.setFallDistance(0);
 			player.setHealth(20);
 			player.setFoodLevel(20);
