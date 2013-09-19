@@ -30,6 +30,7 @@ import org.bukkit.entity.Player;
 
 import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
+import au.com.addstar.truehardcore.HardcoreWorlds.HardcoreWorld;
 
 public class CommandTH implements CommandExecutor {
 	private TrueHardcore plugin;
@@ -196,8 +197,8 @@ public class CommandTH implements CommandExecutor {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			if (args.length == 1) {
-				for (String key : plugin.HardcoreWorlds.keySet()) {
-					HardcoreWorld hcw = plugin.HardcoreWorlds.get(key);
+				for (String key : plugin.HardcoreWorlds.AllRecords().keySet()) {
+					HardcoreWorld hcw = plugin.HardcoreWorlds.Get(key);
 					sender.sendMessage(ChatColor.YELLOW + "World Name : " + ChatColor.AQUA + hcw.getWorld().getName());
 					sender.sendMessage(ChatColor.YELLOW + "Greeting   : " + ChatColor.AQUA + ChatColor.translateAlternateColorCodes('&', hcw.getGreeting()));
 					sender.sendMessage(ChatColor.YELLOW + "Ban Time   : " + ChatColor.AQUA + hcw.getBantime());
@@ -215,7 +216,7 @@ public class CommandTH implements CommandExecutor {
 				if (args[1].toUpperCase().equals("EXIT")) {
 					World world = plugin.getServer().getWorld(args[2]);
 					if ((world != null) && (plugin.IsHardcoreWorld(world))) {
-						HardcoreWorld hcw = plugin.HardcoreWorlds.get(world.getName());
+						HardcoreWorld hcw = plugin.HardcoreWorlds.Get(world.getName());
 						plugin.Debug("Setting ExitPos for " + hcw.getWorld().getName());
 						Player player = (Player) sender;
 						hcw.setExitPos(player.getLocation());
@@ -237,7 +238,7 @@ public class CommandTH implements CommandExecutor {
 			sender.sendMessage(ChatColor.GREEN + "Players currently in hardcore worlds:");
 
 			boolean Playing = false;
-			for (String w : plugin.HardcoreWorlds.keySet()) {
+			for (String w : plugin.HardcoreWorlds.AllRecords().keySet()) {
 				World world = plugin.getServer().getWorld(w);
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();

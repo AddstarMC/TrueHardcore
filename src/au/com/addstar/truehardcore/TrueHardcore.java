@@ -67,6 +67,7 @@ import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.QueryParams;
 
 import au.com.addstar.truehardcore.HardcorePlayers.*;
+import au.com.addstar.truehardcore.HardcoreWorlds.*;
 
 public final class TrueHardcore extends JavaPlugin {
 	public static TrueHardcore instance;
@@ -104,7 +105,7 @@ public final class TrueHardcore extends JavaPlugin {
 	private VanishManager vnp;
 
 	// Hardcore worlds
-	public Map<String, HardcoreWorld> HardcoreWorlds = new HashMap<String, HardcoreWorld>();
+	public HardcoreWorlds HardcoreWorlds = new HardcoreWorlds();
 	
 	// Data for ALL hardcore players 
 	public HardcorePlayers HCPlayers = new HardcorePlayers();
@@ -413,7 +414,7 @@ public final class TrueHardcore extends JavaPlugin {
 			return false;
 		}
 		
-		HardcoreWorld hcw = HardcoreWorlds.get(world);
+		HardcoreWorld hcw = HardcoreWorlds.Get(world);
 		HardcorePlayer hcp = HCPlayers.Get(world, player.getName());
 		if (hcp != null) {
 			if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
@@ -476,7 +477,7 @@ public final class TrueHardcore extends JavaPlugin {
 						SavePlayer(hcp);
 						UnvanishPlayer(player);
 
-						String greeting = HardcoreWorlds.get(world).getGreeting();
+						String greeting = HardcoreWorlds.Get(world).getGreeting();
 						if ((greeting != null) && (!greeting.isEmpty())) {
 							player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
 						}
@@ -499,7 +500,7 @@ public final class TrueHardcore extends JavaPlugin {
 			JoinGame(world, player);
 			SavePlayer(hcp);
 			UnvanishPlayer(player);
-			String greeting = HardcoreWorlds.get(world).getGreeting();
+			String greeting = HardcoreWorlds.Get(world).getGreeting();
 			if ((greeting != null) && (!greeting.isEmpty())) {
 				player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
 			}
@@ -822,14 +823,13 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsHardcoreWorld(World world) {
-		String name = StringUtils.replace(world.getName(), "_nether", "");
-		return HardcoreWorlds.containsKey(name);
+		return HardcoreWorlds.Contains(world.getName());
 	}
 	
 	public Location GetLobbyLocation(Player player, String world) {
 		Location loc = null;
 		if (world != null) {
-			HardcoreWorld hcw = HardcoreWorlds.get(world);
+			HardcoreWorld hcw = HardcoreWorlds.Get(world);
 			loc = hcw.getExitPos();
 		}
 		

@@ -22,6 +22,8 @@ import java.util.Set;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import au.com.addstar.truehardcore.HardcoreWorlds.*;
+
 public class ConfigManager {
 
 	private TrueHardcore plugin;
@@ -48,14 +50,14 @@ public class ConfigManager {
 				plugin.Debug("Found World: " + w);
 				World world = plugin.getServer().getWorld(w);
 				if (world != null) {
-					HardcoreWorld hcw = new HardcoreWorld();
+					HardcoreWorld hcw = plugin.HardcoreWorlds.NewWorld(world.getName());
 					hcw.setWorld(world);
 					hcw.setGreeting(Config().getString("worlds." + w + ".greeting"));
 					hcw.setBantime(Config().getInt("worlds." + w + ".ban-time", 43200));				// Default = 12h
 					hcw.setSpawnDistance(Config().getInt("worlds." + w + ".spawn-distance", 5000));		// Default = 5000
 					hcw.setSpawnProtection(Config().getInt("worlds." + w + ".protection-time", 60));	// Default = 5000
 					hcw.setExitPos(Util.Str2Loc(Config().getString("worlds." + w + ".exitpos")));	// Default = null
-					plugin.HardcoreWorlds.put(world.getName(), hcw);
+					plugin.HardcoreWorlds.AddWorld(world.getName(), hcw);
 				}
 			}
 		} else {

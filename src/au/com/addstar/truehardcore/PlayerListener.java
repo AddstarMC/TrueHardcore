@@ -35,6 +35,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
+import au.com.addstar.truehardcore.HardcoreWorlds.*;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
 
 public class PlayerListener implements Listener {
@@ -177,7 +178,7 @@ public class PlayerListener implements Listener {
 		HardcorePlayer hcp = HCPlayers.Get(player.getWorld(), event.getPlayer());
 		if ((hcp == null) || (hcp.getState() != PlayerState.DEAD)) { return; }
 		
-		HardcoreWorld hcw = plugin.HardcoreWorlds.get(player.getWorld().getName());
+		HardcoreWorld hcw = plugin.HardcoreWorlds.Get(player.getWorld().getName());
 
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
