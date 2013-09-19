@@ -3,6 +3,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -371,7 +372,7 @@ public class HardcorePlayers {
 	}
 
 	public HardcorePlayer Get(String world, String name) {
-		String key = world + "/" + name.toLowerCase();
+		String key = StringUtils.replace(world, "_nether", "") + "/" + name.toLowerCase();
 		if (Players.containsKey(key)) {
 			HardcorePlayer hcp = Players.get(key);
 			return hcp;
@@ -391,7 +392,7 @@ public class HardcorePlayers {
 	
 	public HardcorePlayer Get(String key) {
 		if (Players.containsKey(key)) { return null; }
-		return Players.get(key);
+		return Players.get(StringUtils.replace(key, "_nether", ""));
 	}
 	
 	public boolean AddPlayer(String world, String name, HardcorePlayer hcp) {

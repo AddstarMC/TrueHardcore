@@ -767,7 +767,7 @@ public final class TrueHardcore extends JavaPlugin {
 				while (res.next()) {
 					String player = res.getString("player").toLowerCase();
 					String world = res.getString("world");
-					World w = getServer().getWorld(world);
+					//World w = getServer().getWorld(world);
 					DebugLog("Loading: " + world + "/" + player);
 					
 					HardcorePlayer hcp = HCPlayers.NewPlayer(world, player);
@@ -820,7 +820,8 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsHardcoreWorld(World world) {
-		return HardcoreWorlds.containsKey(world.getName());
+		String name = StringUtils.replace(world.getName(), "_nether", "");
+		return HardcoreWorlds.containsKey(name);
 	}
 	
 	public Location GetLobbyLocation(Player player, String world) {
