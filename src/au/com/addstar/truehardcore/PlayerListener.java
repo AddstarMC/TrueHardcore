@@ -182,8 +182,7 @@ public class PlayerListener implements Listener {
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
 		
-		plugin.Debug("Sending " + player.getName() + " to lobby");
-		Location loc = plugin.getServer().getWorld("games").getSpawnLocation();
+		Location loc = plugin.GetLobbyLocation(player, player.getWorld().getName());
 		event.setRespawnLocation(loc);
 
 		player.sendMessage(ChatColor.RED + "You are now banned from " + player.getWorld().getName() + " for " + Util.Long2Time(hcw.getBantime()) + "!");

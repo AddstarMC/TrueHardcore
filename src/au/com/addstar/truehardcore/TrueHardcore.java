@@ -823,7 +823,7 @@ public final class TrueHardcore extends JavaPlugin {
 		return HardcoreWorlds.containsKey(world.getName());
 	}
 	
-	public void SendToLobby(Player player, String world) {
+	public Location GetLobbyLocation(Player player, String world) {
 		Location loc = null;
 		if (world != null) {
 			HardcoreWorld hcw = HardcoreWorlds.get(world);
@@ -831,10 +831,11 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 		
 		if (loc == null) {
+			Warn("Sending " + player.getName() + " to world spawn!");
 			loc = getServer().getWorld("games").getSpawnLocation();
 		}
 		
-		player.teleport(loc);
+		return loc;
 	}
 	
 	public boolean IsOnWhiteList(String world, String player) {
