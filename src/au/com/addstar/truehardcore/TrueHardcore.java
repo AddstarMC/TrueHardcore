@@ -625,7 +625,7 @@ public final class TrueHardcore extends JavaPlugin {
 			hcp.updatePlayer(player);
 			hcp.calcGameTime();
 			SavePlayer(hcp);
-			SendToLobby(player, hcp.getWorld());
+			player.teleport(GetLobbyLocation(player, hcp.getWorld()));
 		} else {
 			player.sendMessage(ChatColor.RED + "You are not currently in a hardcore game.");
 		}

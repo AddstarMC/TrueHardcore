@@ -128,7 +128,7 @@ public class PlayerListener implements Listener {
 		HardcorePlayer hcp = HCPlayers.Get(player);
 		if (hcp == null) {
 			plugin.Warn(player.getName() + " joined in hardcore world with no player record!");
-			plugin.SendToLobby(player, null);
+			player.teleport(plugin.GetLobbyLocation(player, player.getWorld().getName()));
 			return;
 		}
 		
@@ -138,7 +138,7 @@ public class PlayerListener implements Listener {
 			plugin.SavePlayer(hcp);
 		} else {
 			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
-			plugin.SendToLobby(player, hcp.getWorld());
+			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
 		}
 	}
 
