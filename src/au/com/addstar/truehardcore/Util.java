@@ -52,47 +52,32 @@ public class Util {
 	    return String.format("%1$" + n + "s", s);  
 	}
 
-	public static String Loc2Str(Location loc, boolean IncludeWorld) {
+	public static String Loc2Str(Location loc) {
 		if (loc == null) { return null; }
-		String result = loc.getX() + "," + 
+		String result = loc.getWorld().getName() + "," +
+						loc.getX() + "," + 
 						loc.getY() + "," +
 						loc.getZ() + "," +
 						loc.getYaw() + "," +
 						loc.getPitch();
 		
-		if (IncludeWorld) {
-			result = loc.getWorld().getName() + "," + result;
-		}
 		return result; 
 	}
 	
-	public static Location Str2Loc(World world, String input) {
+	public static Location Str2Loc(String input) {
 		if (input == null) { return null; }
 
 		Location loc;
 		String[] parts = input.split(",");
 
-		if (world == null) {
-			world = TrueHardcore.instance.getServer().getWorld(parts[0]);
-			loc = new Location(world,
-					Double.parseDouble(parts[1]),
-					Double.parseDouble(parts[2]),
-					Double.parseDouble(parts[3]),
-					Float.parseFloat(parts[4]),
-					Float.parseFloat(parts[5]));
-			return loc;
-		}
-		else if (parts.length == 5) {
-			loc = new Location(world,
-					Double.parseDouble(parts[0]),
-					Double.parseDouble(parts[1]),
-					Double.parseDouble(parts[2]),
-					Float.parseFloat(parts[3]),
-					Float.parseFloat(parts[4]));
-			return loc;
-		}
-		
-		return null;
+		World world = TrueHardcore.instance.getServer().getWorld(parts[0]);
+		loc = new Location(world,
+				Double.parseDouble(parts[1]),
+				Double.parseDouble(parts[2]),
+				Double.parseDouble(parts[3]),
+				Float.parseFloat(parts[4]),
+				Float.parseFloat(parts[5]));
+		return loc;
 	}
 	
 	public static String Long2Time(long time) {

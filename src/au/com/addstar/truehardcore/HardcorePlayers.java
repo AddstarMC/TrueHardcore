@@ -24,6 +24,7 @@ public class HardcorePlayers {
 	static class HardcorePlayer {
 		private String PlayerName;
 		private String World;
+		private Location SpawnPos;
 		private Location LastPos;
 		private Date LastJoin;
 		private Date LastQuit;
@@ -65,6 +66,14 @@ public class HardcorePlayers {
 		}
 		public void setWorld(String world) {
 			World = world;
+			if (LoadDataOnly) { return; }
+			setModified(true);
+		}
+		public Location getSpawnPos() {
+			return SpawnPos;
+		}
+		public void setSpawnPos(Location spawnPos) {
+			SpawnPos = spawnPos;
 			if (LoadDataOnly) { return; }
 			setModified(true);
 		}

@@ -54,7 +54,7 @@ public class ConfigManager {
 					hcw.setBantime(Config().getInt("worlds." + w + ".ban-time", 43200));				// Default = 12h
 					hcw.setSpawnDistance(Config().getInt("worlds." + w + ".spawn-distance", 5000));		// Default = 5000
 					hcw.setSpawnProtection(Config().getInt("worlds." + w + ".protection-time", 60));	// Default = 5000
-					hcw.setExitPos(Util.Str2Loc(null, Config().getString("worlds." + w + ".exitpos")));	// Default = null
+					hcw.setExitPos(Util.Str2Loc(Config().getString("worlds." + w + ".exitpos")));	// Default = null
 					plugin.HardcoreWorlds.put(world.getName(), hcw);
 				}
 			}

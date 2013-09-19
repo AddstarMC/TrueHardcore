@@ -638,14 +638,14 @@ public final class TrueHardcore extends JavaPlugin {
 		// OtherKills, PlayerKills;
 
 		String query = "INSERT INTO `truehardcore`.`players` \n" +
-				"(`player`, `world`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
+				"(`player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
 				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
 				"`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
 				"`spiderkills`, `enderkills`, `slimekills`, `mooshkills`, `otherkills`, `playerkills`)\n\n" +
 				
-				"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
+				"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
 				
-				"`lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
+				"`spawnpos`=?, `lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
 				"`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?,\n" +
 				"`cowkills`=?, `pigkills`=?, `sheepkills`=?, `chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?,\n" +
 				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
@@ -653,7 +653,8 @@ public final class TrueHardcore extends JavaPlugin {
 		String[] values = { 
 				hcp.getPlayerName().toLowerCase(), 
 				hcp.getLastPos().getWorld().getName(),
-				Util.Loc2Str(hcp.getLastPos(), false),
+				Util.Loc2Str(hcp.getSpawnPos()),
+				Util.Loc2Str(hcp.getLastPos()),
 				Util.Date2Mysql(hcp.getLastJoin()),
 				Util.Date2Mysql(hcp.getLastQuit()),
 				Util.Date2Mysql(hcp.getGameStart()),
@@ -665,7 +666,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getTopScore()),
 				hcp.getState().toString(),
 				hcp.getDeathMsg(),
-				Util.Loc2Str(hcp.getDeathPos(), false),
+				Util.Loc2Str(hcp.getDeathPos()),
 				String.valueOf(hcp.getDeaths()),
 
 				String.valueOf(hcp.getCowKills()),
@@ -682,9 +683,11 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getOtherKills()),
 				String.valueOf(hcp.getPlayerKills()),
 
-				Util.Loc2Str(hcp.getLastPos(), false),			// REPEATED FOR UPDATE!
-				Util.Date2Mysql(hcp.getLastJoin()),		//   |
-				Util.Date2Mysql(hcp.getLastQuit()),		//   v
+				// REPEATED FOR UPDATE!
+				Util.Loc2Str(hcp.getSpawnPos()),
+				Util.Loc2Str(hcp.getLastPos()),
+				Util.Date2Mysql(hcp.getLastJoin()),
+				Util.Date2Mysql(hcp.getLastQuit()),
 				Util.Date2Mysql(hcp.getGameStart()),
 				Util.Date2Mysql(hcp.getGameEnd()),
 				String.valueOf(hcp.getGameTime()),
@@ -694,7 +697,7 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getTopScore()),
 				hcp.getState().toString(),
 				hcp.getDeathMsg(),
-				Util.Loc2Str(hcp.getDeathPos(), false),
+				Util.Loc2Str(hcp.getDeathPos()),
 				String.valueOf(hcp.getDeaths()),
 				
 				String.valueOf(hcp.getCowKills()),
@@ -768,7 +771,7 @@ public final class TrueHardcore extends JavaPlugin {
 					
 					HardcorePlayer hcp = HCPlayers.NewPlayer(world, player);
 					hcp.setLoadDataOnly(true);
-					hcp.setLastPos(Util.Str2Loc(w, res.getString("lastpos")));
+					hcp.setLastPos(Util.Str2Loc(res.getString("lastpos")));
 					hcp.setLastJoin(Util.Mysql2Date(res.getString("lastjoin")));
 					hcp.setLastQuit(Util.Mysql2Date(res.getString("lastquit")));
 					hcp.setGameStart(Util.Mysql2Date(res.getString("gamestart")));
@@ -780,7 +783,7 @@ public final class TrueHardcore extends JavaPlugin {
 					hcp.setTopScore(res.getInt("topscore"));
 					hcp.setState(PlayerState.valueOf(res.getString("state")));
 					hcp.setDeathMsg(res.getString("deathmsg"));
-					hcp.setDeathPos(Util.Str2Loc(w, res.getString("deathpos")));
+					hcp.setDeathPos(Util.Str2Loc(res.getString("deathpos")));
 					hcp.setDeaths(res.getInt("deaths"));
 					hcp.setCowKills(res.getInt("cowkills"));
 					hcp.setPigKills(res.getInt("pigkills"));

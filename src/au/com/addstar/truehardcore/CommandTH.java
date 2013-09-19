@@ -158,6 +158,7 @@ public class CommandTH implements CommandExecutor {
 				if (hcp != null) {
 					sender.sendMessage(ChatColor.YELLOW + "Player Name    : " + ChatColor.AQUA + hcp.getPlayerName());
 					sender.sendMessage(ChatColor.YELLOW + "World          : " + ChatColor.AQUA + hcp.getWorld());
+					sender.sendMessage(ChatColor.YELLOW + "SpawnPos       : " + ChatColor.AQUA + hcp.getSpawnPos());
 					sender.sendMessage(ChatColor.YELLOW + "LastPos        : " + ChatColor.AQUA + hcp.getLastPos());
 					sender.sendMessage(ChatColor.YELLOW + "LastJoin       : " + ChatColor.AQUA + hcp.getLastJoin());
 					sender.sendMessage(ChatColor.YELLOW + "LastQuit       : " + ChatColor.AQUA + hcp.getLastQuit());
@@ -218,7 +219,7 @@ public class CommandTH implements CommandExecutor {
 						plugin.Debug("Setting ExitPos for " + hcw.getWorld().getName());
 						Player player = (Player) sender;
 						hcw.setExitPos(player.getLocation());
-						plugin.Config().set("worlds." + world.getName() + ".exitpos", Util.Loc2Str(player.getLocation(), true));
+						plugin.Config().set("worlds." + world.getName() + ".exitpos", Util.Loc2Str(player.getLocation()));
 						plugin.saveConfig();
 					} else {
 						sender.sendMessage(ChatColor.RED + "Not a valid hardcore world");
