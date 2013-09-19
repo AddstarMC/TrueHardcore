@@ -14,7 +14,7 @@ public class HardcoreWorlds {
 		Worlds = new HashMap<String, HardcoreWorld>();
 	}
 	
-	public class HardcoreWorld {
+	static class HardcoreWorld {
 		public HardcoreWorld() {
 			// Nothing needed here yet
 		}
