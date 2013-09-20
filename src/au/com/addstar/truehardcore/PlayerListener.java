@@ -132,11 +132,10 @@ public class PlayerListener implements Listener {
 			player.teleport(plugin.GetLobbyLocation(player, player.getWorld().getName()));
 			return;
 		}
-		
+
+		// Always send players back to the exit pos
 		if (hcp.getState() == PlayerState.ALIVE) {
-			// Mark the player as in game
-			hcp.setState(PlayerState.IN_GAME);
-			plugin.SavePlayer(hcp);
+			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
 		} else {
 			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
 			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
@@ -252,7 +251,6 @@ public class PlayerListener implements Listener {
 		HardcorePlayer hcp = HCPlayers.Get(player.getWorld().getName(), player.getName());
 		
 		if ((hcp != null) && (hcp.isGodMode())) {
-			plugin.Debug(player.getName() + " protected from damage!");
 			event.setCancelled(true);
 	    }
 	}

@@ -61,7 +61,12 @@ public class CommandTH implements CommandExecutor {
 				}
 				
 				if (plugin.IsHardcoreWorld(world)) {
-					plugin.PlayGame(world.getName(), (Player) sender);
+					Player player = (Player) sender;
+					if (!plugin.IsHardcoreWorld(player.getWorld())) {
+						plugin.PlayGame(world.getName(), player);
+					} else {
+						sender.sendMessage(ChatColor.RED + "Error: You are already in a hardcore world!");
+					}
 				} else {
 					sender.sendMessage(ChatColor.RED + "Error: That is not a hardcore world!");
 				}
