@@ -43,6 +43,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.Plugin;
@@ -922,5 +924,28 @@ public final class TrueHardcore extends JavaPlugin {
 
 		}
 		return false;
+	}
+	
+	public boolean IsPlayerSafe(Player player, double x, double y, double z) {
+		List<EntityType> mobs = Arrays.asList(
+			EntityType.ZOMBIE,
+			EntityType.CREEPER,
+			EntityType.SPIDER,
+			EntityType.CAVE_SPIDER,
+			EntityType.BLAZE,
+			EntityType.GHAST,
+			EntityType.MAGMA_CUBE,
+			EntityType.SKELETON,
+			EntityType.WITCH,
+			EntityType.WITHER,
+			EntityType.ENDERMAN
+		);
+		List<Entity> ents = player.getNearbyEntities(x, y, z);
+		if (ents != null) {
+			for (Entity e : ents) {
+				if (mobs.contains(e.getType())) return false;
+			}
+		}
+		return true;
 	}
 }

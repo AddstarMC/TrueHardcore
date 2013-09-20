@@ -79,6 +79,11 @@ public class CommandTH implements CommandExecutor {
 			final Player player = (Player) sender;
 			final Location oldloc = player.getLocation();
 
+			if (!plugin.IsPlayerSafe(player, 5, 5, 5)) {
+				player.sendMessage(ChatColor.RED + "It's not safe to leave.. there are monsters around..");
+				return true;
+			}
+			
 			player.sendMessage(ChatColor.GOLD + "Teleportation will commence in " + ChatColor.RED + "5 seconds" + ChatColor.GOLD + ". Don't move.");
 			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
 				@Override
