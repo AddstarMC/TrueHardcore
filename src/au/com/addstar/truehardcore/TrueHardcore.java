@@ -875,10 +875,17 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public void UnvanishPlayer(Player player) {
-		if ((VNPHooked) && (vnp.isVanished(player))) {
+		if (IsPlayerVanished(player)) {
 			Debug("Unvanishing " + player.getName());
 			vnp.toggleVanish(player);
 		}
+	}
+	
+	public boolean IsPlayerVanished(Player player) {
+		if ((VNPHooked) && (vnp.isVanished(player))) {
+			return true;
+		}
+		return false;
 	}
 	
 	public boolean SetProtected(HardcorePlayer hcp, long seconds) {

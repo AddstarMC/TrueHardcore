@@ -263,6 +263,7 @@ public class CommandTH implements CommandExecutor {
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();
 					for (Player p : world.getPlayers()) {
+						if (plugin.IsPlayerVanished(p)) continue;
 						Playing = true;
 						players.add(p.getName());
 					}

@@ -138,6 +138,9 @@ public class PlayerListener implements Listener {
 			// Mark the player as in game
 			hcp.setState(PlayerState.IN_GAME);
 			plugin.SavePlayer(hcp);
+			if (plugin.IsPlayerVanished(player)) {
+				plugin.UnvanishPlayer(player);
+			}
 		} else {
 			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
 			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
