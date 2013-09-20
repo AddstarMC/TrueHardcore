@@ -22,6 +22,7 @@ import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -75,7 +76,21 @@ public class CommandTH implements CommandExecutor {
 			}
 		}
 		else if (action.equals("LEAVE")) {
-			plugin.LeaveGame((Player) sender);
+			final Player player = (Player) sender;
+			final Location oldloc = player.getLocation();
+
+			player.sendMessage(ChatColor.GOLD + "Teleportation will commence in " + ChatColor.RED + "5 seconds" + ChatColor.GOLD + ". Don't move.");
+			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+				@Override
+				public void run() {
+					Location newloc = player.getLocation();
+					if (newloc.distance(oldloc) <= 1) {
+						player.sendMessage(ChatColor.DARK_RED + "Pending teleportation request cancelled.");
+					} else {
+						plugin.LeaveGame(player);
+					}
+				}
+			}, 5 * 20L);
 		}
 		else if (action.equals("INFO")) {
 			HardcorePlayer hcp = null;
