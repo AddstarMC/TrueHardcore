@@ -327,13 +327,13 @@ public class HardcorePlayers {
 			//Date d1 = getLastJoin();
 			//Date d2 = getLastQuit();
 
-			TrueHardcore.instance.DebugLog("DATES: " + d1 + " / " + d2);
+			//TrueHardcore.instance.DebugLog("DATES: " + d1 + " / " + d2);
 			
 			// Only calculate game time if quit is after join
 			if (d2.after(d1)) {
 				int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
-				TrueHardcore.instance.DebugLog("DIFF: " + diff);
-				TrueHardcore.instance.DebugLog("NEW : " + (getGameTime() + diff));
+				//TrueHardcore.instance.DebugLog("DIFF: " + diff);
+				//TrueHardcore.instance.DebugLog("NEW : " + (getGameTime() + diff));
 				return diff;
 			}
 			return null;

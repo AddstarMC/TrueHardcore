@@ -321,7 +321,6 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 		
 		SavePlayer(hcp);
-		Debug("NEW STATE: " + HCPlayers.Get(player).getState());
 
 		// Dont drop XP or items
 		event.setDroppedExp(0);
@@ -497,8 +496,8 @@ public final class TrueHardcore extends JavaPlugin {
 			return false;
 		} else {
 			// Resume existing game
+			Debug(player.getName() + " is returning to " + hcw.getWorld().getName());
 			hcp.setState(PlayerState.IN_GAME);
-			Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 			JoinGame(world, player);
 			SavePlayer(hcp);
 			UnvanishPlayer(player);
