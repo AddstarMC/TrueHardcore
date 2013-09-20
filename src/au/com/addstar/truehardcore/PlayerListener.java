@@ -135,7 +135,9 @@ public class PlayerListener implements Listener {
 
 		// Always send players back to the exit pos
 		if (hcp.getState() == PlayerState.ALIVE) {
-			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
+			// Mark the player as in game
+			hcp.setState(PlayerState.IN_GAME);
+			plugin.SavePlayer(hcp);
 		} else {
 			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
 			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
