@@ -90,9 +90,9 @@ public class CommandTH implements CommandExecutor {
 				public void run() {
 					Location newloc = player.getLocation();
 					if (newloc.distance(oldloc) <= 1) {
-						player.sendMessage(ChatColor.DARK_RED + "Pending teleportation request cancelled.");
-					} else {
 						plugin.LeaveGame(player);
+					} else {
+						player.sendMessage(ChatColor.DARK_RED + "Pending teleportation request cancelled.");
 					}
 				}
 			}, 5 * 20L);
