@@ -315,9 +315,33 @@ public final class TrueHardcore extends JavaPlugin {
 		plugin.getServer().broadcastMessage(Header + DeathMsg + "!");
 		plugin.getServer().broadcastMessage(Header + "Final Score: " + ChatColor.GREEN + player.getTotalExperience());
 		event.setDeathMessage(null);
-		if ((hcp.getTopScore() > 0) && (hcp.getScore() > hcp.getTopScore())) {
-			hcp.setTopScore(hcp.getScore());
-			player.sendMessage(ChatColor.GREEN + "Congratulations! You just beat your personal high score!");
+		if (hcp.getTopScore() > 0) {
+			// Check if this is the player's personal best
+			boolean personalbest = false;
+			if (hcp.getScore() > hcp.getTopScore()) {
+				hcp.setTopScore(hcp.getScore());
+				personalbest = true;
+			}
+
+			// Check if this is a high score
+			boolean highscore = true;
+			for (String key : HCPlayers.AllRecords().keySet()) {
+				HardcorePlayer h = HCPlayers.Get(key);
+				// Only compare other player's scores in the same world 
+				if ((h.getWorld().equals(hcp.getWorld())) && (h.getPlayerName() != hcp.getPlayerName())) {
+					if (h.getTopScore() >= hcp.getScore()) {
+						highscore = false;
+						break;
+					}
+				}
+			}
+			
+			if (highscore) {
+				plugin.getServer().broadcastMessage(Header + ChatColor.AQUA + player.getName() + ChatColor.GREEN + " has beaten the all time high score!");
+			}
+			else if (personalbest) {
+				player.sendMessage(ChatColor.GREEN + "Congratulations! You just beat your personal high score!");
+			}
 		}
 		
 		SavePlayer(hcp);
