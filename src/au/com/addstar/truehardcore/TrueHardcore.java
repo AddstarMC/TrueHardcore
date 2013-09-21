@@ -642,7 +642,7 @@ public final class TrueHardcore extends JavaPlugin {
 		// CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
 		// OtherKills, PlayerKills;
 
-		String query = "INSERT INTO `truehardcore`.`players` \n" +
+		final String query = "INSERT INTO `truehardcore`.`players` \n" +
 				"(`player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
 				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
 				"`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
@@ -655,7 +655,7 @@ public final class TrueHardcore extends JavaPlugin {
 				"`cowkills`=?, `pigkills`=?, `sheepkills`=?, `chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?,\n" +
 				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
 				
-		String[] values = { 
+		final String[] values = {
 				hcp.getPlayerName().toLowerCase(), 
 				hcp.getLastPos().getWorld().getName(),
 				Util.Loc2Str(hcp.getSpawnPos()),
@@ -719,19 +719,23 @@ public final class TrueHardcore extends JavaPlugin {
 				String.valueOf(hcp.getOtherKills()),
 				String.valueOf(hcp.getPlayerKills())
 		};
+		hcp.setModified(false);
 
-		try {
-			int result = dbcon.PreparedUpdate(query, values);
-			if (result < 0) {
-				Debug("Player record save failed!");
-			} else {
-				hcp.setModified(false);
+		getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
+			@Override
+			public void run() {
+				try {
+					int result = dbcon.PreparedUpdate(query, values);
+					if (result < 0) {
+						Debug("Player record save failed!");
+					}
+				}
+				catch (Exception e) {
+					Debug("Unable to save player record to database!");
+					e.printStackTrace();
+				}
 			}
-		}
-		catch (Exception e) {
-			Debug("Unable to save player record to database!");
-			e.printStackTrace();
-		}
+		});
 		
 		return;
 	}
