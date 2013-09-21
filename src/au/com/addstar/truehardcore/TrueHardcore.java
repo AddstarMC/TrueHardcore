@@ -389,7 +389,7 @@ public final class TrueHardcore extends JavaPlugin {
 										e.printStackTrace();
 									}
 								}
-							}, 5 * 20L);
+							}, 20 * 20L);
 							
 						} catch (Exception e) {
 						    // Do nothing or throw an error if you want
