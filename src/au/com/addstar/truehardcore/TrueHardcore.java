@@ -315,7 +315,7 @@ public final class TrueHardcore extends JavaPlugin {
 		plugin.getServer().broadcastMessage(Header + DeathMsg + "!");
 		plugin.getServer().broadcastMessage(Header + "Final Score: " + ChatColor.GREEN + player.getTotalExperience());
 		event.setDeathMessage(null);
-		if (hcp.getTopScore() > 0) {
+		if (hcp.getScore() > 0) {
 			// Check if this is the player's personal best
 			boolean personalbest = false;
 			if (hcp.getScore() > hcp.getTopScore()) {
@@ -331,6 +331,7 @@ public final class TrueHardcore extends JavaPlugin {
 				if ((h.getWorld().equals(hcp.getWorld())) && (h.getPlayerName() != hcp.getPlayerName())) {
 					if (h.getTopScore() >= hcp.getScore()) {
 						highscore = false;
+						Debug(hcp.getPlayerName() + "'s score (" + hcp.getScore() + ") did not beat " + h.getPlayerName() + " (" + h.getTopScore() + ")");
 						break;
 					}
 				}
