@@ -179,7 +179,11 @@ public class CommandTH implements CommandExecutor {
 				for (Map.Entry<String, HardcorePlayer> entry: plugin.HCPlayers.AllRecords().entrySet()) {
 					HardcorePlayer hcp = entry.getValue();
 					if (hcp != null) {
-						sender.sendMessage(Util.padRight(entry.getKey(), 30) + " " + hcp.getState());
+						sender.sendMessage(
+								Util.padRight(entry.getKey(), 30) +
+								Util.padLeft(hcp.getScore() + "", 10) +
+								Util.padLeft(hcp.getTopScore() + "", 10) +
+								" " + hcp.getState());
 					} else {
 						plugin.Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
 					}
