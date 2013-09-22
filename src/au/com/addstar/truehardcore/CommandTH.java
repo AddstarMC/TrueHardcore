@@ -382,12 +382,16 @@ public class CommandTH implements CommandExecutor {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
-
-			List<String> msg = new ArrayList<String>();
-			for (int x = 1; x < args.length; x++) {
-				msg.add(args[x]);
+			
+			if (args.length > 1) {
+				List<String> msg = new ArrayList<String>();
+				for (int x = 1; x < args.length; x++) {
+					msg.add(args[x]);
+				}
+				plugin.BroadcastToHardcore(plugin.Header + StringUtils.join(msg, " "));
+			} else {
+				sender.sendMessage(ChatColor.RED + "You must provide a message to broadcast");
 			}
-			plugin.BroadcastToHardcore(plugin.Header + " " + StringUtils.join(msg, " "));
 		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
