@@ -19,6 +19,7 @@ package au.com.addstar.truehardcore;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -376,6 +377,17 @@ public class CommandTH implements CommandExecutor {
 			}
 			plugin.GameEnabled = true;
 			sender.sendMessage(ChatColor.GREEN + "TrueHardcore has been enabled.");
+		}
+		else if (action.equals("BCAST")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+			}
+
+			List<String> msg = new ArrayList<String>();
+			for (int x = 1; x < args.length; x++) {
+				msg.add(args[x]);
+			}
+			plugin.BroadcastToHardcore(plugin.Header + " " + StringUtils.join(msg, " "));
 		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
