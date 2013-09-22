@@ -294,6 +294,16 @@ public class CommandTH implements CommandExecutor {
 					}
 					sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
 				}
+				world = plugin.getServer().getWorld(entry.getKey() + "_nether");
+				if ((world != null) && (world.getPlayers().size() > 0)) {
+					ArrayList<String> players = new ArrayList<String>();
+					for (Player p : world.getPlayers()) {
+						if (plugin.IsPlayerVanished(p)) continue;
+						Playing = true;
+						players.add(p.getName());
+					}
+					sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+				}
 			}
 			if (!Playing) {
 				sender.sendMessage(ChatColor.RED + "None");
