@@ -300,9 +300,9 @@ public final class TrueHardcore extends JavaPlugin {
 		final TrueHardcore plugin = this;
 		final World realworld = player.getWorld();
 		
-		HardcorePlayer hcp = HCPlayers.Get(realworld, player);
+		final HardcorePlayer hcp = HCPlayers.Get(realworld, player);
 		final World world = getServer().getWorld(hcp.getWorld());
-		HardcoreWorld hcw = HardcoreWorlds.Get(world.getName());
+		final HardcoreWorld hcw = HardcoreWorlds.Get(world.getName());
 
 		hcp.setState(PlayerState.DEAD);
 		hcp.setDeathMsg(event.getDeathMessage());
@@ -371,6 +371,7 @@ public final class TrueHardcore extends JavaPlugin {
 			public void run() {
 				try {
 					if (plugin.LWCHooked) {
+						// Always remove the locks straight away!
 						plugin.Debug("Removing LWC locks...");
 				        int count = 0;
 						if (lwc.getPhysicalDatabase() != null) {
@@ -391,49 +392,54 @@ public final class TrueHardcore extends JavaPlugin {
 					}
 
 					if (LBHooked) {
-						try {
-							final QueryParams params = new QueryParams(logblock);
-							params.setPlayer(player.getName());
-							params.world = world;
-							params.silent = false;
-							params.before = 0;
-							params.excludeVictimsMode = true;
-							params.excludeKillersMode = true;
-
-							final CommandSender cs = plugin.getServer().getConsoleSender();
-
-							if (logblock == null) {
-								plugin.Debug("CRITICAL! logblock handle is null");
-							}
-
-							plugin.Debug("Rollback changes for " + player.getName() + "...");
-							CommandRollback cr = plugin.logblock.getCommandsHandler().new CommandRollback(cs, params, true);
-							cr.close();
-
-							plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-								@Override
-								public void run() {
-									try {
-										plugin.Debug("Clearing changes for " + player.getName() + "...");
-										CommandClearLog ccl = plugin.logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
-										ccl.close();
-									} catch (Exception e) {
-										e.printStackTrace();
+						plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+							@Override
+							public void run() {
+								try {
+									final QueryParams params = new QueryParams(logblock);
+									params.setPlayer(player.getName());
+									params.world = world;
+									params.silent = false;
+									params.before = 0;
+									params.excludeVictimsMode = true;
+									params.excludeKillersMode = true;
+		
+									final CommandSender cs = plugin.getServer().getConsoleSender();
+		
+									if (logblock == null) {
+										plugin.Debug("CRITICAL! logblock handle is null");
 									}
+		
+									plugin.Debug("Rollback changes for " + player.getName() + "...");
+									CommandRollback cr = plugin.logblock.getCommandsHandler().new CommandRollback(cs, params, true);
+									cr.close();
+		
+									plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+										@Override
+										public void run() {
+											try {
+												plugin.Debug("Clearing changes for " + player.getName() + "...");
+												CommandClearLog ccl = plugin.logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
+												ccl.close();
+											} catch (Exception e) {
+												e.printStackTrace();
+											}
+										}
+									}, 20 * 20L);
+									
+								} catch (Exception e) {
+								    // Do nothing or throw an error if you want
+									e.printStackTrace();
 								}
-							}, 20 * 20L);
-							
-						} catch (Exception e) {
-						    // Do nothing or throw an error if you want
-							e.printStackTrace();
-						}
+							}
+						}, 40L + (hcw.getRollbackDelay() * 20L));
 					}
 				} catch (Exception e) {
 				    // Do nothing or throw an error if you want
 					e.printStackTrace();
 				}
 			}
-		}, 40L + (hcw.getRollbackDelay() * 20L));
+		}, 20L);
 	}
 	
 	public boolean PlayGame(String world, Player player) {
