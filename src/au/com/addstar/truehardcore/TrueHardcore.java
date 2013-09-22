@@ -326,8 +326,8 @@ public final class TrueHardcore extends JavaPlugin {
 
 			// Check if this is a high score
 			boolean highscore = true;
-			for (String key : HCPlayers.AllRecords().keySet()) {
-				HardcorePlayer h = HCPlayers.Get(key);
+			for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
+				HardcorePlayer h = entry.getValue();
 				if (h != null) {
 					// Only compare other player's scores in the same world 
 					if ((h.getWorld().equals(hcp.getWorld())) && (h.getPlayerName() != hcp.getPlayerName())) {
@@ -338,7 +338,7 @@ public final class TrueHardcore extends JavaPlugin {
 						}
 					}
 				} else {
-					Warn("Record for key \"" + key + "\" not found! This should not happen!");
+					Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
 				}
 			}
 			
@@ -860,8 +860,8 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public void SaveAllPlayers() {
-		for (String key : HCPlayers.AllRecords().keySet()) {
-			HardcorePlayer hcp = HCPlayers.Get(key);
+		for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
+			HardcorePlayer hcp = entry.getValue();
 			if ((hcp != null) && (hcp.isModified())) {
 				SavePlayer(hcp);
 			}

@@ -19,6 +19,7 @@ package au.com.addstar.truehardcore;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.ChatColor;
@@ -174,12 +175,12 @@ public class CommandTH implements CommandExecutor {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			if (args.length == 1) {
-				for (String key : plugin.HCPlayers.AllRecords().keySet()) {
-					HardcorePlayer hcp = plugin.HCPlayers.Get(key);
+				for (Map.Entry<String, HardcorePlayer> entry: plugin.HCPlayers.AllRecords().entrySet()) {
+					HardcorePlayer hcp = entry.getValue();
 					if (hcp != null) {
-						sender.sendMessage(Util.padRight(key, 30) + " " + hcp.getState());
+						sender.sendMessage(Util.padRight(entry.getKey(), 30) + " " + hcp.getState());
 					} else {
-						plugin.Warn("Record for key \"" + key + "\" not found! This should not happen!");
+						plugin.Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
 					}
 				}
 			}
@@ -226,8 +227,8 @@ public class CommandTH implements CommandExecutor {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			if (args.length == 1) {
-				for (String key : plugin.HardcoreWorlds.AllRecords().keySet()) {
-					HardcoreWorld hcw = plugin.HardcoreWorlds.Get(key);
+				for (Map.Entry<String, HardcoreWorld> entry: plugin.HardcoreWorlds.AllRecords().entrySet()) {
+					HardcoreWorld hcw = entry.getValue();
 					sender.sendMessage(ChatColor.YELLOW + "World Name     : " + ChatColor.AQUA + hcw.getWorld().getName());
 					sender.sendMessage(ChatColor.YELLOW + "Greeting       : " + ChatColor.AQUA + ChatColor.translateAlternateColorCodes('&', hcw.getGreeting()));
 					sender.sendMessage(ChatColor.YELLOW + "Ban Time       : " + ChatColor.AQUA + hcw.getBantime());
@@ -269,8 +270,8 @@ public class CommandTH implements CommandExecutor {
 			sender.sendMessage(ChatColor.GREEN + "Players currently in hardcore worlds:");
 
 			boolean Playing = false;
-			for (String w : plugin.HardcoreWorlds.AllRecords().keySet()) {
-				World world = plugin.getServer().getWorld(w);
+			for (Map.Entry<String, HardcoreWorld> entry: plugin.HardcoreWorlds.AllRecords().entrySet()) {
+				World world = plugin.getServer().getWorld(entry.getKey());
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();
 					for (Player p : world.getPlayers()) {
