@@ -81,28 +81,23 @@ public class Util {
 	}
 	
 	public static String Long2Time(long time) {
-		long diffSeconds = (time % 60);
-		long diffMinutes = ((time / 60) % 60);
-		long diffHours = ((time / (60 * 60)) % 24);
-		long diffDays = (time / (24 * 60 * 60));
+		long dS = (time % 60);
+		long dM = ((time / 60) % 60);
+		long dH = ((time / (60 * 60)) % 24);
+		long dD = (time / (24 * 60 * 60));
 
 		String result = "";
-		if (diffSeconds > 0) {
-			result = diffSeconds + "s";
-		}
+		String d = "", h = "", m = "", s = "";
 		
-		if ((diffMinutes > 0) || (result.length() > 0)) {
-			result = diffMinutes + "m" + " " + result;
-		}
-		
-		if ((diffHours > 0) || (result.length() > 0)) {
-			result = diffHours + "h" + " " + result;
-		}
+		if (dS > 0) s = dS + "s";
+		if (dM > 0) m = dM + "m";
+		if (dH > 0) h = dH + "h";
+		if (dD > 0) d = dD + "d";
 
-		if ((diffDays > 0) || (result.length() > 0)) {
-			result = diffDays + "d" + " " + result;
-		}
-		result.trim();
+		if ((m.length() == 0) && (s.length() > 0) && (h.length() > 0)) m = dM + "m"; 
+		if ((h.length() == 0) && (m.length() > 0) && (d.length() > 0)) h = dH + "h"; 
+		
+		result = d + h + m + s;
 
 		return result;
 	}
