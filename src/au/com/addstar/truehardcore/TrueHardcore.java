@@ -993,7 +993,8 @@ public final class TrueHardcore extends JavaPlugin {
 		return true;
 	}
 	
-	public void BroadcastToWorld(String world, String msg) {
+	public void BroadcastToWorld(String world, String rawmsg) {
+		String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
 		Debug(msg);
 		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
 		for (Player p : players) {
@@ -1004,7 +1005,8 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 	}
 
-	public void BroadcastToHardcore(String msg) {
+	public void BroadcastToHardcore(String rawmsg) {
+		String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
 		Debug(msg);
 		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
 		for (Player p : players) {
