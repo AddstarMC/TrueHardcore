@@ -989,4 +989,14 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 		return true;
 	}
+	
+	public void BroadcastToWorld(String world, String msg) {
+		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
+		for (Player p : players) {
+			HardcorePlayer hcp = HCPlayers.Get(world + "/" + p.getName());
+			if (hcp != null) {
+				p.sendMessage(msg);
+			}
+		}
+	}
 }
