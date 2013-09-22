@@ -25,6 +25,8 @@ public class HardcoreWorlds {
 		private Integer spawndistance;
 		private Integer spawnprotection;
 		private Location exitpos;
+		private Integer rollbackdelay;
+		private Boolean deathdrops;
 
 		public World getWorld() {
 			return world;
@@ -69,6 +71,18 @@ public class HardcoreWorlds {
 		}
 		public void setExitPos(Location exitpos) {
 			this.exitpos = exitpos;
+		}
+		public Integer getRollbackDelay() {
+			return rollbackdelay;
+		}
+		public void setRollbackDelay(Integer rollbackdelay) {
+			this.rollbackdelay = rollbackdelay;
+		}
+		public Boolean getDeathDrops() {
+			return deathdrops;
+		}
+		public void setDeathDrops(Boolean deathdrops) {
+			this.deathdrops = deathdrops;
 		}
 	}
 

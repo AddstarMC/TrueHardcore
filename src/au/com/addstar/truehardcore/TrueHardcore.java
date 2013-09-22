@@ -302,6 +302,7 @@ public final class TrueHardcore extends JavaPlugin {
 		
 		HardcorePlayer hcp = HCPlayers.Get(realworld, player);
 		final World world = getServer().getWorld(hcp.getWorld());
+		HardcoreWorld hcw = HardcoreWorlds.Get(world.getName());
 
 		hcp.setState(PlayerState.DEAD);
 		hcp.setDeathMsg(event.getDeathMessage());
@@ -327,13 +328,17 @@ public final class TrueHardcore extends JavaPlugin {
 			boolean highscore = true;
 			for (String key : HCPlayers.AllRecords().keySet()) {
 				HardcorePlayer h = HCPlayers.Get(key);
-				// Only compare other player's scores in the same world 
-				if ((h.getWorld().equals(hcp.getWorld())) && (h.getPlayerName() != hcp.getPlayerName())) {
-					if (h.getTopScore() >= hcp.getScore()) {
-						highscore = false;
-						Debug(hcp.getPlayerName() + "'s score (" + hcp.getScore() + ") did not beat " + h.getPlayerName() + " (" + h.getTopScore() + ")");
-						break;
+				if (h != null) {
+					// Only compare other player's scores in the same world 
+					if ((h.getWorld().equals(hcp.getWorld())) && (h.getPlayerName() != hcp.getPlayerName())) {
+						if (h.getTopScore() >= hcp.getScore()) {
+							highscore = false;
+							Debug(hcp.getPlayerName() + "'s score (" + hcp.getScore() + ") did not beat " + h.getPlayerName() + " (" + h.getTopScore() + ")");
+							break;
+						}
 					}
+				} else {
+					Warn("Record for key \"" + key + "\" not found! This should not happen!");
 				}
 			}
 			
@@ -348,8 +353,10 @@ public final class TrueHardcore extends JavaPlugin {
 		SavePlayer(hcp);
 
 		// Dont drop XP or items
-		event.setDroppedExp(0);
-		event.getDrops().clear();
+		if (!hcw.getDeathDrops()) {
+			event.setDroppedExp(0);
+			event.getDrops().clear();
+		}
 		
 		// Reset XP levels
 		event.setNewExp(0);
@@ -426,7 +433,7 @@ public final class TrueHardcore extends JavaPlugin {
 					e.printStackTrace();
 				}
 			}
-		}, 40L);
+		}, 40L + (hcw.getRollbackDelay() * 20L));
 	}
 	
 	public boolean PlayGame(String world, Player player) {
