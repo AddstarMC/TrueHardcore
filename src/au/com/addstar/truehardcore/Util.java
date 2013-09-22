@@ -96,11 +96,11 @@ public class Util {
 		}
 		
 		if ((diffHours > 0) || (result.length() > 0)) {
-			result += diffHours + "h" + " " + result;
+			result = diffHours + "h" + " " + result;
 		}
 
 		if ((diffDays > 0) || (result.length() > 0)) {
-			result += diffDays + "d" + " " + result;
+			result = diffDays + "d" + " " + result;
 		}
 		result.trim();
 
