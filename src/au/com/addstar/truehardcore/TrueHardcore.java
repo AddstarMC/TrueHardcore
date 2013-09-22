@@ -997,10 +997,8 @@ public final class TrueHardcore extends JavaPlugin {
 		Debug(msg);
 		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
 		for (Player p : players) {
-			Debug("Checking player: " + p.getName());
 			HardcorePlayer hcp = HCPlayers.Get(world, p.getName());
-			if (hcp != null) {
-				Debug("  Sending msg to: " + p.getName());
+			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
 				p.sendMessage(msg);
 			}
 		}
