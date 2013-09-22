@@ -86,20 +86,24 @@ public class Util {
 		long diffHours = ((time / (60 * 60)) % 24);
 		long diffDays = (time / (24 * 60 * 60));
 
-		String result;
-		if (diffDays > 0) {
-			result = diffDays + "d " + diffHours + "h " + diffMinutes + "m " + diffSeconds + "s"; 
-		} else {
-			if (diffHours > 0) {
-				result = diffHours + "h " + diffMinutes + "m " + diffSeconds + "s";
-			} else {
-				if (diffMinutes > 0) {
-					result = diffMinutes + "m " + diffSeconds + "s";
-				} else {
-					result = diffSeconds + "s";
-				}
-			}
+		String result = "";
+		if (diffSeconds > 0) {
+			result = diffSeconds + "s";
 		}
+		
+		if ((diffMinutes > 0) || (result.length() > 0)) {
+			result = diffMinutes + "m" + " " + result;
+		}
+		
+		if ((diffHours > 0) || (result.length() > 0)) {
+			result += diffHours + "h" + " " + result;
+		}
+
+		if ((diffDays > 0) || (result.length() > 0)) {
+			result += diffDays + "d" + " " + result;
+		}
+		result.trim();
+
 		return result;
 	}
 	

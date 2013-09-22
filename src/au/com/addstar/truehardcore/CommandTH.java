@@ -187,6 +187,13 @@ public class CommandTH implements CommandExecutor {
 			else if (args.length == 3) {
 				HardcorePlayer hcp = plugin.HCPlayers.Get(args[2], args[1]);
 				if (hcp != null) {
+					String sincedeath = "";
+					if (hcp.getGameEnd() != null) {
+						Date now = new Date();
+						long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
+						sincedeath = Util.Long2Time(diff);
+					}
+					
 					sender.sendMessage(ChatColor.YELLOW + "Player Name    : " + ChatColor.AQUA + hcp.getPlayerName());
 					sender.sendMessage(ChatColor.YELLOW + "World          : " + ChatColor.AQUA + hcp.getWorld());
 					sender.sendMessage(ChatColor.YELLOW + "SpawnPos       : " + ChatColor.AQUA + hcp.getSpawnPos());
@@ -195,6 +202,7 @@ public class CommandTH implements CommandExecutor {
 					sender.sendMessage(ChatColor.YELLOW + "LastQuit       : " + ChatColor.AQUA + hcp.getLastQuit());
 					sender.sendMessage(ChatColor.YELLOW + "GameStart      : " + ChatColor.AQUA + hcp.getGameStart());
 					sender.sendMessage(ChatColor.YELLOW + "GameEnd        : " + ChatColor.AQUA + hcp.getGameEnd());
+					sender.sendMessage(ChatColor.YELLOW + "Since Death    : " + ChatColor.AQUA + sincedeath);
 					sender.sendMessage(ChatColor.YELLOW + "GameTime       : " + ChatColor.AQUA + hcp.getGameTime());
 					sender.sendMessage(ChatColor.YELLOW + "Level          : " + ChatColor.AQUA + hcp.getLevel());
 					sender.sendMessage(ChatColor.YELLOW + "Exp            : " + ChatColor.AQUA + hcp.getExp());
