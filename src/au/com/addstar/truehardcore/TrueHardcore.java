@@ -366,6 +366,13 @@ public final class TrueHardcore extends JavaPlugin {
 		player.setLevel(0);
 		player.setExp(0);
 		
+		if (hcw.getRollbackDelay() > 0) {
+			String wh = ChatColor.DARK_RED + "[" + ChatColor.RED + hcp.getWorld() + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
+			BroadcastToWorld(hcp.getWorld(), wh + " " +
+							ChatColor.YELLOW + "You now have " + Util.Long2Time(hcw.getRollbackDelay()) +
+							" to raid " + ChatColor.AQUA + player.getName() + "'s " + ChatColor.YELLOW + "stuff before it all disappears!");
+		}
+		
 		plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
 			@Override
 			public void run() {
@@ -461,10 +468,6 @@ public final class TrueHardcore extends JavaPlugin {
 				Date now = new Date();
 				long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
 				long wait = (hcw.getBantime() - diff);
-				//DebugLog("NOW: " + now.getTime());
-				//DebugLog("DIE: " + hcp.getGameEnd().getTime());
-				//DebugLog("DIFF: " + diff);
-				//DebugLog("WAIT: " + wait);
 				
 				if (wait > 0) {
 					player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " to play " + hcw.getWorld().getName() + " again.");
@@ -991,6 +994,7 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public void BroadcastToWorld(String world, String msg) {
+		Debug(msg);
 		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
 		for (Player p : players) {
 			HardcorePlayer hcp = HCPlayers.Get(world + "/" + p.getName());
