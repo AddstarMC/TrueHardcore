@@ -96,6 +96,10 @@ public class Util {
 
 		if ((m.length() == 0) && (s.length() > 0) && (h.length() > 0)) m = dM + "m"; 
 		if ((h.length() == 0) && (m.length() > 0) && (d.length() > 0)) h = dH + "h"; 
+
+		if ((m.length() > 0) && (s.length() > 0)) m += " ";
+		if ((h.length() > 0) && (m.length() > 0)) h += " ";
+		if ((d.length() > 0) && (h.length() > 0)) d += " ";
 		
 		result = d + h + m + s;
 
