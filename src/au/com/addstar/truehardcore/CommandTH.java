@@ -181,9 +181,9 @@ public class CommandTH implements CommandExecutor {
 					if (hcp != null) {
 						sender.sendMessage(
 								Util.padRight(entry.getKey(), 30) +
-								Util.padLeft(hcp.getScore() + "", 10) +
-								Util.padLeft(hcp.getTopScore() + "", 10) +
-								" " + hcp.getState());
+								Util.padLeft(hcp.getScore() + "", 8) +
+								Util.padLeft(hcp.getTopScore() + "", 8) +
+								"   " + hcp.getState());
 					} else {
 						plugin.Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
 					}
@@ -282,8 +282,11 @@ public class CommandTH implements CommandExecutor {
 
 			sender.sendMessage(ChatColor.GREEN + "Players currently in hardcore worlds:");
 
+			// TODO: Fix this really ugly code!
+
 			boolean Playing = false;
 			for (Map.Entry<String, HardcoreWorld> entry: plugin.HardcoreWorlds.AllRecords().entrySet()) {
+				// Check hardcore world
 				World world = plugin.getServer().getWorld(entry.getKey());
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();
@@ -292,8 +295,12 @@ public class CommandTH implements CommandExecutor {
 						Playing = true;
 						players.add(p.getName());
 					}
-					sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+					if (players.size() > 0) {
+						sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+					}
 				}
+				
+				// Corresponding nether world
 				world = plugin.getServer().getWorld(entry.getKey() + "_nether");
 				if ((world != null) && (world.getPlayers().size() > 0)) {
 					ArrayList<String> players = new ArrayList<String>();
@@ -302,7 +309,9 @@ public class CommandTH implements CommandExecutor {
 						Playing = true;
 						players.add(p.getName());
 					}
-					sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+					if (players.size() > 0) {
+						sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+					}
 				}
 			}
 			if (!Playing) {
