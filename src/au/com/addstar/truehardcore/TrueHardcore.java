@@ -52,6 +52,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
 import org.kitteh.vanish.staticaccess.VanishNoPacket;
@@ -482,7 +483,7 @@ public final class TrueHardcore extends JavaPlugin {
 						
 				// Never played before... create them!
 				if (hcp == null) {
-					Debug("New hardcore player: " + player.getName());
+					Debug("New hardcore player: " + player.getName() + " (" + world + ")");
 					hcp = HCPlayers.NewPlayer(world, player.getName());
 					spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
 				}
@@ -490,7 +491,7 @@ public final class TrueHardcore extends JavaPlugin {
 					Warn("No previous position found for known " + player.getName());
 					spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
 				} else {
-					Debug(player.getName() + " is restarting hardcore");
+					Debug(player.getName() + " is restarting game (" + world + ")");
 					spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
 				}
 				
@@ -529,6 +530,7 @@ public final class TrueHardcore extends JavaPlugin {
 					}
 				} else {
 					player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location. Please try again.");
+					Warn("Unable to find suitable spawn location for " + player.getName() + " (" + world + ")");
 					return false;
 				}
 		}
@@ -666,23 +668,41 @@ public final class TrueHardcore extends JavaPlugin {
 	public void LeaveGame(Player player) {
 		HardcorePlayer hcp = HCPlayers.Get(player);
 		if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
-			hcp.setState(PlayerState.ALIVE);
-			hcp.updatePlayer(player);
-			hcp.calcGameTime();
-			SavePlayer(hcp);
-			player.teleport(GetLobbyLocation(player, hcp.getWorld()));
+			if (!player.isInsideVehicle()) { 
+				// We have to change the game state to allow the teleport out of the world
+				hcp.setState(PlayerState.ALIVE);
+				hcp.updatePlayer(player);
+				if (player.teleport(GetLobbyLocation(player, hcp.getWorld()))) {
+					hcp.calcGameTime();
+					SavePlayer(hcp);
+				} else {
+					// Teleport failed so set the game state back
+					hcp.setState(PlayerState.IN_GAME);
+					player.sendMessage(ChatColor.RED + "Teleportation failed.");
+				}
+			} else {
+				player.sendMessage(ChatColor.RED + "You cannot leave while you are a passenger.");
+			}
 		} else {
 			player.sendMessage(ChatColor.RED + "You are not currently in a hardcore game.");
 		}
 	}
 	
-	public void SavePlayer(HardcorePlayer hcp) {
+	public BukkitTask SavePlayer(HardcorePlayer hcp) {
+		return SavePlayer(hcp, true);
+	}
+	
+	public BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async) {
+		if (hcp == null) {
+			Warn("SavePlayer called with null record!");
+			return null;
+		}
 		Debug("Saving data for " + hcp.getPlayerName());
 
 		// CowKills, PigKills, SheepKills, ChickenKills;
 		// CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
 		// OtherKills, PlayerKills;
-
+		
 		final String query = "INSERT INTO `truehardcore`.`players` \n" +
 				"(`player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
 				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
@@ -762,7 +782,7 @@ public final class TrueHardcore extends JavaPlugin {
 		};
 		hcp.setModified(false);
 
-		getServer().getScheduler().runTaskAsynchronously(this, new Runnable() {
+		Runnable savetask = new Runnable() {
 			@Override
 			public void run() {
 				try {
@@ -776,9 +796,18 @@ public final class TrueHardcore extends JavaPlugin {
 					e.printStackTrace();
 				}
 			}
-		});
+		};
 		
-		return;
+		BukkitTask task = null;
+		if (Async) {
+			Debug("Launching async save task...");
+			task = getServer().getScheduler().runTaskAsynchronously(this, savetask); 
+		} else {
+			Debug("Saving synchronously...");
+			savetask.run();
+		}
+		
+		return task;
 	}
 
 	public void JoinGame(String world, Player player) {
@@ -863,7 +892,7 @@ public final class TrueHardcore extends JavaPlugin {
 		for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
 			HardcorePlayer hcp = entry.getValue();
 			if ((hcp != null) && (hcp.isModified())) {
-				SavePlayer(hcp);
+				SavePlayer(hcp, false);
 			}
 		}
 	}
