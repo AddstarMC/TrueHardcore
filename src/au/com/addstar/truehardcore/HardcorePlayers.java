@@ -362,6 +362,7 @@ public class HardcorePlayers {
 	public HardcorePlayer NewPlayer(String world, String name) {
 		HardcorePlayer hcp = new HardcorePlayer();
 		if (hcp != null) {
+			TrueHardcore.instance.Debug("Creating new player record: " + world + "/" + name);
 			hcp.LoadDataOnly = true;
 			hcp.setPlayerName(name.toLowerCase());
 			hcp.setWorld(world);
