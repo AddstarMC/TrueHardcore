@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>TrueHardcore</groupId>
   <artifactId>TrueHardcore</artifactId>
-  <version>1.1-${env.BUILD_NUMBER}</version>
+  <version>1.1-b${env.BUILD_NUMBER}</version>
   <name>TrueHardcore</name>
   <url>http://dev.bukkit.org/bukkit-plugins/truehardcore</url>
 
