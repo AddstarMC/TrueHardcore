@@ -117,7 +117,7 @@ public class PlayerListener implements Listener {
 	 * Handle players joining the server in the hardcore world
 	 * Change their hardcore player state, or kick them out!
 	 */
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		final Player player = event.getPlayer();
 		if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
@@ -135,11 +135,16 @@ public class PlayerListener implements Listener {
 
 		// Always send players back to the exit pos
 		if (hcp.getState() == PlayerState.ALIVE) {
-			// Mark the player as in game
-			hcp.setState(PlayerState.IN_GAME);
-			plugin.SavePlayer(hcp);
-			if (plugin.IsPlayerVanished(player)) {
-				plugin.UnvanishPlayer(player);
+			// Send player to game lobby
+			plugin.Debug(player.getName() + " joined in " + player.getWorld() + "! Returning player to lobby...");
+			if (!player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()))) {
+				// Mark the player as in game (don't do this by default! causes teleport problems + interop issues with NCP)
+				plugin.Warn("Unable to send " + player.getName() + " to lobby! Resuming game play...");
+				hcp.setState(PlayerState.IN_GAME);
+				plugin.SavePlayer(hcp);
+				if (plugin.IsPlayerVanished(player)) {
+					plugin.UnvanishPlayer(player);
+				}
 			}
 		} else {
 			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
@@ -220,11 +225,18 @@ public class PlayerListener implements Listener {
 			if (hcp.getState() == PlayerState.IN_GAME) {
 				if (player.isOp()) {
 					plugin.Debug("OP override! Teleport allowed.");
-				} else { 
+				} else {
 					event.setCancelled(true);
-					plugin.Debug(player.getName() + " teleport out of hardcore cancelled!");
-					player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
+					if (from.getWorld().equals(to.getWorld())) {
+						plugin.Debug(player.getName() + " teleport within hardcore cancelled!");
+						player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
+					} else {
+						plugin.Debug(player.getName() + " teleport out of hardcore cancelled!");
+						player.sendMessage(ChatColor.RED + "You are not allowed to teleport out of hardcore!");
+					}
 					player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+					plugin.Debug("From: " + from);
+					plugin.Debug("To  : " + to);
 				}
 			}
 		}
