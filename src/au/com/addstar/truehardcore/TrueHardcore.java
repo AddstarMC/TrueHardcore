@@ -496,9 +496,7 @@ public final class TrueHardcore extends JavaPlugin {
 				}
 				
 				if (spawn != null) {
-					//Debug("OLD STATE: " + HCPlayers.Get(world, player.getName()).getState());
 					hcp.setState(PlayerState.IN_GAME);
-					//Debug("NEW STATE: " + HCPlayers.Get(world, player.getName()).getState());
 					if (NewSpawn(player, spawn)) {
 						SetProtected(hcp, hcw.getSpawnProtection());
 						hcp.setGameTime(0);
