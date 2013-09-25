@@ -834,7 +834,7 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public void LoadAllPlayers() {
-		String query = "SELECT * FROM `truehardcore`.`players`";
+		String query = "SELECT * FROM `truehardcore`.`players` ORDER BY world,player";
 		try {
 			HCPlayers.Clear();
 			ResultSet res = dbcon.PreparedQuery(query, null);
