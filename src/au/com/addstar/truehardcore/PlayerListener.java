@@ -136,7 +136,7 @@ public class PlayerListener implements Listener {
 		// Always send players back to the exit pos
 		if (hcp.getState() == PlayerState.ALIVE) {
 			// Send player to game lobby
-			plugin.Debug(player.getName() + " joined in " + player.getWorld() + "! Returning player to lobby...");
+			plugin.Debug(player.getName() + " joined in " + player.getWorld().getName() + "! Returning player to lobby...");
 			if (!player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()))) {
 				// Mark the player as in game (don't do this by default! causes teleport problems + interop issues with NCP)
 				plugin.Warn("Unable to send " + player.getName() + " to lobby! Resuming game play...");
