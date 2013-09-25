@@ -364,16 +364,16 @@ public class HardcorePlayers {
 		if (hcp != null) {
 			TrueHardcore.instance.Debug("Creating new player record: " + world + "/" + name);
 			hcp.LoadDataOnly = true;
-			hcp.setPlayerName(name.toLowerCase());
+			hcp.setPlayerName(name);
 			hcp.setWorld(world);
 			hcp.LoadDataOnly = false;
-			AddPlayer(world, name.toLowerCase(), hcp);
+			AddPlayer(world, name, hcp);
 		}
 		return hcp;
 	}
 
 	public HardcorePlayer Get(String world, String name) {
-		String key = StringUtils.replace(world, "_nether", "") + "/" + name.toLowerCase();
+		String key = StringUtils.replace(world, "_nether", "") + "/" + name;
 		if (Players.containsKey(key)) {
 			HardcorePlayer hcp = Players.get(key);
 			return hcp;
@@ -397,7 +397,7 @@ public class HardcorePlayers {
 	}
 	
 	public boolean AddPlayer(String world, String name, HardcorePlayer hcp) {
-		String key = world + "/" + name.toLowerCase();
+		String key = world + "/" + name;
 		Players.put(key, hcp);
 		return true;
 	}

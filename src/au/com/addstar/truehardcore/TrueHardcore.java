@@ -715,7 +715,7 @@ public final class TrueHardcore extends JavaPlugin {
 				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
 				
 		final String[] values = {
-				hcp.getPlayerName().toLowerCase(), 
+				hcp.getPlayerName(), 
 				hcp.getLastPos().getWorld().getName(),
 				Util.Loc2Str(hcp.getSpawnPos()),
 				Util.Loc2Str(hcp.getLastPos()),
@@ -841,7 +841,7 @@ public final class TrueHardcore extends JavaPlugin {
 			//Debug("Found " + res.getFetchSize() + " records in database");
 			if (res != null) {
 				while (res.next()) {
-					String player = res.getString("player").toLowerCase();
+					String player = res.getString("player");
 					String world = res.getString("world");
 					//World w = getServer().getWorld(world);
 					DebugLog("Loading: " + world + "/" + player);
