@@ -716,7 +716,7 @@ public final class TrueHardcore extends JavaPlugin {
 				
 		final String[] values = {
 				hcp.getPlayerName(), 
-				hcp.getLastPos().getWorld().getName(),
+				hcp.getWorld(),
 				Util.Loc2Str(hcp.getSpawnPos()),
 				Util.Loc2Str(hcp.getLastPos()),
 				Util.Date2Mysql(hcp.getLastJoin()),
