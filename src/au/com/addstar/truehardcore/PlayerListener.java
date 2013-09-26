@@ -34,6 +34,7 @@ import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
@@ -211,12 +212,26 @@ public class PlayerListener implements Listener {
 		// Ignore if neither from/to are related to hardcore
 		if (!plugin.IsHardcoreWorld(to.getWorld()) && !plugin.IsHardcoreWorld(from.getWorld())) { return; }
 
+		TeleportCause cause = event.getCause();
+		plugin.DebugLog(
+				event.getEventName() + ": " + 
+				from.getBlockX() + "/" + from.getBlockY() + "/" + from.getBlockZ() +
+				" TO " +
+				to.getBlockX() + "/" + to.getBlockY() + "/" + to.getBlockZ() +
+				" (" + cause + ")"
+		);
+
+		// Some teleport methods are fine.. let them go
+		if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL) || (cause == TeleportCause.NETHER_PORTAL)) {
+			return;
+		}
+		
 		// Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
 		if (from.getWorld().equals(to.getWorld()) && (from.distance(to) <= 30)) { return; }
 
-		plugin.DebugLog("EVENT: " + event.getEventName());
-		plugin.DebugLog("FROM : " + from);
-		plugin.DebugLog("TO   : " + to);
+		//plugin.DebugLog("EVENT: " + event.getEventName());
+		//plugin.DebugLog("FROM : " + from);
+		//plugin.DebugLog("TO   : " + to);
 
 		if (plugin.IsHardcoreWorld(from.getWorld())) {
 			// Prevent unauthorised exit from hardcore
