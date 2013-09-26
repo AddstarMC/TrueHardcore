@@ -215,9 +215,9 @@ public class PlayerListener implements Listener {
 		TeleportCause cause = event.getCause();
 		plugin.DebugLog(
 				event.getEventName() + ": " + 
-				from.getBlockX() + "/" + from.getBlockY() + "/" + from.getBlockZ() +
+				from.getWorld().getName() + ", " + from.getBlockX() + ", " + from.getBlockY() + ", " + from.getBlockZ() +
 				" TO " +
-				to.getBlockX() + "/" + to.getBlockY() + "/" + to.getBlockZ() +
+				to.getWorld().getName() + ", " + to.getBlockX() + ", " + to.getBlockY() + ", " + to.getBlockZ() +
 				" (" + cause + ")"
 		);
 
