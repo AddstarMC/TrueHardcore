@@ -127,54 +127,52 @@ public class PlayerListener implements Listener {
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
 
 		// Check if player is resuming a game or somehow stuck in the world but not playing
-		HardcorePlayer hcp = HCPlayers.Get(player);
+		Location loc = null;
+		HardcorePlayer hcp = HCPlayers.Get(player.getWorld().getName(), player.getName());
 		if (hcp == null) {
 			plugin.Warn(player.getName() + " joined in hardcore world with no player record!");
-			player.teleport(plugin.GetLobbyLocation(player, player.getWorld().getName()));
-			return;
+			loc = plugin.GetLobbyLocation(player, player.getWorld().getName());
 		}
-
-		// Always send players back to the exit pos
-		if (hcp.getState() == PlayerState.ALIVE) {
+		else if ((hcp.getState() == PlayerState.ALIVE) || (hcp.getState() == PlayerState.IN_GAME)) {
 			// Send player to game lobby
 			plugin.Debug(player.getName() + " joined in " + player.getWorld().getName() + "! Returning player to lobby...");
-			if (!player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()))) {
-				// Mark the player as in game (don't do this by default! causes teleport problems + interop issues with NCP)
-				plugin.Warn("Unable to send " + player.getName() + " to lobby! Resuming game play...");
-				hcp.setState(PlayerState.IN_GAME);
-				plugin.SavePlayer(hcp);
-				if (plugin.IsPlayerVanished(player)) {
-					plugin.UnvanishPlayer(player);
+			loc = plugin.GetLobbyLocation(player, hcp.getWorld());
+			hcp.setState(PlayerState.ALIVE);
+		} else {
+			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess (State=" + hcp.getState() + ")!");
+			loc = plugin.GetLobbyLocation(player, hcp.getWorld());
+		}
+		
+		// We need to send them away!
+		if (loc != null) {
+			// Riders must be ejected before teleport
+			if (player.isInsideVehicle()) {
+				Entity ent = player.getVehicle();
+				ent.eject();
+			}
+
+			// Save record if needed
+			if (hcp != null) {
+				plugin.SavePlayer(hcp);					
+			}
+
+			// Send the player to the lobby
+			if (player.teleport(loc)) {
+				if (hcp != null) {
+					// Mark the player as in game (don't do this by default! causes teleport problems + interop issues with NCP)
+					plugin.Warn("Unable to send " + player.getName() + " to lobby! Resuming game play...");
+					hcp.setState(PlayerState.IN_GAME);
+					plugin.SavePlayer(hcp);
+					if (plugin.IsPlayerVanished(player)) {
+						plugin.UnvanishPlayer(player);
+					}
+				} else {
+					plugin.Warn("Unable to send " + player.getName() + " to lobby and no player record!! THAT IS BAD!");
 				}
 			}
-		} else {
-			plugin.Warn(player.getName() + " joined in hardcore world with no game in progess!");
-			player.teleport(plugin.GetLobbyLocation(player, hcp.getWorld()));
 		}
 	}
 
-	/*
-	 * Handle player changing worlds
-	 * TODO: work out if this is needed (currently does nothing)
-	 */
-	@EventHandler
-	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-		final Player player = event.getPlayer();
-		//plugin.Debug("EVENT: " + event.getEventName());
-		//plugin.Debug("FROM: " + event.getFrom().getName());
-		//plugin.Debug("LOCATION: " + player.getLocation().toString());
-		
-		if (plugin.IsHardcoreWorld(event.getFrom())) {
-			// World change
-			plugin.Debug(player.getName() + " exit from hardcore world");
-		}
-		else if (plugin.IsHardcoreWorld(player.getWorld())) {
-			// Player changing to the hardcore world
-			//plugin.LoadPlayer(player);
-			plugin.Debug(player.getName() + " entering hardcore world");
-		}
-	}
-	
 	/*
 	 * Handle the player respawning after death
 	 * Return the player to the lobby location
