@@ -157,7 +157,7 @@ public class PlayerListener implements Listener {
 			}
 
 			// Send the player to the lobby
-			if (player.teleport(loc)) {
+			if (!player.teleport(loc)) {
 				if (hcp != null) {
 					// Mark the player as in game (don't do this by default! causes teleport problems + interop issues with NCP)
 					plugin.Warn("Unable to send " + player.getName() + " to lobby! Resuming game play...");
