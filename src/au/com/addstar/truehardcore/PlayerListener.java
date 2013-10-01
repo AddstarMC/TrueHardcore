@@ -147,8 +147,8 @@ public class PlayerListener implements Listener {
 		if (loc != null) {
 			// Riders must be ejected before teleport
 			if (player.isInsideVehicle()) {
-				Entity ent = player.getVehicle();
-				ent.eject();
+				plugin.Debug(player.getName() + " exiting vehicle...");
+				player.leaveVehicle();
 			}
 
 			// Save record if needed
