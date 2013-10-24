@@ -125,6 +125,11 @@ public class PlayerListener implements Listener {
 
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
+		
+		if (player.isDead()) {
+			plugin.Debug(player.getName() + " joined " + player.getWorld() + " while dead! Ignoring event...");
+			return;
+		}
 
 		// Check if player is resuming a game or somehow stuck in the world but not playing
 		Location loc = null;
