@@ -833,55 +833,84 @@ public final class TrueHardcore extends JavaPlugin {
 		return;
 	}
 	
-	public void LoadAllPlayers() {
+	public Boolean LoadAllPlayers() {
 		String query = "SELECT * FROM `truehardcore`.`players` ORDER BY world,player";
 		try {
 			HCPlayers.Clear();
 			ResultSet res = dbcon.PreparedQuery(query, null);
-			//Debug("Found " + res.getFetchSize() + " records in database");
 			if (res != null) {
 				while (res.next()) {
 					String player = res.getString("player");
 					String world = res.getString("world");
-					//World w = getServer().getWorld(world);
 					DebugLog("Loading: " + world + "/" + player);
-					
 					HardcorePlayer hcp = HCPlayers.NewPlayer(world, player);
-					hcp.setLoadDataOnly(true);
-					hcp.setLastPos(Util.Str2Loc(res.getString("lastpos")));
-					hcp.setLastJoin(Util.Mysql2Date(res.getString("lastjoin")));
-					hcp.setLastQuit(Util.Mysql2Date(res.getString("lastquit")));
-					hcp.setGameStart(Util.Mysql2Date(res.getString("gamestart")));
-					hcp.setGameEnd(Util.Mysql2Date(res.getString("gameend")));
-					hcp.setGameTime(res.getInt("gametime"));
-					hcp.setLevel(res.getInt("level"));
-					hcp.setExp(res.getInt("exp"));
-					hcp.setScore(res.getInt("score"));
-					hcp.setTopScore(res.getInt("topscore"));
-					hcp.setState(PlayerState.valueOf(res.getString("state")));
-					hcp.setDeathMsg(res.getString("deathmsg"));
-					hcp.setDeathPos(Util.Str2Loc(res.getString("deathpos")));
-					hcp.setDeaths(res.getInt("deaths"));
-					hcp.setCowKills(res.getInt("cowkills"));
-					hcp.setPigKills(res.getInt("pigkills"));
-					hcp.setSheepKills(res.getInt("sheepkills"));
-					hcp.setChickenKills(res.getInt("chickenkills"));
-					hcp.setCreeperKills(res.getInt("creeperkills"));
-					hcp.setZombieKills(res.getInt("zombiekills"));
-					hcp.setSkeletonKills(res.getInt("skeletonkills"));
-					hcp.setSpiderKills(res.getInt("spiderkills"));
-					hcp.setEnderKills(res.getInt("enderkills"));
-					hcp.setSlimeKills(res.getInt("slimekills"));
-					hcp.setMooshKills(res.getInt("mooshkills"));
-					hcp.setOtherKills(res.getInt("otherkills"));
-					hcp.setPlayerKills(res.getInt("playerkills"));
-					hcp.setModified(false);
-					hcp.setLoadDataOnly(false);
+					LoadPlayerFromData(hcp, res);
 				}
 			}
 		}
 		catch (Exception e) {
-			Debug("Unable to save player record to database!");
+			Debug("Unable to load player record to database!");
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	public Boolean LoadPlayer(String world, String player) {
+		String query = "SELECT * FROM `truehardcore`.`players` WHERE player='?' and world='?'";
+		try {
+			ResultSet res = dbcon.PreparedQuery(query, new String[]{player, world});
+			HardcorePlayer hcp = HCPlayers.Get(world, player);
+			if ((res != null) && (hcp != null) && (res.next())) {
+				DebugLog("Loading: " + world + "/" + player);
+				LoadPlayerFromData(hcp, res);
+			} else {
+				return false;
+			}
+		}
+		catch (Exception e) {
+			Debug("Unable to load player record to database!");
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
+	public void LoadPlayerFromData(HardcorePlayer hcp, ResultSet res) {
+		try {
+			hcp.setLoadDataOnly(true);
+			hcp.setLastPos(Util.Str2Loc(res.getString("lastpos")));
+			hcp.setLastJoin(Util.Mysql2Date(res.getString("lastjoin")));
+			hcp.setLastQuit(Util.Mysql2Date(res.getString("lastquit")));
+			hcp.setGameStart(Util.Mysql2Date(res.getString("gamestart")));
+			hcp.setGameEnd(Util.Mysql2Date(res.getString("gameend")));
+			hcp.setGameTime(res.getInt("gametime"));
+			hcp.setLevel(res.getInt("level"));
+			hcp.setExp(res.getInt("exp"));
+			hcp.setScore(res.getInt("score"));
+			hcp.setTopScore(res.getInt("topscore"));
+			hcp.setState(PlayerState.valueOf(res.getString("state")));
+			hcp.setDeathMsg(res.getString("deathmsg"));
+			hcp.setDeathPos(Util.Str2Loc(res.getString("deathpos")));
+			hcp.setDeaths(res.getInt("deaths"));
+			hcp.setCowKills(res.getInt("cowkills"));
+			hcp.setPigKills(res.getInt("pigkills"));
+			hcp.setSheepKills(res.getInt("sheepkills"));
+			hcp.setChickenKills(res.getInt("chickenkills"));
+			hcp.setCreeperKills(res.getInt("creeperkills"));
+			hcp.setZombieKills(res.getInt("zombiekills"));
+			hcp.setSkeletonKills(res.getInt("skeletonkills"));
+			hcp.setSpiderKills(res.getInt("spiderkills"));
+			hcp.setEnderKills(res.getInt("enderkills"));
+			hcp.setSlimeKills(res.getInt("slimekills"));
+			hcp.setMooshKills(res.getInt("mooshkills"));
+			hcp.setOtherKills(res.getInt("otherkills"));
+			hcp.setPlayerKills(res.getInt("playerkills"));
+			hcp.setModified(false);
+			hcp.setLoadDataOnly(false);
+		}
+		catch (Exception e) {
+			Debug("Unable to load player record to database!");
 			e.printStackTrace();
 		}
 	}

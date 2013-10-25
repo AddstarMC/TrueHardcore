@@ -381,6 +381,23 @@ public class CommandTH implements CommandExecutor {
 			plugin.Debug("Saving buffered data...");
 			plugin.SaveAllPlayers();
 		}
+		else if (action.equals("LOAD")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+			}
+			
+			if (args.length < 3) {
+				sender.sendMessage(ChatColor.RED + "Usage: /th load <player> <world>");
+				return true;
+			}
+			else if (args.length == 3) {
+				if (plugin.LoadPlayer(args[2], args[1])) {
+					sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/" + args[1] + " has been reloaded.");
+				} else {
+					sender.sendMessage(ChatColor.RED + "Player record failed to load!");
+				}
+			}
+		}
 		else if (action.equals("RELOAD")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
