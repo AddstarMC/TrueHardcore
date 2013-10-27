@@ -409,6 +409,7 @@ public class CommandTH implements CommandExecutor {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			plugin.GameEnabled = false;
+			plugin.DebugLog("TrueHardcore has been disabled.");
 			sender.sendMessage(ChatColor.RED + "TrueHardcore has been disabled.");
 		}
 		else if (action.equals("ENABLE")) {
@@ -416,6 +417,7 @@ public class CommandTH implements CommandExecutor {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 			}
 			plugin.GameEnabled = true;
+			plugin.DebugLog("TrueHardcore has been enabled.");
 			sender.sendMessage(ChatColor.GREEN + "TrueHardcore has been enabled.");
 		}
 		else if (action.equals("BCAST")) {

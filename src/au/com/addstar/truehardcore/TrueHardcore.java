@@ -857,11 +857,10 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public Boolean LoadPlayer(String world, String player) {
-		String query = "SELECT * FROM `players` WHERE player='?' and world='?'";
+		String query = "SELECT * FROM `players` WHERE player=? and world=?";
 		try {
 			DebugLog("Reload player record from DB: " + world + "/" + player);
-			String[] values = {player, world};
-			ResultSet res = dbcon.PreparedQuery(query, values);
+			ResultSet res = dbcon.PreparedQuery(query, new String[]{player, world});
 			HardcorePlayer hcp = HCPlayers.Get(world, player);
 			if ((res != null) && (hcp != null) && (res.next())) {
 				DebugLog("Loading: " + world + "/" + player);
