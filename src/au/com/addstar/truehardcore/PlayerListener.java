@@ -28,7 +28,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -162,7 +161,7 @@ public class PlayerListener implements Listener {
 			}
 
 			// Send the player to the lobby
-			if (!player.teleport(loc)) {
+			if (!Util.Teleport(player, loc)) {
 				if (hcp != null) {
 					// Mark the player as in game (don't do this by default! causes teleport problems + interop issues with NCP)
 					plugin.Warn("Unable to send " + player.getName() + " to lobby! Resuming game play...");
@@ -217,10 +216,10 @@ public class PlayerListener implements Listener {
 
 		TeleportCause cause = event.getCause();
 		plugin.DebugLog(
-				"Teleport (" + player.getName() + "): " + 
-				from.getWorld().getName() + " " + from.getBlockX() + " " + from.getBlockY() + " " + from.getBlockZ() +
+				"PlayerTeleportEvent (" + player.getName() + "): " + 
+				from.getWorld().getName() + " " + from.getX() + " " + from.getY() + " " + from.getZ() +
 				" [TO] " +
-				to.getWorld().getName() + " " + to.getBlockX() + " " + to.getBlockY() + " " + to.getBlockZ() +
+				to.getWorld().getName() + " " + to.getX() + " " + to.getY() + " " + to.getZ() +
 				" (" + cause + ")"
 		);
 

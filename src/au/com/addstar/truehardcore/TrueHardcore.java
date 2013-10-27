@@ -554,7 +554,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public boolean NewSpawn(Player player, Location spawn) {
 		HardcorePlayer hcp = HCPlayers.Get(spawn.getWorld(), player);
 		
-		if (player.teleport(spawn)) {
+		if (Util.Teleport(player, spawn)) {
 			hcp.setState(PlayerState.IN_GAME);
 			hcp.setSpawnPos(spawn);
 			player.setFallDistance(0);
@@ -670,7 +670,7 @@ public final class TrueHardcore extends JavaPlugin {
 				// We have to change the game state to allow the teleport out of the world
 				hcp.setState(PlayerState.ALIVE);
 				hcp.updatePlayer(player);
-				if (player.teleport(GetLobbyLocation(player, hcp.getWorld()))) {
+				if (Util.Teleport(player, GetLobbyLocation(player, hcp.getWorld()))) {
 					hcp.calcGameTime();
 					SavePlayer(hcp);
 				} else {
@@ -814,7 +814,7 @@ public final class TrueHardcore extends JavaPlugin {
 		if (hcp != null) {
 			if (hcp.getLastPos() != null) {
 				DebugLog("Returning player to: " + hcp.getLastPos());
-				if (player.teleport(hcp.getLastPos())) {
+				if (Util.Teleport(player, hcp.getLastPos())) {
 					player.setWalkSpeed(0.2F);
 					player.setFlySpeed(0.2F);
 					player.setGameMode(GameMode.SURVIVAL);

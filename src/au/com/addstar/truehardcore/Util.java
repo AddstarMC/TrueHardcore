@@ -192,6 +192,20 @@ public class Util {
 		}
 		return false;
 	}
-	
-	
+
+	public static boolean Teleport(Player player, Location loc) {
+		if ((loc == null) || (player == null)) {
+			TrueHardcore.instance.DebugLog("Teleport location or player null!");
+			return false;
+		} else {
+			TrueHardcore.instance.DebugLog("Teleport (" + player.getName() + "): " + loc);
+			Location newloc = new Location(
+					loc.getWorld(),
+					(double) loc.getBlockX() + 0.5,
+					(double) loc.getBlockY(),
+					(double) loc.getBlockZ() + 0.5
+			);
+			return player.teleport(newloc);
+		}
+	}	
 }
