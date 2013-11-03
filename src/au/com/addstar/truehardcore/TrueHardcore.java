@@ -384,8 +384,9 @@ public final class TrueHardcore extends JavaPlugin {
 				        int count = 0;
 						if (lwc.getPhysicalDatabase() != null) {
 					        List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getName());
+					        String w = world.getName();
 					        for(Protection prot : prots) {
-					        	if (prot.getWorld().equals(world.getName())) {
+					        	if (prot.getWorld().equals(w) || prot.getWorld().equals(w + "_nether")) {
 					        		count++;
 		
 					        		// Remove LWC protection
@@ -406,7 +407,6 @@ public final class TrueHardcore extends JavaPlugin {
 								try {
 									final QueryParams params = new QueryParams(logblock);
 									params.setPlayer(player.getName());
-									params.world = world;
 									params.silent = false;
 									params.before = 0;
 									params.excludeVictimsMode = true;
@@ -417,18 +417,40 @@ public final class TrueHardcore extends JavaPlugin {
 									if (logblock == null) {
 										plugin.Debug("CRITICAL! logblock handle is null");
 									}
-		
-									plugin.Debug("Rollback changes for " + player.getName() + "...");
+
+									// Rollback hardcore world (overworld)
+									params.world = world;
+									plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
 									CommandRollback cr = plugin.logblock.getCommandsHandler().new CommandRollback(cs, params, true);
 									cr.close();
 		
+									// Rollback corresponding nether world
+									World nether = getServer().getWorld(world.getName() + "_nether");
+									if (nether != null) {
+										params.world = nether;
+										plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
+										cr = plugin.logblock.getCommandsHandler().new CommandRollback(cs, params, true);
+										cr.close();
+									}
+
 									plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
 										@Override
 										public void run() {
 											try {
-												plugin.Debug("Clearing changes for " + player.getName() + "...");
+												// Clear player changes in hardcore world (overworld)
+												params.world = world;
+												plugin.Debug("Clearing changes for " + player.getName() + " (" + params.world.getName() + ")...");
 												CommandClearLog ccl = plugin.logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
 												ccl.close();
+
+												// Clear player changes in corresponding nether world
+												World nether = getServer().getWorld(world.getName() + "_nether");
+												if (nether != null) {
+													params.world = nether;
+													plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
+													ccl = plugin.logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
+													ccl.close();
+												}
 											} catch (Exception e) {
 												e.printStackTrace();
 											}
