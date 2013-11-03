@@ -41,7 +41,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -64,10 +63,7 @@ import com.griefcraft.model.Protection;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 
-import de.diddiz.LogBlock.CommandsHandler.CommandClearLog;
-import de.diddiz.LogBlock.CommandsHandler.CommandRollback;
 import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.LogBlock.QueryParams;
 
 import au.com.addstar.truehardcore.HardcorePlayers.*;
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
@@ -237,8 +233,6 @@ public final class TrueHardcore extends JavaPlugin {
         getServer().getScheduler().cancelTasks(this);
 		SaveAllPlayers();
 		
-		// TODO: force leave all players
-		
 		Log(pdfFile.getName() + " has been disabled!");
 		debugfh.close();
 	}
@@ -401,68 +395,16 @@ public final class TrueHardcore extends JavaPlugin {
 					}
 
 					if (LBHooked) {
-						plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-							@Override
-							public void run() {
-								try {
-									final QueryParams params = new QueryParams(logblock);
-									params.setPlayer(player.getName());
-									params.silent = false;
-									params.before = 0;
-									params.excludeVictimsMode = true;
-									params.excludeKillersMode = true;
-		
-									final CommandSender cs = plugin.getServer().getConsoleSender();
-		
-									if (logblock == null) {
-										plugin.Debug("CRITICAL! logblock handle is null");
-									}
-
-									// Rollback hardcore world (overworld)
-									params.world = world;
-									plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
-									CommandRollback cr = plugin.logblock.getCommandsHandler().new CommandRollback(cs, params, true);
-									cr.close();
-		
-									// Rollback corresponding nether world
-									World nether = getServer().getWorld(world.getName() + "_nether");
-									if (nether != null) {
-										params.world = nether;
-										plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
-										cr = plugin.logblock.getCommandsHandler().new CommandRollback(cs, params, true);
-										cr.close();
-									}
-
-									plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-										@Override
-										public void run() {
-											try {
-												// Clear player changes in hardcore world (overworld)
-												params.world = world;
-												plugin.Debug("Clearing changes for " + player.getName() + " (" + params.world.getName() + ")...");
-												CommandClearLog ccl = plugin.logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
-												ccl.close();
-
-												// Clear player changes in corresponding nether world
-												World nether = getServer().getWorld(world.getName() + "_nether");
-												if (nether != null) {
-													params.world = nether;
-													plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
-													ccl = plugin.logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
-													ccl.close();
-												}
-											} catch (Exception e) {
-												e.printStackTrace();
-											}
-										}
-									}, 20 * 20L);
-									
-								} catch (Exception e) {
-								    // Do nothing or throw an error if you want
-									e.printStackTrace();
-								}
-							}
-						}, 40L + (hcw.getRollbackDelay() * 20L));
+						// Overworld rollback
+						Runnable rb1 = new WorldRollback(logblock, player, world, 30);
+						plugin.getServer().getScheduler().runTaskLater(plugin, rb1, 40L + (hcw.getRollbackDelay() * 20L));
+						
+						// Nether rollback (delayed by 5s to reduce collisions)
+						World netherworld = plugin.getServer().getWorld(world.getName() + "_nether");
+						if (netherworld != null) {
+							Runnable rb2 = new WorldRollback(logblock, player, netherworld, 30);
+							plugin.getServer().getScheduler().runTaskLater(plugin, rb2, 40L + ((hcw.getRollbackDelay() * 20L) + (5 * 20L)));
+						}
 					}
 				} catch (Exception e) {
 				    // Do nothing or throw an error if you want
