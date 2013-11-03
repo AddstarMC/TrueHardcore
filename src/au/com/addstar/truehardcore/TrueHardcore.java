@@ -999,6 +999,25 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 	}
 	
+	public Boolean AddToWhitelist(String player) {
+		String query = "INSERT INTO `whitelist` (player, worlds) VALUES (?, ?)";
+		String worlds = HardcoreWorlds.GetNames(); 
+		try {
+			DebugLog("Add player to whitelist: " + player);
+			int result = dbcon.PreparedUpdate(query, new String[]{player, worlds});
+			if (result < 0) {
+				Debug("Whitelist update failed!");
+				return false;
+			}
+		}
+		catch (Exception e) {
+			Debug("Unable to load player record to database!");
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
 	public void UnvanishPlayer(Player player) {
 		if (IsPlayerVanished(player)) {
 			Debug("Unvanishing " + player.getName());

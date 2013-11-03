@@ -116,4 +116,9 @@ public class HardcoreWorlds {
 	public Map<String, HardcoreWorld> AllRecords() {
 		return Worlds;
 	}
+	
+	public String GetNames() {
+		String[] names = (String[]) Worlds.keySet().toArray();
+		return StringUtils.join(names, ",");
+	}
 }

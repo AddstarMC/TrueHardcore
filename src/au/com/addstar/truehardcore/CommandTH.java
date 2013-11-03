@@ -374,6 +374,33 @@ public class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.YELLOW + "Player Kills   : " + ChatColor.AQUA + hcp.getPlayerKills());
 			}
 		}
+		else if (action.equals("WHITELIST")) {
+			if (args.length < 3) {
+				sender.sendMessage(ChatColor.RED + "Usage: /th whitelist <add|del|list> [player]");
+			}
+			else {
+				if (sender instanceof Player) {
+					if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+				}
+				String type = args[1].toUpperCase();
+				String player = args[2];
+				if (type == "ADD") {
+					if (plugin.AddToWhitelist(player)) {
+						sender.sendMessage(ChatColor.GREEN + "Player " + player + " added to TrueHardcore whitelist.");
+					} else {
+						sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
+					}
+				}
+				else if (type == "LIST") {
+					sender.sendMessage(ChatColor.RED + "Not implemented yet!");
+				}
+				else if (type == "DEL") {
+					sender.sendMessage(ChatColor.RED + "Not implemented yet!");
+				} else {
+					sender.sendMessage(ChatColor.RED + "Usage: /th whitelist <add|del|list> [player]");
+				}
+			}
+		}
 		else if (action.equals("SAVE")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
@@ -437,11 +464,22 @@ public class CommandTH implements CommandExecutor {
 		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
-			sender.sendMessage(ChatColor.AQUA + "/th play   " + ChatColor.YELLOW + ": Start or resume your hardcore game");
-			sender.sendMessage(ChatColor.AQUA + "/th leave  " + ChatColor.YELLOW + ": Leave the hardcore game (progress is saved)");
-			sender.sendMessage(ChatColor.AQUA + "/th list   " + ChatColor.YELLOW + ": List the current hardcore players");
-			sender.sendMessage(ChatColor.AQUA + "/th info   " + ChatColor.YELLOW + ": Display your current game information");
-			sender.sendMessage(ChatColor.AQUA + "/th stats  " + ChatColor.YELLOW + ": Display kill statistics");
+			sender.sendMessage(ChatColor.AQUA + "/th play       " + ChatColor.YELLOW + ": Start or resume your game");
+			sender.sendMessage(ChatColor.AQUA + "/th leave      " + ChatColor.YELLOW + ": Exit the hardcore game");
+			sender.sendMessage(ChatColor.AQUA + "/th list       " + ChatColor.YELLOW + ": List the current hardcore players");
+			sender.sendMessage(ChatColor.AQUA + "/th info       " + ChatColor.YELLOW + ": Display your game information");
+			sender.sendMessage(ChatColor.AQUA + "/th stats      " + ChatColor.YELLOW + ": Display kill statistics");
+			if (!(sender instanceof Player) || (!Util.RequirePermission((Player) sender, "truehardcore.admin"))) {
+				sender.sendMessage(ChatColor.AQUA + "/th bcast      " + ChatColor.YELLOW + ": Message all TH players");
+				sender.sendMessage(ChatColor.AQUA + "/th enable     " + ChatColor.YELLOW + ": Enable TrueHardocre");
+				sender.sendMessage(ChatColor.AQUA + "/th disable    " + ChatColor.YELLOW + ": Disable TrueHardcore");
+				sender.sendMessage(ChatColor.AQUA + "/th dump       " + ChatColor.YELLOW + ": Dump player record");
+				sender.sendMessage(ChatColor.AQUA + "/th dumpworlds " + ChatColor.YELLOW + ": Dump world records");
+				sender.sendMessage(ChatColor.AQUA + "/th save       " + ChatColor.YELLOW + ": Save all in-memory changes");
+				sender.sendMessage(ChatColor.AQUA + "/th load       " + ChatColor.YELLOW + ": Load player data from DB");
+				sender.sendMessage(ChatColor.AQUA + "/th reload     " + ChatColor.YELLOW + ": Reload whitelist");
+				sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW + ": Add/remove player to whitelist");
+			}
 		}
 		
 		return true;
