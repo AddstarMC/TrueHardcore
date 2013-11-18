@@ -384,17 +384,17 @@ public class CommandTH implements CommandExecutor {
 				}
 				String type = args[1].toUpperCase();
 				String player = args[2];
-				if (type == "ADD") {
+				if (type.equals("ADD")) {
 					if (plugin.AddToWhitelist(player)) {
 						sender.sendMessage(ChatColor.GREEN + "Player " + player + " added to TrueHardcore whitelist.");
 					} else {
 						sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
 					}
 				}
-				else if (type == "LIST") {
+				else if (type.equals("LIST")) {
 					sender.sendMessage(ChatColor.RED + "Not implemented yet!");
 				}
-				else if (type == "DEL") {
+				else if (type.equals("DEL")) {
 					sender.sendMessage(ChatColor.RED + "Not implemented yet!");
 				} else {
 					sender.sendMessage(ChatColor.RED + "Usage: /th whitelist <add|del|list> [player]");
