@@ -1,6 +1,8 @@
 package au.com.addstar.truehardcore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -118,7 +120,7 @@ public class HardcoreWorlds {
 	}
 	
 	public String GetNames() {
-		String[] names = (String[]) Worlds.keySet().toArray();
+		List<String> names = new ArrayList<String>(Worlds.keySet());
 		return StringUtils.join(names, ",");
 	}
 }
