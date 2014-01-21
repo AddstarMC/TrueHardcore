@@ -309,7 +309,11 @@ public final class TrueHardcore extends JavaPlugin {
 		String DeathMsg = event.getDeathMessage();
 		DeathMsg = DeathMsg.replaceFirst(player.getName(), ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
 		plugin.getServer().broadcastMessage(Header + DeathMsg + "!");
-		plugin.getServer().broadcastMessage(Header + "Final Score: " + ChatColor.GREEN + player.getTotalExperience());
+		plugin.getServer().broadcastMessage(
+				Header + 
+				"Final Score: " + ChatColor.GREEN + player.getTotalExperience() + " " +
+				ChatColor.AQUA + "(" + hcp.getWorld() + ")"
+		);
 		event.setDeathMessage(null);
 		if (hcp.getScore() > 0) {
 			// Check if this is the player's personal best
