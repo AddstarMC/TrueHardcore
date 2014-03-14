@@ -469,7 +469,7 @@ public class CommandTH implements CommandExecutor {
 			sender.sendMessage(ChatColor.AQUA + "/th list       " + ChatColor.YELLOW + ": List the current hardcore players");
 			sender.sendMessage(ChatColor.AQUA + "/th info       " + ChatColor.YELLOW + ": Display your game information");
 			sender.sendMessage(ChatColor.AQUA + "/th stats      " + ChatColor.YELLOW + ": Display kill statistics");
-			if (!(sender instanceof Player) || (!Util.RequirePermission((Player) sender, "truehardcore.admin"))) {
+			if (!(sender instanceof Player) || (Util.RequirePermission((Player) sender, "truehardcore.admin"))) {
 				sender.sendMessage(ChatColor.AQUA + "/th bcast      " + ChatColor.YELLOW + ": Message all TH players");
 				sender.sendMessage(ChatColor.AQUA + "/th enable     " + ChatColor.YELLOW + ": Enable TrueHardocre");
 				sender.sendMessage(ChatColor.AQUA + "/th disable    " + ChatColor.YELLOW + ": Disable TrueHardcore");
