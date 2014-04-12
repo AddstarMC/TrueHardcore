@@ -894,7 +894,10 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsHardcoreWorld(World world) {
-		return HardcoreWorlds.Contains(world.getName());
+		if (World != null) {
+			return HardcoreWorlds.Contains(world.getName());
+		}
+		return false;
 	}
 	
 	public Location GetLobbyLocation(Player player, String world) {
