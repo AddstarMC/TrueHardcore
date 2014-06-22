@@ -581,12 +581,6 @@ public final class TrueHardcore extends JavaPlugin {
 				b = b.getRelative(BlockFace.DOWN);
 			}
 
-			// Get worldborder
-			BorderData bd = null;
-			if (WBHooked) {
-				bd = wb.GetWorldBorder(world.getName());
-			}
-			
 			spawn = new Location(b.getWorld(), b.getX(), b.getY()+2, b.getZ());
 			if (SpawnBlocks.contains(b.getType())) {
 				if (spawn.getBlockX() >= 0) { spawn.setX(spawn.getBlockX() + 0.5); }
@@ -596,7 +590,7 @@ public final class TrueHardcore extends JavaPlugin {
 				if (spawn.getBlockZ() < 0)  { spawn.setZ(spawn.getBlockZ() - 0.5); }
 
 				// Make sure it's inside the world border (if one exists)
-				if ((bd == null) || bd.insideBorder(spawn)) {
+				if (InsideWorldBorder(spawn)) {
 					GoodSpawn = true;
 					reason = "Allowed block type (" + b.getType() + ")!";
 				} else {
@@ -894,7 +888,7 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsHardcoreWorld(World world) {
-		if (World != null) {
+		if (world != null) {
 			return HardcoreWorlds.Contains(world.getName());
 		}
 		return false;
@@ -1064,5 +1058,15 @@ public final class TrueHardcore extends JavaPlugin {
 				}
 			}
 		}
+	}
+	
+	public boolean InsideWorldBorder(Location loc) {
+		BorderData bd = null;
+		if (!WBHooked) return true;
+		bd = wb.GetWorldBorder(loc.getWorld().getName());
+		if (bd.insideBorder(loc)) {
+			return true;
+		}
+		return false;
 	}
 }
