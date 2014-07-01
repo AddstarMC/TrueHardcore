@@ -359,7 +359,7 @@ public class PlayerListener implements Listener {
 		}
 	}
 	
-	@EventHandler(ignoreCancelled=true)
+	@EventHandler(ignoreCancelled=true, priority=EventPriority.LOWEST)
 	private void playerExitPortal(EntityPortalExitEvent event) {
 		if (event.getEntity() instanceof Player) {
 			Location to = event.getTo();
@@ -368,7 +368,6 @@ public class PlayerListener implements Listener {
 					event.setCancelled(true);
 					Player player = (Player) event.getEntity();
 					player.sendMessage(ChatColor.RED + "Sorry, this portal destination is not inside the borders of a Hardcore world. Please move it to another location.");
-					player.teleport(event.getFrom());
 				}
 			}
 		}
