@@ -27,7 +27,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntityPortalExitEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -360,7 +360,7 @@ public class PlayerListener implements Listener {
 	}
 	
 	@EventHandler(ignoreCancelled=true)
-	private void playerExitPortal(EntityPortalExitEvent event) {
+	private void playerExitPortal(EntityPortalEvent event) {
 		if (event.getEntity() instanceof Player) {
 			Location to = event.getTo();
 			if (plugin.IsHardcoreWorld(to.getWorld())) {
