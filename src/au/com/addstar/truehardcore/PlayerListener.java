@@ -27,10 +27,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.EntityPortalExitEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -360,15 +360,13 @@ public class PlayerListener implements Listener {
 	}
 	
 	@EventHandler(ignoreCancelled=true, priority=EventPriority.LOWEST)
-	private void playerExitPortal(EntityPortalExitEvent event) {
-		if (event.getEntity() instanceof Player) {
-			Location to = event.getTo();
-			if (plugin.IsHardcoreWorld(to.getWorld())) {
-				if (!plugin.InsideWorldBorder(to)) {
-					event.setCancelled(true);
-					Player player = (Player) event.getEntity();
-					player.sendMessage(ChatColor.RED + "Sorry, this portal destination is not inside the borders of a Hardcore world. Please move it to another location.");
-				}
+	private void playerExitPortal(PlayerPortalEvent event) {
+		Location to = event.getTo();
+		if (plugin.IsHardcoreWorld(to.getWorld())) {
+			if (!plugin.InsideWorldBorder(to)) {
+				event.setCancelled(true);
+				Player player = event.getPlayer();
+				player.sendMessage(ChatColor.RED + "Sorry, this portal destination is not inside the borders of a Hardcore world. Please move it to another location.");
 			}
 		}
 	}
