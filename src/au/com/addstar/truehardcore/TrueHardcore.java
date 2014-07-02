@@ -1064,7 +1064,7 @@ public final class TrueHardcore extends JavaPlugin {
 		BorderData bd = null;
 		if (!WBHooked) return true;
 		bd = wb.GetWorldBorder(loc.getWorld().getName());
-		if (bd.insideBorder(loc)) {
+		if ((bd != null) && (bd.insideBorder(loc))) {
 			return true;
 		}
 		return false;
