@@ -359,10 +359,10 @@ public class PlayerListener implements Listener {
 		}
 	}
 	
-	@EventHandler(ignoreCancelled=true, priority=EventPriority.LOWEST)
+	@EventHandler(ignoreCancelled=true)
 	private void playerExitPortal(PlayerPortalEvent event) {
 		Location to = event.getTo();
-		if (plugin.IsHardcoreWorld(to.getWorld())) {
+		if ((to != null) && (plugin.IsHardcoreWorld(to.getWorld()))) {
 			if (!plugin.InsideWorldBorder(to)) {
 				event.setCancelled(true);
 				Player player = event.getPlayer();
