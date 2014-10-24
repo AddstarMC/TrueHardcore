@@ -199,13 +199,13 @@ public class Util {
 			return false;
 		} else {
 			TrueHardcore.instance.DebugLog("Teleport (" + player.getName() + "): " + loc);
-			Location newloc = new Location(
+			/*Location newloc = new Location(
 					loc.getWorld(),
 					(double) loc.getBlockX() + 0.5,
 					(double) loc.getBlockY(),
 					(double) loc.getBlockZ() + 0.5
-			);
-			return player.teleport(newloc);
+			);*/
+			return player.teleport(loc);
 		}
 	}	
 }
