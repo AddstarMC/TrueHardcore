@@ -72,5 +72,8 @@ public class ConfigManager {
 		plugin.DBName = Config().getString("mysql.database", "truehardcore");
 		plugin.DBUser = Config().getString("mysql.username", "truehardcore");
 		plugin.DBPass = Config().getString("mysql.password", "truehardcore");
+
+		// BungeeChat broadcast channel
+		plugin.BroadcastChannel = Config().getString("broadcast-channel", "GamesBCast");
 	}
 }

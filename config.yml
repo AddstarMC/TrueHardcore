@@ -1,6 +1,9 @@
 # Enable plugin debugging (warning: this is very verbose!)
 debug: true
 
+# BungeeChat Channel used for game broadcasts (eg. death)
+broadcast-channel: "GamesBCast" 
+
 # Which worlds are hardcore worlds
 worlds:
   hardcore1:

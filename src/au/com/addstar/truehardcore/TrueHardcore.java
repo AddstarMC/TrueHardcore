@@ -79,6 +79,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public boolean DebugEnabled = false;
 	public List<String> RollbackCmds = null;
 	public boolean GameEnabled = true;
+	public String BroadcastChannel = null; 
 	
 	private static final Logger logger = Logger.getLogger("Minecraft");
 	private static final Logger debuglog = Logger.getLogger("DebugLog");
@@ -1072,6 +1073,6 @@ public final class TrueHardcore extends JavaPlugin {
 	
 	public void BroadcastToAllServers(String msg) {
 		Bukkit.getServer().broadcastMessage(msg);
-		BungeeChat.mirrorChat(msg, getConfig().getString("GamesBCast"));
+		BungeeChat.mirrorChat(msg, BroadcastChannel);
 	}
 }
