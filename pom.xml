@@ -105,8 +105,8 @@
 
     <dependency>
       <groupId>org.kitteh</groupId>
-      <artifactId>vanish</artifactId>
-      <version>3.18.2</version>
+      <artifactId>VanishNoPacket</artifactId>
+      <version>3.19.2bungee-SNAPSHOT</version>
     </dependency>
 
     <!-- Used for Proxy-wide broadcast -->
