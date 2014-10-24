@@ -1071,7 +1071,7 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public void BroadcastToAllServers(String msg) {
-		Bukkit.broadcast(msg, null);
+		Bukkit.getServer().broadcastMessage(msg);
 		BungeeChat.mirrorChat(msg, getConfig().getString("GamesBCast"));
 	}
 }
