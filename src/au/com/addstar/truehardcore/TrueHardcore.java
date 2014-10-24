@@ -34,6 +34,7 @@ import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 import net.milkbowl.vault.permission.Permission;
 
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -64,7 +65,7 @@ import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 
 import de.diddiz.LogBlock.LogBlock;
-
+import au.com.addstar.bc.BungeeChat;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
 
@@ -308,8 +309,8 @@ public final class TrueHardcore extends JavaPlugin {
 		
 		String DeathMsg = event.getDeathMessage();
 		DeathMsg = DeathMsg.replaceFirst(player.getName(), ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
-		plugin.getServer().broadcastMessage(Header + DeathMsg + "!");
-		plugin.getServer().broadcastMessage(
+		BroadcastToAllServers(Header + DeathMsg + "!");
+		BroadcastToAllServers(
 				Header + 
 				"Final Score: " + ChatColor.GREEN + player.getTotalExperience() + " " +
 				ChatColor.AQUA + "(" + hcp.getWorld() + ")"
@@ -342,7 +343,7 @@ public final class TrueHardcore extends JavaPlugin {
 			}
 			
 			if (highscore) {
-				plugin.getServer().broadcastMessage(Header + ChatColor.AQUA + player.getName() + ChatColor.GREEN + " has beaten the all time high score!");
+				BroadcastToAllServers(Header + ChatColor.AQUA + player.getName() + ChatColor.GREEN + " has beaten the all time high score!");
 			}
 			else if (personalbest) {
 				player.sendMessage(ChatColor.GREEN + "Congratulations! You just beat your personal high score!");
@@ -989,7 +990,6 @@ public final class TrueHardcore extends JavaPlugin {
 			hcp.setGodMode(true);
 			player.sendMessage(ChatColor.YELLOW + "You are now invincible for " + seconds + " seconds...");
 			
-            // Delay the broadcast so the player sees it as the last message on their screen
             getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
                     @Override
                     public void run() {
@@ -1063,10 +1063,15 @@ public final class TrueHardcore extends JavaPlugin {
 	public boolean InsideWorldBorder(Location loc) {
 		BorderData bd = null;
 		if (!WBHooked) return true;
-		bd = wb.GetWorldBorder(loc.getWorld().getName());
+		bd = wb.getWorldBorder(loc.getWorld().getName());
 		if ((bd != null) && (bd.insideBorder(loc))) {
 			return true;
 		}
 		return false;
+	}
+	
+	public void BroadcastToAllServers(String msg) {
+		Bukkit.broadcast(msg, null);
+		BungeeChat.mirrorChat(msg, getConfig().getString("GamesBCast"));
 	}
 }
