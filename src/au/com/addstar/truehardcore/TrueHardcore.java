@@ -226,6 +226,16 @@ public final class TrueHardcore extends JavaPlugin {
 		getCommand("th").setExecutor(new CommandTH(this));
 
 		pm.registerEvents(new PlayerListener(this), this);
+
+		// Set auto save timer
+		Log("Launching auto-save timer (every 5 minutes)...");
+		getServer().getScheduler().runTaskTimer(this, new Runnable() {
+			@Override
+			public void run() {
+				SaveIngamePlayers();
+			}
+		}, 20*20L, 20*20L);
+		
 		Log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
 	}
 	
@@ -636,6 +646,7 @@ public final class TrueHardcore extends JavaPlugin {
 				hcp.updatePlayer(player);
 				if (Util.Teleport(player, GetLobbyLocation(player, hcp.getWorld()))) {
 					hcp.calcGameTime();
+					hcp.updatePlayer(player);
 					SavePlayer(hcp);
 				} else {
 					// Teleport failed so set the game state back
@@ -651,15 +662,24 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public BukkitTask SavePlayer(HardcorePlayer hcp) {
-		return SavePlayer(hcp, true);
+		return SavePlayer(hcp, true, false);
 	}
 	
 	public BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async) {
+		return SavePlayer(hcp, Async, false);
+	}
+	
+	public BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async, final boolean AutoSave) {
 		if (hcp == null) {
 			Warn("SavePlayer called with null record!");
 			return null;
 		}
-		Debug("Saving data for " + hcp.getPlayerName());
+
+		if (AutoSave) {
+			DebugLog("Auto-saving data for " + hcp.getWorld() + "/" + hcp.getPlayerName());
+		} else {
+			Debug("Saving data for " + hcp.getWorld() + "/" + hcp.getPlayerName());
+		}
 
 		// CowKills, PigKills, SheepKills, ChickenKills;
 		// CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
@@ -748,13 +768,17 @@ public final class TrueHardcore extends JavaPlugin {
 			@Override
 			public void run() {
 				try {
-					int result = dbcon.PreparedUpdate(query, values);
+					int result = dbcon.PreparedUpdate(query, values, AutoSave);
 					if (result < 0) {
 						Debug("Player record save failed!");
+						Debug("Query: " + query);
+						Debug("Values: " + Arrays.toString(values));
 					}
 				}
 				catch (Exception e) {
 					Debug("Unable to save player record to database!");
+					Debug("Query: " + query);
+					Debug("Values: " + Arrays.toString(values));
 					e.printStackTrace();
 				}
 			}
@@ -762,10 +786,10 @@ public final class TrueHardcore extends JavaPlugin {
 		
 		BukkitTask task = null;
 		if (Async) {
-			Debug("Launching async save task...");
+			if (!AutoSave) Debug("Launching async save task...");
 			task = getServer().getScheduler().runTaskAsynchronously(this, savetask); 
 		} else {
-			Debug("Saving synchronously...");
+			if (!AutoSave) Debug("Saving synchronously...");
 			savetask.run();
 		}
 		
@@ -885,6 +909,20 @@ public final class TrueHardcore extends JavaPlugin {
 			HardcorePlayer hcp = entry.getValue();
 			if ((hcp != null) && (hcp.isModified())) {
 				SavePlayer(hcp, false);
+			}
+		}
+	}
+	
+	public void SaveIngamePlayers() {
+		for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
+			HardcorePlayer hcp = entry.getValue();
+			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
+				Player p = Bukkit.getPlayer(hcp.getPlayerName());
+				if (p != null) {
+					hcp.calcGameTime(new Date());
+					hcp.updatePlayer(p);
+					SavePlayer(hcp, true, true);
+				}
 			}
 		}
 	}

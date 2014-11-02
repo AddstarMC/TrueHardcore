@@ -339,7 +339,10 @@ public class HardcorePlayers {
 			return null;
 		}
 		public void calcGameTime() {
-			Integer diff = TimeDiff(getLastJoin(), getLastQuit());
+			calcGameTime(getLastQuit());
+		}
+		public void calcGameTime(Date when) {
+			Integer diff = TimeDiff(getLastJoin(), when);
 			if (diff != null) {
 				setGameTime(getGameTime() + diff);
 			}

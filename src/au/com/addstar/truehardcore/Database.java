@@ -115,6 +115,10 @@ public class Database {
 	}
 	
 	public int PreparedUpdate(String query, String[] params) {
+		return PreparedUpdate(query, params, false);
+	}
+
+	public int PreparedUpdate(String query, String[] params, boolean silent) {
 		PreparedStatement ps;
 		
 		if (!IsConnected) { return -1; }
@@ -122,9 +126,9 @@ public class Database {
 		try {
 			ps = Conn.prepareStatement(query);
 			// Construct PreparedStatement by adding all supplied params to the query
-			plugin.DebugLog("SQL Update: " + query);
+			if (!silent) plugin.DebugLog("SQL Update: " + query);
 			for (int x=0; x < params.length; x++) {
-				plugin.DebugLog("Param " + (x+1) + ": "+ params[x]);
+				if (!silent) plugin.DebugLog("Param " + (x+1) + ": "+ params[x]);
 				ps.setString(x+1, params[x]);
 			}
 			return ps.executeUpdate();
