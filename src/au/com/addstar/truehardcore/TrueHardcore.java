@@ -234,7 +234,7 @@ public final class TrueHardcore extends JavaPlugin {
 			public void run() {
 				SaveIngamePlayers();
 			}
-		}, 20*20L, 20*20L);
+		}, 300*20L, 300*20L);
 		
 		Log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
 	}
