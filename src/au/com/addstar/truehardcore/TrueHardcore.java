@@ -649,7 +649,6 @@ public final class TrueHardcore extends JavaPlugin {
 				hcp.updatePlayer(player);
 				if (Util.Teleport(player, GetLobbyLocation(player, hcp.getWorld()))) {
 					hcp.calcGameTime();
-					hcp.updatePlayer(player);
 					SavePlayer(hcp);
 				} else {
 					// Teleport failed so set the game state back
