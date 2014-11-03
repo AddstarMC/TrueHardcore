@@ -1,6 +1,9 @@
 # Enable plugin debugging (warning: this is very verbose!)
 debug: true
 
+# Auto save player state to the database every 5 minutes?
+auto-save: false
+
 # BungeeChat Channel used for game broadcasts (eg. death)
 broadcast-channel: "GamesBCast" 
 

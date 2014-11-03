@@ -75,5 +75,6 @@ public class ConfigManager {
 
 		// BungeeChat broadcast channel
 		plugin.BroadcastChannel = Config().getString("broadcast-channel", "GamesBCast");
+		plugin.AutoSaveEnabled = Config().getBoolean("auto-save", false);
 	}
 }

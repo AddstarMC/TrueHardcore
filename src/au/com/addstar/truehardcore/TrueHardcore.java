@@ -79,7 +79,8 @@ public final class TrueHardcore extends JavaPlugin {
 	public boolean DebugEnabled = false;
 	public List<String> RollbackCmds = null;
 	public boolean GameEnabled = true;
-	public String BroadcastChannel = null; 
+	public String BroadcastChannel = null;
+	public boolean AutoSaveEnabled = false;
 	
 	private static final Logger logger = Logger.getLogger("Minecraft");
 	private static final Logger debuglog = Logger.getLogger("DebugLog");
@@ -228,13 +229,15 @@ public final class TrueHardcore extends JavaPlugin {
 		pm.registerEvents(new PlayerListener(this), this);
 
 		// Set auto save timer
-		Log("Launching auto-save timer (every 5 minutes)...");
-		getServer().getScheduler().runTaskTimer(this, new Runnable() {
-			@Override
-			public void run() {
-				SaveIngamePlayers();
-			}
-		}, 300*20L, 300*20L);
+		if (AutoSaveEnabled) {
+			Log("Launching auto-save timer (every 5 minutes)...");
+			getServer().getScheduler().runTaskTimer(this, new Runnable() {
+				@Override
+				public void run() {
+					SaveIngamePlayers();
+				}
+			}, 300*20L, 300*20L);
+		}
 		
 		Log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
 	}
