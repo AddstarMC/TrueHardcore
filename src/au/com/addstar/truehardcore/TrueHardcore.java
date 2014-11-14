@@ -648,7 +648,7 @@ public final class TrueHardcore extends JavaPlugin {
 				hcp.setState(PlayerState.ALIVE);
 				hcp.updatePlayer(player);
 				if (Util.Teleport(player, GetLobbyLocation(player, hcp.getWorld()))) {
-					BroadcastToHardcore(ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
+					BroadcastToHardcore(Header + ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
 					hcp.calcGameTime();
 					SavePlayer(hcp);
 				} else {
@@ -814,7 +814,7 @@ public final class TrueHardcore extends JavaPlugin {
 					player.setFlying(false);
 					player.setFallDistance(0);
 					player.setNoDamageTicks(60);
-					BroadcastToHardcore(ChatColor.GREEN + player.getDisplayName() + " has entered " + hcp.getWorld(), player.getName());
+					BroadcastToHardcore(Header + ChatColor.GREEN + player.getDisplayName() + " has entered " + hcp.getWorld(), player.getName());
 				} else {
 					Warn("Teleport failed!");
 				}
