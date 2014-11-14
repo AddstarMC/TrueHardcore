@@ -921,7 +921,6 @@ public final class TrueHardcore extends JavaPlugin {
 			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
 				Player p = Bukkit.getPlayer(hcp.getPlayerName());
 				if (p != null) {
-					hcp.calcGameTime(new Date());
 					hcp.updatePlayer(p);
 					SavePlayer(hcp, true, true);
 				}
