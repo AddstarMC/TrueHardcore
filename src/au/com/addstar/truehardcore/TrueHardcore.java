@@ -648,6 +648,7 @@ public final class TrueHardcore extends JavaPlugin {
 				hcp.setState(PlayerState.ALIVE);
 				hcp.updatePlayer(player);
 				if (Util.Teleport(player, GetLobbyLocation(player, hcp.getWorld()))) {
+					BroadcastToHardcore(ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
 					hcp.calcGameTime();
 					SavePlayer(hcp);
 				} else {
@@ -813,6 +814,7 @@ public final class TrueHardcore extends JavaPlugin {
 					player.setFlying(false);
 					player.setFallDistance(0);
 					player.setNoDamageTicks(60);
+					BroadcastToHardcore(ChatColor.GREEN + player.getDisplayName() + " has entered " + hcp.getWorld(), player.getName());
 				} else {
 					Warn("Teleport failed!");
 				}
@@ -1087,10 +1089,18 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 
 	public void BroadcastToHardcore(String rawmsg) {
+		BroadcastToHardcore(rawmsg, null);
+	}
+	
+	public void BroadcastToHardcore(String rawmsg, String excludePlayer) {
 		String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
 		Debug(msg);
 		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
 		for (Player p : players) {
+			// Skip the excluded player (if specified)
+			if ((excludePlayer != null) && (excludePlayer.equals(p.getName())))
+				continue;
+
 			if (IsHardcoreWorld(p.getWorld())) {
 				HardcorePlayer hcp = HCPlayers.Get(p);
 				if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {

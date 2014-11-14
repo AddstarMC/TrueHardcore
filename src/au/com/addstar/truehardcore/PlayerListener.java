@@ -87,6 +87,7 @@ public class PlayerListener implements Listener {
 			hcp.updatePlayer(player);
 			hcp.calcGameTime();
 			plugin.SavePlayer(hcp);
+			plugin.BroadcastToHardcore(ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
 		}
 	}
 
@@ -111,6 +112,7 @@ public class PlayerListener implements Listener {
 			hcp.updatePlayer(player);
 			hcp.calcGameTime();
 			plugin.SavePlayer(hcp);
+			plugin.BroadcastToHardcore(ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
 		}
 	}
 
@@ -171,6 +173,7 @@ public class PlayerListener implements Listener {
 					if (plugin.IsPlayerVanished(player)) {
 						plugin.UnvanishPlayer(player);
 					}
+					plugin.BroadcastToHardcore(ChatColor.GREEN + player.getDisplayName() + " has entered " + hcp.getWorld(), player.getName());
 				} else {
 					plugin.Warn("Unable to send " + player.getName() + " to lobby and no player record!! THAT IS BAD!");
 				}
