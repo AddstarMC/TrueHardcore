@@ -1,24 +1,26 @@
 package au.com.addstar.truehardcore;
 
-import org.bukkit.World;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
+import me.botsko.prism.Prism;
+import me.botsko.prism.actionlibs.ActionsQuery;
+import me.botsko.prism.actionlibs.QueryParameters;
+import me.botsko.prism.actionlibs.QueryResult;
+import me.botsko.prism.appliers.PrismProcessType;
+import me.botsko.prism.appliers.Rollback;
 
-import de.diddiz.LogBlock.LogBlock;
-import de.diddiz.LogBlock.QueryParams;
-import de.diddiz.LogBlock.CommandsHandler.CommandClearLog;
-import de.diddiz.LogBlock.CommandsHandler.CommandRollback;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 
 public class WorldRollback implements Runnable {
 	final Player player;
 	final World world;
-	final LogBlock logblock;
+	final Prism prism;
 	final TrueHardcore plugin;
 	final Integer cleartime;
 	
-	public WorldRollback(LogBlock lb, Player p, World w, Integer ct) {
+	public WorldRollback(Prism prism, Player p, World w, Integer ct) {
 		plugin = TrueHardcore.instance;
-		logblock = lb;
+		this.prism = prism;
 		world = w;
 		player = p;
 		cleartime = ct;
@@ -27,34 +29,33 @@ public class WorldRollback implements Runnable {
 	@Override
 	public void run() {
 		try {
-			final QueryParams params = new QueryParams(logblock);
-			params.setPlayer(player.getName());
-			params.world = world;
-			params.silent = false;
-			params.before = 0;
-			params.excludeVictimsMode = true;
-			params.excludeKillersMode = true;
-
-			final CommandSender cs = plugin.getServer().getConsoleSender();
-
-			if (logblock == null) {
-				plugin.Debug("CRITICAL! logblock handle is null");
-			}
-
+			final QueryParameters params = new QueryParameters();
+			params.addPlayerName(player.getName());
+			params.setWorld(world.getName());
+			params.setProcessType(PrismProcessType.ROLLBACK);
+//			params.silent = false;
+//			params.before = 0;
+//			params.excludeVictimsMode = true;
+//			params.excludeKillersMode = true;
+			
 			// Rollback specified world
-			plugin.Debug("Rollback changes for " + player.getName() + " (" + params.world.getName() + ")...");
-			CommandRollback cr = logblock.getCommandsHandler().new CommandRollback(cs, params, true);
-			cr.close();
-
-			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+			plugin.Debug("Rollback changes for " + player.getName() + " (" + world.getName() + ")...");
+			
+			final ActionsQuery aq = new ActionsQuery(prism);
+			final QueryResult result = aq.lookup(params);
+			
+			if (!result.getActionResults().isEmpty()) {
+				Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(), result.getActionResults(), params, null);
+				rollback.apply();
+			}
+			
+			plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
 				@Override
 				public void run() {
 					try {
-						// Clear player changes in the world
-						params.world = world;
-						plugin.Debug("Clearing changes for " + player.getName() + " (" + params.world.getName() + ")...");
-						CommandClearLog ccl = logblock.getCommandsHandler().new CommandClearLog(cs, params, true);
-						ccl.close();
+						plugin.Debug("Clearing changes for " + player.getName() + " (" + world.getName() + ")...");
+						params.setProcessType(PrismProcessType.DELETE);
+						aq.delete(params);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}

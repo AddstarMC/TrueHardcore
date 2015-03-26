@@ -28,6 +28,7 @@ import java.util.UUID;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
+import me.botsko.prism.Prism;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -55,17 +56,12 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
-import org.kitteh.vanish.VanishPlugin;
-import org.kitteh.vanish.staticaccess.VanishNoPacket;
-import org.kitteh.vanish.staticaccess.VanishNotLoadedException;
-
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 
-import de.diddiz.LogBlock.LogBlock;
 import au.com.addstar.bc.BungeeChat;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
@@ -102,8 +98,10 @@ public final class TrueHardcore extends JavaPlugin {
 	private Boolean LBHooked = false;
 	private Boolean WBHooked = false;
 	private Boolean VNPHooked = false;
+	private Boolean BCHooked = false;
+	
 	private LWC lwc;
-	private LogBlock logblock;
+	private Prism prism;
 	private WorldBorder wb;
 	private VanishManager vnp;
 
@@ -171,14 +169,14 @@ public final class TrueHardcore extends JavaPlugin {
     		Log("LWC not Found");
     	}
     	
-    	p = pm.getPlugin("LogBlock");
-    	if (p != null && p instanceof LogBlock) {
+    	p = pm.getPlugin("Prism");
+    	if (p != null && p instanceof Prism) {
     		LBHooked = true;
-    		logblock = LogBlock.getInstance();
-    		Log("LogBlock found, hooking it.");
+    		prism = (Prism)p;
+    		Log("Prism found, hooking it.");
     	} else {
     		LBHooked = false;
-    		Log("LogBlock not found! This won't work very well...");
+    		Log("Prism not found! This won't work very well...");
     	}
 
     	p = pm.getPlugin("WorldBorder");
@@ -191,17 +189,23 @@ public final class TrueHardcore extends JavaPlugin {
     		Log("WorldBorder not found! Spawning will not be limited...");
     	}
 
-    	p = pm.getPlugin("VanishNoPacket");
-    	if (p != null && p instanceof VanishPlugin) {
-    		try {
-				vnp = VanishNoPacket.getManager();
-	    		VNPHooked = true;
-			} catch (VanishNotLoadedException e) {
-				e.printStackTrace();
-			}
-    		Log("VanishNoPacket found, hooking it.");
+    	p = pm.getPlugin("BungeeChat");
+    	if (p != null && p instanceof BungeeChat) {
+    		BCHooked = true;
+    		Log("BungeeChat found, hooking it.");
     	} else {
-    		Log("VanishNoPacket not found! Will not auto-unvanish...");
+    		BCHooked = false;
+    		Log("BungeeChat not found! No cross server messages");
+    	}
+    	
+    	p = pm.getPlugin("WorldBorder");
+    	if (p != null && p instanceof WorldBorder) {
+    		WBHooked = true;
+    		wb = WorldBorder.plugin;
+    		Log("WorldBorder found, hooking it.");
+    	} else {
+    		WBHooked = false;
+    		Log("WorldBorder not found! Spawning will not be limited...");
     	}
 
     	// Read (or initialise) plugin config file
@@ -416,14 +420,14 @@ public final class TrueHardcore extends JavaPlugin {
 
 					if (LBHooked) {
 						// Overworld rollback
-						Runnable rb1 = new WorldRollback(logblock, player, world, 30);
-						plugin.getServer().getScheduler().runTaskLater(plugin, rb1, 40L + (hcw.getRollbackDelay() * 20L));
+						Runnable rb1 = new WorldRollback(prism, player, world, 30);
+						plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, rb1, 40L + (hcw.getRollbackDelay() * 20L));
 						
 						// Nether rollback (delayed by 5s to reduce collisions)
 						World netherworld = plugin.getServer().getWorld(world.getName() + "_nether");
 						if (netherworld != null) {
-							Runnable rb2 = new WorldRollback(logblock, player, netherworld, 30);
-							plugin.getServer().getScheduler().runTaskLater(plugin, rb2, 40L + ((hcw.getRollbackDelay() * 20L) + (5 * 20L)));
+							Runnable rb2 = new WorldRollback(prism, player, netherworld, 30);
+							plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, rb2, 40L + ((hcw.getRollbackDelay() * 20L) + (5 * 20L)));
 						}
 					}
 				} catch (Exception e) {
@@ -1127,6 +1131,8 @@ public final class TrueHardcore extends JavaPlugin {
 	
 	public void BroadcastToAllServers(String msg) {
 		Bukkit.getServer().broadcastMessage(msg);
-		BungeeChat.mirrorChat(msg, BroadcastChannel);
+		if (BCHooked) {
+			BungeeChat.mirrorChat(msg, BroadcastChannel);
+		}
 	}
 }
