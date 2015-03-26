@@ -135,7 +135,7 @@ public class PlayerListener implements Listener {
 
 		// Check if player is resuming a game or somehow stuck in the world but not playing
 		Location loc = null;
-		HardcorePlayer hcp = HCPlayers.Get(player.getWorld().getName(), player.getName());
+		HardcorePlayer hcp = HCPlayers.Get(player);
 		if (hcp == null) {
 			plugin.Warn(player.getName() + " joined in hardcore world with no player record!");
 			loc = plugin.GetLobbyLocation(player, player.getWorld().getName());
@@ -286,7 +286,7 @@ public class PlayerListener implements Listener {
 		if (!plugin.IsHardcoreWorld(event.getEntity().getWorld())) { return; }
 
 		Player player = (Player) event.getEntity();
-		HardcorePlayer hcp = HCPlayers.Get(player.getWorld().getName(), player.getName());
+		HardcorePlayer hcp = HCPlayers.Get(player);
 		
 		if ((hcp != null) && (hcp.isGodMode())) {
 			event.setCancelled(true);
@@ -305,7 +305,7 @@ public class PlayerListener implements Listener {
 
 		if (damager instanceof Player) {
 			Player killer = (Player) damager;
-			HardcorePlayer hcp = HCPlayers.Get(killer.getWorld().getName(), killer.getName());
+			HardcorePlayer hcp = HCPlayers.Get(killer);
 			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
 				if (ent instanceof Player) {
 					Player killed = (Player) ent;

@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -136,18 +138,23 @@ public class CommandTH implements CommandExecutor {
 				if (sender instanceof Player) {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
 				}
-				hcp = plugin.HCPlayers.Get(args[2], args[1]);
-				if (hcp != null) {
-					Player player = (Player) plugin.getServer().getPlayer(args[2]);
-					if (player != null) {
-						if (plugin.IsHardcoreWorld(player.getWorld())) {
-							if (args[1] == player.getWorld().getName()) {
-								hcp.updatePlayer(player);
+				OfflinePlayer lookup = Bukkit.getOfflinePlayer(args[2]);
+				if (!lookup.hasPlayedBefore()) {
+					sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
+				} else {
+					hcp = plugin.HCPlayers.Get(args[1], lookup.getUniqueId());
+					if (hcp != null) {
+						Player player = (Player) plugin.getServer().getPlayer(args[2]);
+						if (player != null) {
+							if (plugin.IsHardcoreWorld(player.getWorld())) {
+								if (args[1] == player.getWorld().getName()) {
+									hcp.updatePlayer(player);
+								}
 							}
 						}
+					} else {
+						sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
 					}
-				} else {
-					sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
 				}
 			}
 			
@@ -190,7 +197,9 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 			else if (args.length == 3) {
-				HardcorePlayer hcp = plugin.HCPlayers.Get(args[2], args[1]);
+				OfflinePlayer player = Bukkit.getOfflinePlayer(args[1]);
+				
+				HardcorePlayer hcp = plugin.HCPlayers.Get(args[2], player.getUniqueId());
 				if (hcp != null) {
 					String sincedeath = "";
 					if (hcp.getGameEnd() != null) {
@@ -351,7 +360,7 @@ public class CommandTH implements CommandExecutor {
 				if (sender instanceof Player) {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.stats.other")) { return true; }
 				}
-				hcp = plugin.HCPlayers.Get(args[2], args[1]);
+				hcp = plugin.HCPlayers.Get(args[2], Bukkit.getOfflinePlayer(args[1]).getUniqueId());
 				if (hcp == null) {
 					sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
 				}
@@ -383,12 +392,16 @@ public class CommandTH implements CommandExecutor {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
 				}
 				String type = args[1].toUpperCase();
-				String player = args[2];
 				if (type.equals("ADD")) {
-					if (plugin.AddToWhitelist(player)) {
-						sender.sendMessage(ChatColor.GREEN + "Player " + player + " added to TrueHardcore whitelist.");
+					OfflinePlayer player = Bukkit.getOfflinePlayer(args[2]);
+					if (!player.hasPlayedBefore()) {
+						sender.sendMessage(ChatColor.RED + "ERROR: That player has never joined this server");
 					} else {
-						sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
+						if (plugin.AddToWhitelist(player.getUniqueId())) {
+							sender.sendMessage(ChatColor.GREEN + "Player " + player.getName() + " added to TrueHardcore whitelist.");
+						} else {
+							sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
+						}
 					}
 				}
 				else if (type.equals("LIST")) {
@@ -418,7 +431,7 @@ public class CommandTH implements CommandExecutor {
 				return true;
 			}
 			else if (args.length == 3) {
-				if (plugin.LoadPlayer(args[2], args[1])) {
+				if (plugin.LoadPlayer(args[2], Bukkit.getOfflinePlayer(args[1]).getUniqueId())) {
 					sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/" + args[1] + " has been reloaded.");
 				} else {
 					sender.sendMessage(ChatColor.RED + "Player record failed to load!");

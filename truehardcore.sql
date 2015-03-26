@@ -23,9 +23,11 @@ DROP TABLE IF EXISTS `players`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `players` (
+  `id` char(36) NOT NULL,
   `player` varchar(20) NOT NULL,
   `world` varchar(20) NOT NULL,
-  `lastpos` varchar(100) DEFAULT NULL,
+  `spawnpos` varchar(200) DEFAULT NULL,
+  `lastpos` varchar(200) DEFAULT NULL,
   `lastjoin` datetime DEFAULT NULL,
   `lastquit` datetime DEFAULT NULL,
   `gamestart` datetime DEFAULT NULL,
@@ -39,10 +41,29 @@ CREATE TABLE `players` (
   `deathmsg` varchar(255) DEFAULT NULL,
   `deathpos` varchar(100) DEFAULT NULL,
   `deaths` int(11) NOT NULL,
-  PRIMARY KEY (`player`,`world`)
+  `cowkills` int(11) NOT NULL,
+  `pigkills` int(11) NOT NULL,
+  `sheepkills` int(11) NOT NULL,
+  `chickenkills` int(11) NOT NULL,
+  `creeperkills` int(11) NOT NULL,
+  `zombiekills` int(11) NOT NULL,
+  `skeletonkills` int(11) NOT NULL,
+  `spiderkills` int(11) NOT NULL,
+  `enderkills` int(11) NOT NULL,
+  `slimekills` int(11) NOT NULL,
+  `otherkills` int(11) NOT NULL,
+  `playerkills` int(11) NOT NULL,
+  `mooshkills` int(11) NOT NULL,
+  PRIMARY KEY (`id`,`world`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+DROP TABLE IF EXISTS `whitelist`;
+
+CREATE TABLE `whitelist` (
+  `id` char(36) NOT NULL PRIMARY KEY,
+  `worlds` varchar(255) DEFAULT NULL
+);
 --
 -- Dumping data for table `players`
 --

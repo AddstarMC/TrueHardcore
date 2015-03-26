@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
@@ -113,7 +114,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public HardcorePlayers HCPlayers = new HardcorePlayers();
 
 	// List of ALL players who are allowed to enter a hardcore world
-	public Map<String, List<String>> WhiteList = new HashMap<String, List<String>>();
+	public Map<UUID, List<String>> WhiteList = new HashMap<UUID, List<String>>();
 	
 	public String Header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore" + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
 	
@@ -434,18 +435,18 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean PlayGame(String world, Player player) {
-		if (!IsOnWhiteList(world, player.getName())) {
+		if (!IsOnWhiteList(world, player.getUniqueId())) {
 			player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
 			return false;
 		}
 
-		if ((!GameEnabled) && (!player.getName().equals("add5tar")) && (!player.getName().equals("qw33ty"))) {
+		if (!GameEnabled && !player.hasPermission("truehardcore.admin")) {
 			player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
 			return false;
 		}
 		
 		HardcoreWorld hcw = HardcoreWorlds.Get(world);
-		HardcorePlayer hcp = HCPlayers.Get(world, player.getName());
+		HardcorePlayer hcp = HCPlayers.Get(world, player.getUniqueId());
 		if (hcp != null) {
 			if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
 				// Check last death time
@@ -467,7 +468,7 @@ public final class TrueHardcore extends JavaPlugin {
 				// Never played before... create them!
 				if (hcp == null) {
 					Debug("New hardcore player: " + player.getName() + " (" + world + ")");
-					hcp = HCPlayers.NewPlayer(world, player.getName());
+					hcp = HCPlayers.NewPlayer(world, player.getUniqueId(), player.getName());
 					spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
 				}
 				else if (hcp.getDeathPos() == null) {
@@ -541,7 +542,7 @@ public final class TrueHardcore extends JavaPlugin {
 			hcp.setState(PlayerState.IN_GAME);
 			hcp.setSpawnPos(spawn);
 			player.setFallDistance(0);
-			player.setHealth(20);
+			player.setHealth(20.0D);
 			player.setFoodLevel(20);
 			player.setAllowFlight(false);
 			player.setFlying(false);
@@ -689,12 +690,12 @@ public final class TrueHardcore extends JavaPlugin {
 		// OtherKills, PlayerKills;
 		
 		final String query = "INSERT INTO `truehardcore`.`players` \n" +
-				"(`player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
+				"(`id`, `player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
 				"`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
 				"`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
 				"`spiderkills`, `enderkills`, `slimekills`, `mooshkills`, `otherkills`, `playerkills`)\n\n" +
 				
-				"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
+				"VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
 				
 				"`spawnpos`=?, `lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
 				"`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?,\n" +
@@ -702,6 +703,7 @@ public final class TrueHardcore extends JavaPlugin {
 				"`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
 				
 		final String[] values = {
+				hcp.getUniqueId().toString(),
 				hcp.getPlayerName(), 
 				hcp.getWorld(),
 				Util.Loc2Str(hcp.getSpawnPos()),
@@ -801,7 +803,7 @@ public final class TrueHardcore extends JavaPlugin {
 
 	public void JoinGame(String world, Player player) {
 		Debug("Joining game for " + player.getName());
-		HardcorePlayer hcp = HCPlayers.Get(world, player.getName());
+		HardcorePlayer hcp = HCPlayers.Get(world, player.getUniqueId());
 		if (hcp != null) {
 			if (hcp.getLastPos() != null) {
 				DebugLog("Returning player to: " + hcp.getLastPos());
@@ -826,16 +828,17 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public Boolean LoadAllPlayers() {
-		String query = "SELECT * FROM `players` ORDER BY world,player";
+		String query = "SELECT * FROM `players` ORDER BY world,id";
 		try {
 			HCPlayers.Clear();
 			ResultSet res = dbcon.PreparedQuery(query, null);
 			if (res != null) {
 				while (res.next()) {
-					String player = res.getString("player");
+					UUID id = UUID.fromString(res.getString("id"));
+					String name = res.getString("player");
 					String world = res.getString("world");
-					DebugLog("Loading: " + world + "/" + player);
-					HardcorePlayer hcp = HCPlayers.NewPlayer(world, player);
+					DebugLog("Loading: " + world + "/" + name);
+					HardcorePlayer hcp = HCPlayers.NewPlayer(world, id, name);
 					LoadPlayerFromData(hcp, res);
 				}
 			}
@@ -848,11 +851,11 @@ public final class TrueHardcore extends JavaPlugin {
 		return true;
 	}
 	
-	public Boolean LoadPlayer(String world, String player) {
-		String query = "SELECT * FROM `players` WHERE player=? and world=?";
+	public Boolean LoadPlayer(String world, UUID player) {
+		String query = "SELECT * FROM `players` WHERE `id`=? and `world`=?";
 		try {
 			DebugLog("Reload player record from DB: " + world + "/" + player);
-			ResultSet res = dbcon.PreparedQuery(query, new String[]{player, world});
+			ResultSet res = dbcon.PreparedQuery(query, new String[]{player.toString(), world});
 			HardcorePlayer hcp = HCPlayers.Get(world, player);
 			if ((res != null) && (hcp != null) && (res.next())) {
 				DebugLog("Loading: " + world + "/" + player);
@@ -946,13 +949,13 @@ public final class TrueHardcore extends JavaPlugin {
 		
 		if (loc == null) {
 			Warn("Sending " + player.getName() + " to world spawn!");
-			loc = getServer().getWorld("games").getSpawnLocation();
+			loc = getServer().getWorld(getConfig().getString("lobbyWorld", "games")).getSpawnLocation();
 		}
 		
 		return loc;
 	}
 	
-	public boolean IsOnWhiteList(String world, String player) {
+	public boolean IsOnWhiteList(String world, UUID player) {
 		if (WhiteList.containsKey(player)) {
 			List<String> worlds = WhiteList.get(player);
 			if ((worlds != null) && (worlds.size() > 0)) {
@@ -974,9 +977,9 @@ public final class TrueHardcore extends JavaPlugin {
 			ResultSet res = dbcon.PreparedQuery(query, null);
 			if (res != null) {
 				while (res.next()) {
-					String player = res.getString("player");
+					UUID id = UUID.fromString(res.getString("id"));
 					List<String> worlds = Arrays.asList(StringUtils.split(res.getString("worlds"), ","));
-					WhiteList.put(player, worlds);
+					WhiteList.put(id, worlds);
 				}
 			}
 		}
@@ -985,15 +988,17 @@ public final class TrueHardcore extends JavaPlugin {
 		}
 	}
 	
-	public Boolean AddToWhitelist(String player) {
-		String query = "INSERT INTO `whitelist` (player, worlds) VALUES (?, ?)";
+	public Boolean AddToWhitelist(UUID player) {
+		String query = "INSERT INTO `whitelist` (id, worlds) VALUES (?, ?)";
 		String worlds = HardcoreWorlds.GetNames(); 
 		try {
 			DebugLog("Add player to whitelist: " + player);
-			int result = dbcon.PreparedUpdate(query, new String[]{player, worlds});
+			int result = dbcon.PreparedUpdate(query, new String[]{player.toString(), worlds});
 			if (result < 0) {
 				Debug("Whitelist update failed!");
 				return false;
+			} else {
+				WhiteList.put(player, Arrays.asList(worlds.split(",")));
 			}
 		}
 		catch (Exception e) {
@@ -1026,8 +1031,8 @@ public final class TrueHardcore extends JavaPlugin {
 			}
 
 			final String world = hcp.getWorld();
-			final String pname = hcp.getPlayerName();
-			final Player player = getServer().getPlayer(pname);
+			final UUID id = hcp.getUniqueId();
+			final Player player = getServer().getPlayer(id);
 
 			hcp.setGodMode(true);
 			player.sendMessage(ChatColor.YELLOW + "You are now invincible for " + seconds + " seconds...");
@@ -1035,7 +1040,7 @@ public final class TrueHardcore extends JavaPlugin {
             getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
                     @Override
                     public void run() {
-                    	HardcorePlayer hcp = HCPlayers.Get(world, pname);
+                    	HardcorePlayer hcp = HCPlayers.Get(world, id);
                     	if (hcp != null) {
                 			hcp.setGodMode(false);
                     		if (hcp.getState() == PlayerState.IN_GAME) {
@@ -1081,7 +1086,7 @@ public final class TrueHardcore extends JavaPlugin {
 		Debug(msg);
 		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
 		for (Player p : players) {
-			HardcorePlayer hcp = HCPlayers.Get(world, p.getName());
+			HardcorePlayer hcp = HCPlayers.Get(world, p.getUniqueId());
 			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
 				p.sendMessage(msg);
 			}

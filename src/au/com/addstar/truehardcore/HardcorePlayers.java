@@ -2,6 +2,7 @@ package au.com.addstar.truehardcore;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
@@ -24,6 +25,7 @@ public class HardcorePlayers {
 	
 	static class HardcorePlayer {
 		private String PlayerName;
+		private UUID PlayerId;
 		private String World;
 		private Location SpawnPos;
 		private Location LastPos;
@@ -59,6 +61,14 @@ public class HardcorePlayers {
 		}
 		public void setPlayerName(String playerName) {
 			PlayerName = playerName;
+			if (LoadDataOnly) { return; }
+			setModified(true);
+		}
+		public UUID getUniqueId() {
+			return PlayerId;
+		}
+		public void setUniqueId(UUID id) {
+			PlayerId = id;
 			if (LoadDataOnly) { return; }
 			setModified(true);
 		}
@@ -362,21 +372,22 @@ public class HardcorePlayers {
 		}
 	}
 	
-	public HardcorePlayer NewPlayer(String world, String name) {
+	public HardcorePlayer NewPlayer(String world, UUID id, String name) {
 		HardcorePlayer hcp = new HardcorePlayer();
 		if (hcp != null) {
 			TrueHardcore.instance.Debug("Creating new player record: " + world + "/" + name);
 			hcp.LoadDataOnly = true;
 			hcp.setPlayerName(name);
+			hcp.setUniqueId(id);
 			hcp.setWorld(world);
 			hcp.LoadDataOnly = false;
-			AddPlayer(world, name, hcp);
+			AddPlayer(world, id, hcp);
 		}
 		return hcp;
 	}
 
-	public HardcorePlayer Get(String world, String name) {
-		String key = StringUtils.replace(world, "_nether", "") + "/" + name;
+	public HardcorePlayer Get(String world, UUID id) {
+		String key = StringUtils.replace(world, "_nether", "") + "/" + id;
 		if (Players.containsKey(key)) {
 			HardcorePlayer hcp = Players.get(key);
 			return hcp;
@@ -386,12 +397,12 @@ public class HardcorePlayers {
 	
 	public HardcorePlayer Get(World world, Player player) {
 		if ((world == null) || (player == null)) { return null; }
-		return Get(world.getName(), player.getName());
+		return Get(world.getName(), player.getUniqueId());
 	}
 
 	public HardcorePlayer Get(Player player) {
 		if (player == null) { return null; }
-		return Get(player.getLocation().getWorld().getName(), player.getName());
+		return Get(player.getWorld().getName(), player.getUniqueId());
 	}
 	
 	public HardcorePlayer Get(String key) {
@@ -399,8 +410,8 @@ public class HardcorePlayers {
 		return Players.get(StringUtils.replace(key, "_nether", ""));
 	}
 	
-	public boolean AddPlayer(String world, String name, HardcorePlayer hcp) {
-		String key = world + "/" + name;
+	public boolean AddPlayer(String world, UUID id, HardcorePlayer hcp) {
+		String key = world + "/" + id.toString();
 		Players.put(key, hcp);
 		return true;
 	}

@@ -24,6 +24,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.logging.Logger;
+
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 public class Database {
 	public TrueHardcore plugin;
@@ -46,6 +52,8 @@ public class Database {
 			Conn = DriverManager.getConnection(url, plugin.DBUser, plugin.DBPass);
 			
 			IsConnected = true;
+			
+			tryConvert();
 		} catch (SQLException e) {
 			plugin.Warn("Unable to open database!");
 			e.printStackTrace();
@@ -54,6 +62,138 @@ public class Database {
 			e.printStackTrace();
 		}
 		return IsConnected;
+	}
+	
+	private void tryConvert() throws SQLException {
+		
+		// Schema check for new id column
+		Statement st = Conn.createStatement();
+		try {
+			st.executeQuery("SELECT `id` from `players`");
+			return;
+		} catch (SQLException e) {
+			// Not present, do upgrade
+		}
+		
+		Logger log = TrueHardcore.instance.getLogger();
+		
+		log.info("A conversion to UUIDs is required.");
+		
+		// First build a name map
+		log.info("- Building name cache");
+		HashMap<String, UUID> lookup = new HashMap<String, UUID>();
+		for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
+			lookup.put(player.getName().toLowerCase(), player.getUniqueId());
+		}
+		
+		// Next update the schema for the table
+		log.info("- Updating db schema");
+		st.executeUpdate("ALTER TABLE `players` ADD COLUMN (`id` CHAR(36));");
+		
+		// Now query for all entries for an inplace update
+		log.info("- Converting players ...");
+		
+		PreparedStatement update = Conn.prepareStatement("UPDATE `players` SET `id`= ? WHERE `player`=? AND `world`=?;");
+		
+		int pending = 0;
+		int count = 0;
+		int failCount = 0;
+		long lastAnnounce = System.currentTimeMillis();
+		
+		ResultSet rs = st.executeQuery("SELECT `player`,`world` from `players`");
+		while (rs.next()) {
+			String name = rs.getString("player");
+			String world = rs.getString("world");
+			UUID id = lookup.get(name.toLowerCase());
+			if (id != null) {
+				update.setString(1, id.toString());
+				update.setString(2, name);
+				update.setString(3, world);
+				update.addBatch();
+				++pending;
+			} else {
+				update.setString(1, UUID.nameUUIDFromBytes(name.getBytes()).toString());
+				update.setString(2, name);
+				update.setString(3, world);
+				update.addBatch();
+				++pending;
+				++failCount;
+			}
+			
+			++count;
+			
+			if (pending > 30) {
+				update.executeBatch();
+				pending = 0;
+			}
+			
+			if (System.currentTimeMillis() - lastAnnounce > 4000) {
+				lastAnnounce = System.currentTimeMillis();
+				log.info("  * Processed " + count + " entries. " + failCount + " failed");
+			}
+		}
+		
+		if (pending > 0) {
+			update.executeBatch();
+			pending = 0;
+		}
+		
+		log.info("  Finished converting " + count + " entries. " + failCount + " failed");
+		
+		rs.close();
+		update.close();
+		
+		// Finish the schema change
+		st.executeUpdate("ALTER TABLE `players` DROP PRIMARY KEY;");
+		st.executeUpdate("ALTER TABLE `players` ADD PRIMARY KEY (`id`, `world`);");
+		
+		// Now convert the whitelist
+		log.info("- Converting whitelist");
+		st.executeUpdate("ALTER TABLE `whitelist` ADD COLUMN (`id` CHAR(36));");
+		update = Conn.prepareStatement("UPDATE `whitelist` SET `id`= ? WHERE `player`=?;");
+		
+		rs = st.executeQuery("SELECT `player` from `whitelist`");
+		while (rs.next()) {
+			String name = rs.getString("player");
+			UUID id = lookup.get(name.toLowerCase());
+			if (id != null) {
+				update.setString(1, id.toString());
+				update.setString(2, name);
+				update.addBatch();
+				++pending;
+			} else {
+				++failCount;
+				update.setString(1, UUID.nameUUIDFromBytes(name.getBytes()).toString());
+				update.setString(2, name);
+				update.addBatch();
+				++pending;
+			}
+			
+			++count;
+			
+			if (pending > 30) {
+				update.executeBatch();
+				pending = 0;
+			}
+			
+			if (System.currentTimeMillis() - lastAnnounce > 4000) {
+				lastAnnounce = System.currentTimeMillis();
+				log.info("  * Processed " + count + " entries. " + failCount + " failed");
+			}
+		}
+		
+		if (pending > 0) {
+			update.executeBatch();
+			pending = 0;
+		}
+		
+		log.info("  Finished converting " + count + " entries. " + failCount + " failed");
+		
+		st.executeUpdate("ALTER TABLE `whitelist` DROP PRIMARY KEY;");
+		st.executeUpdate("ALTER TABLE `whitelist` ADD PRIMARY KEY (`id`);");
+		rs.close();
+		
+		log.info("- Conversion complete");
 	}
 	
 	public ResultSet ExecuteQuery(String query) {
