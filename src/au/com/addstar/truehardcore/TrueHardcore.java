@@ -56,6 +56,8 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
+import org.kitteh.vanish.VanishPlugin;
+
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
@@ -198,14 +200,14 @@ public final class TrueHardcore extends JavaPlugin {
     		Log("BungeeChat not found! No cross server messages");
     	}
     	
-    	p = pm.getPlugin("WorldBorder");
-    	if (p != null && p instanceof WorldBorder) {
-    		WBHooked = true;
-    		wb = WorldBorder.plugin;
-    		Log("WorldBorder found, hooking it.");
+    	p = pm.getPlugin("VanishNoPacket");
+    	if (p != null && p instanceof VanishPlugin) {
+    		VNPHooked = true;
+    		vnp = ((VanishPlugin)p).getManager();
+    		Log("VanishNoPacket found, hooking it.");
     	} else {
     		WBHooked = false;
-    		Log("WorldBorder not found! Spawning will not be limited...");
+    		Log("VanishNoPacket not found! Vanished players will not be unvanished...");
     	}
 
     	// Read (or initialise) plugin config file

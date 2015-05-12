@@ -190,6 +190,7 @@ public class Database {
 		log.info("  Finished converting " + count + " entries. " + failCount + " failed");
 		
 		st.executeUpdate("ALTER TABLE `whitelist` DROP PRIMARY KEY;");
+		st.executeUpdate("ALTER TABLE `whitelist` DROP `player`;");
 		st.executeUpdate("ALTER TABLE `whitelist` ADD PRIMARY KEY (`id`);");
 		rs.close();
 		
