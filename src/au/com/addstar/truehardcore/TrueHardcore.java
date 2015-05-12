@@ -403,7 +403,7 @@ public final class TrueHardcore extends JavaPlugin {
 						plugin.Debug("Removing LWC locks...");
 				        int count = 0;
 						if (lwc.getPhysicalDatabase() != null) {
-					        List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getName());
+					        List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getUniqueId().toString());
 					        String w = world.getName();
 					        for(Protection prot : prots) {
 					        	if (prot.getWorld().equals(w) || prot.getWorld().equals(w + "_nether")) {

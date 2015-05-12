@@ -74,6 +74,12 @@
       <groupId>com.sk89q</groupId>
       <artifactId>worldguard</artifactId>
       <version>5.9</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bukkit</groupId>
+          <artifactId>bukkit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     
     <!-- Used for Economy interop -->
@@ -81,6 +87,12 @@
       <groupId>net.milkbowl.vault</groupId>
       <artifactId>Vault</artifactId>
       <version>1.4.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bukkit</groupId>
+          <artifactId>bukkit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Used for LWC stuff -->
@@ -100,6 +112,10 @@
           <groupId>mo.botsko</groupId>
           <artifactId>elixr</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.bukkit</groupId>
+          <artifactId>bukkit</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
@@ -107,6 +123,12 @@
       <groupId>com.wimbli.WorldBorder</groupId>
       <artifactId>WorldBorder</artifactId>
       <version>1.8.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.bukkit</groupId>
+          <artifactId>bukkit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
