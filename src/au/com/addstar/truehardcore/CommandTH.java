@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
@@ -32,7 +34,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.spigotmc.SpigotConfig;
 
+import au.com.addstar.monolith.lookup.Lookup;
+import au.com.addstar.monolith.lookup.LookupCallback;
+import au.com.addstar.monolith.lookup.PlayerDefinition;
 import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.HardcoreWorlds.HardcoreWorld;
@@ -47,7 +53,7 @@ public class CommandTH implements CommandExecutor {
 	/*
 	 * Handle the /truehardcore command
 	 */
-	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
+	public boolean onCommand(final CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		String action = "";
 		if (args.length > 0) {
 			action = args[0].toUpperCase();
@@ -394,13 +400,42 @@ public class CommandTH implements CommandExecutor {
 				String type = args[1].toUpperCase();
 				if (type.equals("ADD")) {
 					OfflinePlayer player = Bukkit.getOfflinePlayer(args[2]);
-					if (!player.hasPlayedBefore()) {
-						sender.sendMessage(ChatColor.RED + "ERROR: That player has never joined this server");
-					} else {
+					
+					if (player.getUniqueId().version() == 4 || (!Bukkit.getOnlineMode() && !SpigotConfig.bungee)) {
 						if (plugin.AddToWhitelist(player.getUniqueId())) {
 							sender.sendMessage(ChatColor.GREEN + "Player " + player.getName() + " added to TrueHardcore whitelist.");
 						} else {
 							sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
+						}
+					} else {
+						// We have to resolve this player
+						
+						// We cannot do this lookup without there being at least one player on this server
+						boolean hasPlayers = false;
+						for (Player p : Bukkit.getOnlinePlayers()) {
+							hasPlayers = true;
+							break;
+						}
+						
+						if (!hasPlayers) {
+							sender.sendMessage(ChatColor.RED + "ERROR: At least one player is needed to be on this server to do a name lookup");
+						} else {
+							final String name = args[2];
+							
+							Lookup.lookupPlayerName(name, new LookupCallback<PlayerDefinition>() {
+								@Override
+								public void onResult( boolean success, PlayerDefinition def, Throwable error ) {
+									if (success) {
+										if (plugin.AddToWhitelist(def.getUniqueId())) {
+											sender.sendMessage(ChatColor.GREEN + "Player " + def.getName() + " added to TrueHardcore whitelist.");
+										} else {
+											sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
+										}
+									} else {
+										sender.sendMessage(ChatColor.RED + "ERROR: Failed to lookup the UUID for that player");
+									}
+								}
+							});
 						}
 					}
 				}

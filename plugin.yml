@@ -2,7 +2,7 @@ name: TrueHardcore
 main: au.com.addstar.truehardcore.TrueHardcore
 version: ${project.version}
 author: add5tar
-softdepend: [Vault, Multiverse-Core, My Worlds, Prism, LWC, VanishNoPacket, WorldBorder, BungeeChat]
+softdepend: [Vault, Multiverse-Core, My Worlds, Prism, LWC, VanishNoPacket, WorldBorder, BungeeChat, Monolith]
 description: Multiplayer hardcore plugin to simulate true hardcore
 
 commands:
