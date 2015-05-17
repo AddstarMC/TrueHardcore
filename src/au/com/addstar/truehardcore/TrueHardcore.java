@@ -191,7 +191,7 @@ public final class TrueHardcore extends JavaPlugin {
     		Log("WorldBorder not found! Spawning will not be limited...");
     	}
 
-    	p = pm.getPlugin("BungeeChat");
+    	p = pm.getPlugin("BungeeChatBukkit");
     	if (p != null && p instanceof BungeeChat) {
     		BCHooked = true;
     		Log("BungeeChat found, hooking it.");
