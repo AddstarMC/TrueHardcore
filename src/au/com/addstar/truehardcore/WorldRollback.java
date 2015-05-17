@@ -2,6 +2,7 @@ package au.com.addstar.truehardcore;
 
 import me.botsko.prism.Prism;
 import me.botsko.prism.actionlibs.ActionsQuery;
+import me.botsko.prism.actionlibs.MatchRule;
 import me.botsko.prism.actionlibs.QueryParameters;
 import me.botsko.prism.actionlibs.QueryResult;
 import me.botsko.prism.appliers.PrismProcessType;
@@ -33,10 +34,8 @@ public class WorldRollback implements Runnable {
 			params.addPlayerName(player.getName());
 			params.setWorld(world.getName());
 			params.setProcessType(PrismProcessType.ROLLBACK);
-//			params.silent = false;
-//			params.before = 0;
-//			params.excludeVictimsMode = true;
-//			params.excludeKillersMode = true;
+			params.addActionType("item-drop", MatchRule.EXCLUDE);
+			params.addActionType("item-pickup", MatchRule.EXCLUDE);
 			
 			// Rollback specified world
 			plugin.Debug("Rollback changes for " + player.getName() + " (" + world.getName() + ")...");
