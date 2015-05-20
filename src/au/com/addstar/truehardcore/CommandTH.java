@@ -473,12 +473,6 @@ public class CommandTH implements CommandExecutor {
 				}
 			}
 		}
-		else if (action.equals("RELOAD")) {
-			if (sender instanceof Player) {
-				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
-			}
-			plugin.LoadWhiteList();
-		}
 		else if (action.equals("DISABLE")) {
 			if (sender instanceof Player) {
 				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
@@ -525,7 +519,6 @@ public class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.AQUA + "/th dumpworlds " + ChatColor.YELLOW + ": Dump world records");
 				sender.sendMessage(ChatColor.AQUA + "/th save       " + ChatColor.YELLOW + ": Save all in-memory changes");
 				sender.sendMessage(ChatColor.AQUA + "/th load       " + ChatColor.YELLOW + ": Load player data from DB");
-				sender.sendMessage(ChatColor.AQUA + "/th reload     " + ChatColor.YELLOW + ": Reload whitelist");
 				sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW + ": Add/remove player to whitelist");
 			}
 		}

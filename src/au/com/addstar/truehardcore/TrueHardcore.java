@@ -113,9 +113,6 @@ public final class TrueHardcore extends JavaPlugin {
 	// Data for ALL hardcore players 
 	public HardcorePlayers HCPlayers = new HardcorePlayers();
 
-	// List of ALL players who are allowed to enter a hardcore world
-	public Map<UUID, List<String>> WhiteList = new HashMap<UUID, List<String>>();
-	
 	public String Header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore" + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
 	
 	private final List<Material> SpawnBlocks = Arrays.asList(
@@ -222,7 +219,6 @@ public final class TrueHardcore extends JavaPlugin {
 			Log("Successfully connected to the database.");
 			Log("Loading players from database...");
 			LoadAllPlayers();
-			LoadWhiteList();
 		} else {
 			Log(pdfFile.getName() + " " + pdfFile.getVersion() + " could not be enabled!");
 			this.setEnabled(false);
@@ -962,38 +958,26 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean IsOnWhiteList(String world, UUID player) {
-		if (WhiteList.containsKey(player)) {
-			List<String> worlds = WhiteList.get(player);
-			if ((worlds != null) && (worlds.size() > 0)) {
-				for (String w : worlds) {
-					if ((w.equals(world)) || (w.equals("*"))) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
-
-	public void LoadWhiteList() {
-		Debug("Loading player whitelist...");
-		String query = "SELECT * FROM `whitelist`";
+		String query = "SELECT worlds FROM `whitelist` WHERE id=?";
 		try {
-			WhiteList.clear();
-			ResultSet res = dbcon.PreparedQuery(query, null);
+			ResultSet res = dbcon.PreparedQuery(query, new String[] {player.toString()});
 			if (res != null) {
-				while (res.next()) {
-					UUID id = UUID.fromString(res.getString("id"));
-					List<String> worlds = Arrays.asList(StringUtils.split(res.getString("worlds"), ","));
-					WhiteList.put(id, worlds);
+				if (res.next()) {
+					String[] worlds = StringUtils.split(res.getString("worlds"), ",");
+					for (String w : worlds) {
+						if ((w.equals(world)) || (w.equals("*"))) {
+							return true;
+						}
+					}
 				}
 			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		return false;
 	}
-	
+
 	public Boolean AddToWhitelist(UUID player) {
 		String query = "INSERT INTO `whitelist` (id, worlds) VALUES (?, ?)";
 		String worlds = HardcoreWorlds.GetNames(); 
@@ -1003,8 +987,6 @@ public final class TrueHardcore extends JavaPlugin {
 			if (result < 0) {
 				Debug("Whitelist update failed!");
 				return false;
-			} else {
-				WhiteList.put(player, Arrays.asList(worlds.split(",")));
 			}
 		}
 		catch (Exception e) {
