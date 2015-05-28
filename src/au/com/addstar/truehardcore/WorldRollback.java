@@ -44,8 +44,13 @@ public class WorldRollback implements Runnable {
 			final QueryResult result = aq.lookup(params);
 			
 			if (!result.getActionResults().isEmpty()) {
-				Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(), result.getActionResults(), params, null);
-				rollback.apply();
+				plugin.getServer().getScheduler().runTask(plugin, new Runnable() {
+					@Override
+					public void run() {
+						Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(), result.getActionResults(), params, null);
+						rollback.apply();
+					}
+				});
 			}
 			
 			plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
