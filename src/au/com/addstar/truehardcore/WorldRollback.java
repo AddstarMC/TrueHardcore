@@ -53,18 +53,19 @@ public class WorldRollback implements Runnable {
 				});
 			}
 			
-			plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+			plugin.Debug("Scheduling activity purge for " + player.getName() + " (" + world.getName() + ")...");
+			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
 				@Override
 				public void run() {
 					try {
-						plugin.Debug("Clearing changes for " + player.getName() + " (" + world.getName() + ")...");
+						plugin.Debug("Purging changes for " + player.getName() + " (" + world.getName() + ")...");
 						params.setProcessType(PrismProcessType.DELETE);
 						aq.delete(params);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
-			}, cleartime * 20L);
+			}, cleartime * 300L);
 			
 		} catch (Exception e) {
 		    // Do nothing or throw an error if you want
