@@ -65,7 +65,7 @@ public class WorldRollback implements Runnable {
 						e.printStackTrace();
 					}
 				}
-			}, cleartime * 300L);
+			}, 600L);
 			
 		} catch (Exception e) {
 		    // Do nothing or throw an error if you want
