@@ -308,10 +308,10 @@ public class CommandTH implements CommandExecutor {
 					for (Player p : world.getPlayers()) {
 						if (plugin.IsPlayerVanished(p)) continue;
 						Playing = true;
-						players.add(p.getName());
+						players.add(p.getDisplayName());
 					}
 					if (players.size() > 0) {
-						sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+						sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ChatColor.AQUA + ", "));
 					}
 				}
 				
@@ -322,10 +322,10 @@ public class CommandTH implements CommandExecutor {
 					for (Player p : world.getPlayers()) {
 						if (plugin.IsPlayerVanished(p)) continue;
 						Playing = true;
-						players.add(p.getName());
+						players.add(p.getDisplayName());
 					}
 					if (players.size() > 0) {
-						sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ", "));
+						sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ChatColor.AQUA + ", "));
 					}
 				}
 			}
