@@ -34,14 +34,6 @@
       </releases>
     </repository>
 
-    <repository>
-      <id>bukkit-maven</id>
-      <url>http://repo.bukkit.org/content/repositories/releases/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    
     <!-- Repository for other dependencies of SK's -->
     <repository>
       <id>sk89q-mvn2</id>
@@ -66,7 +58,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot</artifactId>
-      <version>1.7.10-R0.1-SNAPSHOT</version>
+      <version>1.9-R0.1-SNAPSHOT</version>
     </dependency>
     
     <!-- WorldGuard for some of the sk functions -->

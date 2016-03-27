@@ -1072,8 +1072,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public void BroadcastToWorld(String world, String rawmsg) {
 		String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
 		Debug(msg);
-		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
-		for (Player p : players) {
+		for (final Player p : getServer().getOnlinePlayers()) {
 			HardcorePlayer hcp = HCPlayers.Get(world, p.getUniqueId());
 			if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
 				p.sendMessage(msg);
@@ -1088,8 +1087,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public void BroadcastToHardcore(String rawmsg, String excludePlayer) {
 		String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
 		Debug(msg);
-		List<Player> players = Arrays.asList(getServer().getOnlinePlayers());
-		for (Player p : players) {
+		for (final Player p : getServer().getOnlinePlayers()) {
 			// Skip the excluded player (if specified)
 			if ((excludePlayer != null) && (excludePlayer.equals(p.getName())))
 				continue;
