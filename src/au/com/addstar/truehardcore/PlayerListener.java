@@ -37,6 +37,8 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 public class PlayerListener implements Listener {
 	
@@ -374,13 +376,16 @@ public class PlayerListener implements Listener {
 	}
 	@EventHandler(ignoreCancelled = true)
 	private void playerEnterPortal(PlayerPortalEvent event) {
-		if (event.getPlayer().hasPermission("truehardcore.endteleport")){
+		Player player = event.getPlayer();
+		if (player.hasPermission("truehardcore.endteleport")){
 			return;
 		}
 		if(event.getCause() == TeleportCause.END_PORTAL){
 			event.setCancelled(true);
-			event.getPlayer().sendMessage(ChatColor.RED + "Sorry, this portal destination is unavailable.");
-			event.getPlayer().playNote(event.getPlayer().getLocation(), Instrument.PIANO, Note.natural(1, Note.Tone.B));
+			player.sendMessage(ChatColor.RED + "Sorry, this portal destination is unavailable. Best get out of that fire quick you have temporary resistance!!");
+			PotionEffect effect = new PotionEffect(PotionEffectType.FIRE_RESISTANCE,400,2,false,true);
+			player.addPotionEffect(effect);
+			player.playNote(event.getPlayer().getLocation(), Instrument.PIANO, Note.natural(1, Note.Tone.B));
 		}
 	}
 }
