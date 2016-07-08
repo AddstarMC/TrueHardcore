@@ -27,4 +27,6 @@ permissions:
   truehardcore.stats:
     description:
   truehardcore.stats.other:
-    description:  
+    description:
+  truehardcore.endteleport:
+    description: people with this perm can teleport to the end.

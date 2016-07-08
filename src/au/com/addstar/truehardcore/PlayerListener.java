@@ -17,8 +17,7 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
@@ -371,6 +370,17 @@ public class PlayerListener implements Listener {
 				Player player = event.getPlayer();
 				player.sendMessage(ChatColor.RED + "Sorry, this portal destination is not inside the borders of a Hardcore world. Please move it to another location.");
 			}
+		}
+	}
+	@EventHandler(ignoreCancelled = true)
+	private void playerEnterPortal(PlayerPortalEvent event) {
+		if (event.getPlayer().hasPermission("truehardcore.endteleport")){
+			return;
+		}
+		if(event.getCause() == TeleportCause.END_PORTAL){
+			event.setCancelled(true);
+			event.getPlayer().sendMessage(ChatColor.RED + "Sorry, this portal destination is unavailable.");
+			event.getPlayer().playNote(event.getPlayer().getLocation(), Instrument.PIANO, Note.natural(1, Note.Tone.B));
 		}
 	}
 }
