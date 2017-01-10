@@ -11,16 +11,16 @@ import org.bukkit.entity.Player;
 
 public class HardcorePlayers {
 
-	private Map<String, HardcorePlayer> Players;
+	private final Map<String, HardcorePlayer> Players;
 	public HardcorePlayers() {
-		Players = new HashMap<String, HardcorePlayer>();
+		Players = new HashMap<>();
 	}
 	
 	public static enum PlayerState {
 		NOT_IN_GAME,
 		IN_GAME,
 		ALIVE,
-		DEAD;
+		DEAD
 	}
 	
 	static class HardcorePlayer {
@@ -410,7 +410,7 @@ public class HardcorePlayers {
 		return Players.get(StringUtils.replace(key, "_nether", ""));
 	}
 	
-	public boolean AddPlayer(String world, UUID id, HardcorePlayer hcp) {
+	private boolean AddPlayer(String world, UUID id, HardcorePlayer hcp) {
 		String key = world + "/" + id.toString();
 		Players.put(key, hcp);
 		return true;

@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
@@ -37,14 +35,12 @@ import org.bukkit.entity.Player;
 import org.spigotmc.SpigotConfig;
 
 import au.com.addstar.monolith.lookup.Lookup;
-import au.com.addstar.monolith.lookup.LookupCallback;
-import au.com.addstar.monolith.lookup.PlayerDefinition;
 import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.HardcoreWorlds.HardcoreWorld;
 
-public class CommandTH implements CommandExecutor {
-	private TrueHardcore plugin;
+class CommandTH implements CommandExecutor {
+	private final TrueHardcore plugin;
 	
 	public CommandTH(TrueHardcore instance) {
 		plugin = instance;
@@ -95,17 +91,14 @@ public class CommandTH implements CommandExecutor {
 			}
 			
 			player.sendMessage(ChatColor.GOLD + "Teleportation will commence in " + ChatColor.RED + "5 seconds" + ChatColor.GOLD + ". Don't move.");
-			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-				@Override
-				public void run() {
-					Location newloc = player.getLocation();
-					if (newloc.distance(oldloc) <= 1) {
-						plugin.LeaveGame(player);
-					} else {
-						player.sendMessage(ChatColor.DARK_RED + "Pending teleportation request cancelled.");
-					}
-				}
-			}, 5 * 20L);
+			plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                Location newloc = player.getLocation();
+                if (newloc.distance(oldloc) <= 1) {
+                    plugin.LeaveGame(player);
+                } else {
+                    player.sendMessage(ChatColor.DARK_RED + "Pending teleportation request cancelled.");
+                }
+            }, 5 * 20L);
 		}
 		else if (action.equals("INFO")) {
 			HardcorePlayer hcp = null;
@@ -128,7 +121,7 @@ public class CommandTH implements CommandExecutor {
 				if (sender instanceof Player) {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.info.other")) { return true; }
 				}
-				Player player = (Player) plugin.getServer().getPlayer(args[1]);
+				Player player = plugin.getServer().getPlayer(args[1]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
 					if (plugin.IsHardcoreWorld(player.getWorld())) {
@@ -150,7 +143,7 @@ public class CommandTH implements CommandExecutor {
 				} else {
 					hcp = plugin.HCPlayers.Get(args[1], lookup.getUniqueId());
 					if (hcp != null) {
-						Player player = (Player) plugin.getServer().getPlayer(args[2]);
+						Player player = plugin.getServer().getPlayer(args[2]);
 						if (player != null) {
 							if (plugin.IsHardcoreWorld(player.getWorld())) {
 								if (args[1] == player.getWorld().getName()) {
@@ -304,7 +297,7 @@ public class CommandTH implements CommandExecutor {
 				// Check hardcore world
 				World world = plugin.getServer().getWorld(entry.getKey());
 				if ((world != null) && (world.getPlayers().size() > 0)) {
-					ArrayList<String> players = new ArrayList<String>();
+					ArrayList<String> players = new ArrayList<>();
 					for (Player p : world.getPlayers()) {
 						if (plugin.IsPlayerVanished(p)) continue;
 						Playing = true;
@@ -318,7 +311,7 @@ public class CommandTH implements CommandExecutor {
 				// Corresponding nether world
 				world = plugin.getServer().getWorld(entry.getKey() + "_nether");
 				if ((world != null) && (world.getPlayers().size() > 0)) {
-					ArrayList<String> players = new ArrayList<String>();
+					ArrayList<String> players = new ArrayList<>();
 					for (Player p : world.getPlayers()) {
 						if (plugin.IsPlayerVanished(p)) continue;
 						Playing = true;
@@ -352,7 +345,7 @@ public class CommandTH implements CommandExecutor {
 				if (sender instanceof Player) {
 					if (!Util.RequirePermission((Player) sender, "truehardcore.stats.other")) { return true; }
 				}
-				Player player = (Player) plugin.getServer().getPlayer(args[1]);
+				Player player = plugin.getServer().getPlayer(args[1]);
 				if (player != null) {
 					hcp = plugin.HCPlayers.Get(player);
 					if (!plugin.IsHardcoreWorld(player.getWorld())) {
@@ -422,20 +415,17 @@ public class CommandTH implements CommandExecutor {
 						} else {
 							final String name = args[2];
 							
-							Lookup.lookupPlayerName(name, new LookupCallback<PlayerDefinition>() {
-								@Override
-								public void onResult( boolean success, PlayerDefinition def, Throwable error ) {
-									if (success) {
-										if (plugin.AddToWhitelist(def.getUniqueId())) {
-											sender.sendMessage(ChatColor.GREEN + "Player " + def.getName() + " added to TrueHardcore whitelist.");
-										} else {
-											sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
-										}
-									} else {
-										sender.sendMessage(ChatColor.RED + "ERROR: Failed to lookup the UUID for that player");
-									}
-								}
-							});
+							Lookup.lookupPlayerName(name, (success, def, error) -> {
+                                if (success) {
+                                    if (plugin.AddToWhitelist(def.getUniqueId())) {
+                                        sender.sendMessage(ChatColor.GREEN + "Player " + def.getName() + " added to TrueHardcore whitelist.");
+                                    } else {
+                                        sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
+                                    }
+                                } else {
+                                    sender.sendMessage(ChatColor.RED + "ERROR: Failed to lookup the UUID for that player");
+                                }
+                            });
 						}
 					}
 				}
@@ -495,7 +485,7 @@ public class CommandTH implements CommandExecutor {
 			}
 			
 			if (args.length > 1) {
-				List<String> msg = new ArrayList<String>();
+				List<String> msg = new ArrayList<>();
 				for (int x = 1; x < args.length; x++) {
 					msg.add(args[x]);
 				}

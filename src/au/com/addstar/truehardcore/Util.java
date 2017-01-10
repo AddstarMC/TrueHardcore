@@ -16,7 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-public class Util {
+class Util {
 
 	static class LogFormatter extends Formatter {
 	    //
@@ -154,7 +154,7 @@ public class Util {
 	/*
 	 * Check if the player has the specified permission
 	 */
-	public static boolean HasPermission(Player player, String perm) {
+	private static boolean HasPermission(Player player, String perm) {
 		if (player instanceof Player) {
 			// Real player
 			if (player.hasPermission(perm)) {

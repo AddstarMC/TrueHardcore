@@ -40,10 +40,10 @@ import au.com.addstar.truehardcore.HardcorePlayers.*;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-public class PlayerListener implements Listener {
+class PlayerListener implements Listener {
 	
-	private TrueHardcore plugin;
-	private HardcorePlayers HCPlayers;
+	private final TrueHardcore plugin;
+	private final HardcorePlayers HCPlayers;
 	public PlayerListener(TrueHardcore instance) {
 		plugin = instance;
 		HCPlayers = plugin.HCPlayers;

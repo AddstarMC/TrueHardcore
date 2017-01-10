@@ -10,10 +10,10 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 public class HardcoreWorlds {
-	private Map<String, HardcoreWorld> Worlds;
+	private final Map<String, HardcoreWorld> Worlds;
 
 	public HardcoreWorlds() {
-		Worlds = new HashMap<String, HardcoreWorld>();
+		Worlds = new HashMap<>();
 	}
 	
 	static class HardcoreWorld {
@@ -120,7 +120,7 @@ public class HardcoreWorlds {
 	}
 	
 	public String GetNames() {
-		List<String> names = new ArrayList<String>(Worlds.keySet());
+		List<String> names = new ArrayList<>(Worlds.keySet());
 		return StringUtils.join(names, ",");
 	}
 }

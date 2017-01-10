@@ -24,14 +24,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
 
-public class ConfigManager {
+class ConfigManager {
 
-	private TrueHardcore plugin;
+	private final TrueHardcore plugin;
 	public ConfigManager(TrueHardcore instance) {
 		plugin = instance;
 	}
 	
-	public FileConfiguration Config() {
+	private FileConfiguration Config() {
 		return plugin.getConfig();
 	}
 	
@@ -41,7 +41,7 @@ public class ConfigManager {
 		plugin.DebugEnabled = Config().getBoolean("debug");
 
 		// Get the list of worlds
-		Set<String> worlds = (Set<String>) Config().getConfigurationSection("worlds").getKeys(false);
+		Set<String> worlds = Config().getConfigurationSection("worlds").getKeys(false);
 
 		// Load each world's settings
 		plugin.Debug("Loading worlds...");

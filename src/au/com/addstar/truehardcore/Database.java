@@ -31,10 +31,10 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
-public class Database {
-	public TrueHardcore plugin;
+class Database {
+	private final TrueHardcore plugin;
 	public String DBFilename;
-	public Connection Conn;
+	private Connection Conn;
 	public boolean IsConnected = false;
 	
 	public Database(TrueHardcore instance) {
@@ -42,7 +42,7 @@ public class Database {
 		OpenDatabase();
 	}
 
-	public boolean OpenDatabase() {
+	private boolean OpenDatabase() {
 		try {
 			Class.forName ("com.mysql.jdbc.Driver");
 			if (plugin.DBHost == null) { plugin.Log("Host is null"); }
@@ -81,7 +81,7 @@ public class Database {
 		
 		// First build a name map
 		log.info("- Building name cache");
-		HashMap<String, UUID> lookup = new HashMap<String, UUID>();
+		HashMap<String, UUID> lookup = new HashMap<>();
 		for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
 			lookup.put(player.getName().toLowerCase(), player.getUniqueId());
 		}
