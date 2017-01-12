@@ -17,31 +17,28 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-
+import au.com.addstar.bc.BungeeChat;
+import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
+import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
+import au.com.addstar.truehardcore.HardcoreWorlds.HardcoreWorld;
+import com.griefcraft.lwc.LWC;
+import com.griefcraft.lwc.LWCPlugin;
+import com.griefcraft.model.Protection;
+import com.lishid.openinv.IOpenInv;
+import com.wimbli.WorldBorder.BorderData;
+import com.wimbli.WorldBorder.WorldBorder;
 import me.botsko.prism.Prism;
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 import net.milkbowl.vault.permission.Permission;
-
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -52,15 +49,11 @@ import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
 
-import com.griefcraft.lwc.LWC;
-import com.griefcraft.lwc.LWCPlugin;
-import com.griefcraft.model.Protection;
-import com.wimbli.WorldBorder.BorderData;
-import com.wimbli.WorldBorder.WorldBorder;
-
-import au.com.addstar.bc.BungeeChat;
-import au.com.addstar.truehardcore.HardcorePlayers.*;
-import au.com.addstar.truehardcore.HardcoreWorlds.*;
+import java.io.IOException;
+import java.sql.ResultSet;
+import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
 
 public final class TrueHardcore extends JavaPlugin {
 	public static TrueHardcore instance;
@@ -71,7 +64,7 @@ public final class TrueHardcore extends JavaPlugin {
 	public static Permission perms = null;
 	public static Chat chat = null;
 	private boolean VaultEnabled = false;
-	public boolean DebugEnabled = false;
+	public static boolean DebugEnabled = false;
 	public List<String> RollbackCmds = null;
 	public boolean GameEnabled = true;
 	public String BroadcastChannel = null;
@@ -82,24 +75,26 @@ public final class TrueHardcore extends JavaPlugin {
 	private FileHandler debugfh;
 	
 	private final ConfigManager cfg = new ConfigManager(this);
-	private PluginDescriptionFile pdfFile = null;
+	private static PluginDescriptionFile pdfFile = null;
 	private PluginManager pm = null;
 
 	private Database dbcon = null;
-	public String DBHost;
-	public String DBPort;
-	public String DBName;
-	public String DBUser;
-	public String DBPass;
+	String DBHost;
+	String DBPort;
+	String DBName;
+	String DBUser;
+	String DBPass;
 
 	private Boolean LWCHooked = false;
-	private Boolean LBHooked = false;
+	Boolean LBHooked = false;
+	Boolean OIHooked = false;
+	IOpenInv openInv;
 	private Boolean WBHooked = false;
 	private Boolean VNPHooked = false;
 	private Boolean BCHooked = false;
 	
 	private LWC lwc;
-	private Prism prism;
+	Prism prism;
 	private WorldBorder wb;
 	private VanishManager vnp;
 
@@ -163,7 +158,6 @@ public final class TrueHardcore extends JavaPlugin {
     		LWCHooked = false;
     		Log("LWC not Found");
     	}
-    	
     	p = pm.getPlugin("Prism");
     	if (p != null && p instanceof Prism) {
     		LBHooked = true;
@@ -202,7 +196,7 @@ public final class TrueHardcore extends JavaPlugin {
     		WBHooked = false;
     		Log("VanishNoPacket not found! Vanished players will not be unvanished...");
     	}
-
+    	OIHooked = checkOpenInventory();
     	// Read (or initialise) plugin config file
 		cfg.LoadConfig(getConfig());
 
@@ -259,6 +253,21 @@ public final class TrueHardcore extends JavaPlugin {
         econ = rsp.getProvider();
         return econ != null;
     }
+
+    private boolean checkOpenInventory() {
+		Plugin p = getServer().getPluginManager().getPlugin("OpenInv");
+		if(p == null){
+			Log("Open Inventory support disabled");
+			return false;
+		}else{
+			if(p instanceof IOpenInv){
+				openInv = (IOpenInv) p;
+				Log("Open Inventory support enabled");
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	public void Log(String data) {
 		logger.info("[" + pdfFile.getName() + "] " + data);
@@ -270,7 +279,7 @@ public final class TrueHardcore extends JavaPlugin {
 		debuglog.warning(data);
 	}
 	
-	public void Debug(String data) {
+	public static void Debug(String data) {
 		if (DebugEnabled) {
 			logger.info("[" + pdfFile.getName() + "] " + data);
 		}
@@ -1028,23 +1037,12 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	boolean IsPlayerSafe(Player player, double x, double y, double z) {
-		List<EntityType> mobs = Arrays.asList(
-			EntityType.ZOMBIE,
-			EntityType.CREEPER,
-			EntityType.SPIDER,
-			EntityType.CAVE_SPIDER,
-			EntityType.BLAZE,
-			EntityType.GHAST,
-			EntityType.MAGMA_CUBE,
-			EntityType.SKELETON,
-			EntityType.WITCH,
-			EntityType.WITHER,
-			EntityType.ENDERMAN
-		);
 		List<Entity> ents = player.getNearbyEntities(x, y, z);
 		if (ents != null) {
 			for (Entity e : ents) {
-				if (mobs.contains(e.getType())) return false;
+				if (e instanceof Monster) return false;
+				if (e instanceof Slime) return false;
+				if (e instanceof Ghast) return false;
 			}
 		}
 		return true;
@@ -1092,7 +1090,7 @@ public final class TrueHardcore extends JavaPlugin {
 		return false;
 	}
 	
-	private void BroadcastToAllServers(String msg) {
+	public void BroadcastToAllServers(String msg) {
 		Bukkit.getServer().broadcastMessage(msg);
 		if (BCHooked) {
 			BungeeChat.mirrorChat(msg, BroadcastChannel);

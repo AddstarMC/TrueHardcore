@@ -494,6 +494,13 @@ class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.RED + "You must provide a message to broadcast");
 			}
 		}
+		else if (action.equals("DEBUG")) {
+			if (sender instanceof Player) {
+				if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) { return true; }
+			}
+			plugin.DebugEnabled = !plugin.DebugEnabled;
+			sender.sendMessage(ChatColor.RED + "Debug Status:" + plugin.DebugEnabled);
+		}
 		else {
 			sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
 			sender.sendMessage(ChatColor.AQUA + "/th play       " + ChatColor.YELLOW + ": Start or resume your game");
@@ -510,6 +517,8 @@ class CommandTH implements CommandExecutor {
 				sender.sendMessage(ChatColor.AQUA + "/th save       " + ChatColor.YELLOW + ": Save all in-memory changes");
 				sender.sendMessage(ChatColor.AQUA + "/th load       " + ChatColor.YELLOW + ": Load player data from DB");
 				sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW + ": Add/remove player to whitelist");
+				sender.sendMessage(ChatColor.AQUA + "/th debug  " + ChatColor.YELLOW + ": Toggle debug until restart");
+
 			}
 		}
 		

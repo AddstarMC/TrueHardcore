@@ -111,8 +111,8 @@
     <!-- Used for Economy interop -->
     <dependency>
       <groupId>net.milkbowl.vault</groupId>
-      <artifactId>Vault</artifactId>
-      <version>1.6.6</version>
+      <artifactId>VaultAPI</artifactId>
+      <version>1.6</version>
       <exclusions>
         <exclusion>
           <groupId>org.bukkit</groupId>
@@ -143,6 +143,11 @@
           <artifactId>bukkit</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.lishid</groupId>
+      <artifactId>openinvapi</artifactId>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
 
     <dependency>

@@ -12,6 +12,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import static au.com.addstar.truehardcore.TrueHardcore.Debug;
+
 class WorldRollback implements Runnable {
 	private final Player player;
 	private final World world;
@@ -40,7 +42,7 @@ class WorldRollback implements Runnable {
 			params.addActionType("item-pickup", MatchRule.EXCLUDE);
 			
 			// Rollback specified world
-			plugin.Debug("Rollback changes for " + player.getName() + " (" + world.getName() + ")...");
+			Debug("Rollback changes for " + player.getName() + " (" + world.getName() + ")...");
 			
 			final ActionsQuery aq = new ActionsQuery(prism);
 			final QueryResult result = aq.lookup(params);
@@ -52,11 +54,11 @@ class WorldRollback implements Runnable {
                 });
 			}
 			
-			plugin.Debug("Scheduling activity purge for " + player.getName() + " (" + world.getName() + ")...");
+			Debug("Scheduling activity purge for " + player.getName() + " (" + world.getName() + ")...");
 			plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, () -> {
                 synchronized (lock) {
                     try {
-                        plugin.Debug("Purging changes for " + player.getName() + " (" + world.getName() + ")...");
+                        Debug("Purging changes for " + player.getName() + " (" + world.getName() + ")...");
                         params.setProcessType(PrismProcessType.DELETE);
                         aq.delete(params);
                     } catch (Exception e) {

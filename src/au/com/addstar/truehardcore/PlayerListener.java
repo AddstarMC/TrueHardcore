@@ -17,16 +17,23 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+import com.lishid.openinv.IOpenInv;
+import com.lishid.openinv.internal.ISpecialEnderChest;
+import com.lishid.openinv.internal.ISpecialPlayerInventory;
+import me.botsko.prism.actionlibs.ActionsQuery;
+import me.botsko.prism.actionlibs.MatchRule;
+import me.botsko.prism.actionlibs.QueryParameters;
+import me.botsko.prism.actionlibs.QueryResult;
+import me.botsko.prism.actions.Handler;
+import me.botsko.prism.appliers.PrismProcessType;
 import org.bukkit.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
@@ -37,11 +44,18 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.text.DateFormat;
+import java.util.*;
+
 class PlayerListener implements Listener {
-	
+
 	private final TrueHardcore plugin;
 	private final HardcorePlayers HCPlayers;
 	public PlayerListener(TrueHardcore instance) {
@@ -298,6 +312,17 @@ class PlayerListener implements Listener {
 	public void onEntityDeath(EntityDeathEvent event) {
 		Entity ent = event.getEntity();
 		if (!plugin.IsHardcoreWorld(ent.getWorld())) { return; }
+		if(ent.getLastDamageCause() instanceof EntityDamageByBlockEvent){
+			EntityDamageByBlockEvent causeB = (EntityDamageByBlockEvent) ent.getLastDamageCause();
+			List<Material> damagers = new ArrayList<>();
+			damagers.add(Material.TNT);
+			damagers.add(Material.EXPLOSIVE_MINECART);
+			if (!damagers.contains(causeB.getDamager().getType()))return;
+			Bukkit.getScheduler().runTaskAsynchronously(plugin,()->{
+				findPlacer(causeB);
+			});
+			return;
+		}
 		if (!(ent.getLastDamageCause() instanceof EntityDamageByEntityEvent)) { return; }
 
 		// Find out who did the last damage
@@ -312,6 +337,8 @@ class PlayerListener implements Listener {
 					Player killed = (Player) ent;
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
 					hcp.setPlayerKills(hcp.getPlayerKills()+1);
+					giveSkullOnline(killed,killer);
+					plugin.BroadcastToAllServers(killer.getDisplayName() + "has taken the life of " + killed.getDisplayName()+ "...in the end there can be only one...");
 				} else {
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
 					switch (ent.getType()) {
@@ -388,4 +415,144 @@ class PlayerListener implements Listener {
 			player.playNote(event.getPlayer().getLocation(), Instrument.PIANO, Note.natural(1, Note.Tone.B));
 		}
 	}
+
+	private void findPlacer(EntityDamageByBlockEvent e){
+		if(!plugin.LBHooked)return;//if Prism isnt loaded ...this wont work.
+		QueryParameters parameters = new QueryParameters();
+		parameters.setSpecificBlockLocation(e.getDamager().getLocation());
+		parameters.setProcessType(PrismProcessType.LOOKUP);
+		parameters.setLimit(1);
+		parameters.addActionType("block-place", MatchRule.INCLUDE);
+		ActionsQuery aq = new ActionsQuery(plugin.prism);
+		QueryResult lookupResult = aq.lookup( parameters);
+		if(lookupResult.getActionResults().size() > 0){
+			Handler handle = lookupResult.getActionResults().get(0);
+			OfflinePlayer killer =  Bukkit.getOfflinePlayer(handle.getPlayerName());
+			HardcorePlayer hcp = HCPlayers.Get(e.getDamager().getWorld().getName(),killer.getUniqueId());
+			if ((hcp != null)) {
+				if (e.getEntity() instanceof Player) {
+					Player killed = (Player) e.getEntity();
+					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
+					hcp.setPlayerKills(hcp.getPlayerKills()+1);
+					if((hcp.getState() == PlayerState.IN_GAME)){
+					Bukkit.getScheduler().runTask(plugin,()->{
+						giveSkullOnline(killed,Bukkit.getPlayer(killer.getUniqueId()));
+					});
+					}else{
+						Bukkit.getScheduler().runTask(plugin,()->{
+							giveSkullOffline(killed,killer);
+						});
+
+
+					}
+
+					return;
+				} else {
+					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + e.getEntity().getType());
+					switch (e.getEntity().getType()) {
+						case COW:
+							hcp.setCowKills(hcp.getCowKills() + 1);
+							break;
+						case PIG:
+							hcp.setPigKills(hcp.getPigKills() + 1);
+							break;
+						case SHEEP:
+							hcp.setSheepKills(hcp.getSheepKills() + 1);
+							break;
+						case CHICKEN:
+							hcp.setChickenKills(hcp.getChickenKills() + 1);
+							break;
+						case CREEPER:
+							hcp.setCreeperKills(hcp.getCreeperKills() + 1);
+							break;
+						case ZOMBIE:
+							hcp.setZombieKills(hcp.getZombieKills() + 1);
+							break;
+						case SKELETON:
+							hcp.setSkeletonKills(hcp.getSkeletonKills() + 1);
+							break;
+						case SPIDER:
+						case CAVE_SPIDER:
+							hcp.setSpiderKills(hcp.getSpiderKills() + 1);
+							break;
+						case ENDERMAN:
+							hcp.setEnderKills(hcp.getEnderKills() + 1);
+							break;
+						case SLIME:
+							hcp.setSlimeKills(hcp.getSlimeKills() + 1);
+							break;
+						case MUSHROOM_COW:
+							hcp.setMooshKills(hcp.getMooshKills() + 1);
+							break;
+						case PLAYER:
+							hcp.setPlayerKills(hcp.getPlayerKills() + 1);
+							break;
+						default:
+							hcp.setOtherKills(hcp.getOtherKills() + 1);
+							break;
+					}
+				}
+			}else {
+
+			plugin.DebugLog("Ignoring hardcore death: " + killer.getName() + " killed " + e.getEntity().getType());
+		}
+		}else{
+			return;
+		}
+	}
+
+	private void giveSkullOffline(Player killed, OfflinePlayer killer){
+		IOpenInv openInv = plugin.openInv;
+		Player loadedKiller = openInv.loadPlayer(killer);
+		openInv.retainPlayer(loadedKiller,plugin);
+		giveSkull(killed,loadedKiller, false);
+		openInv.releasePlayer(loadedKiller,plugin);
+	}
+	private void giveSkullOnline(Player killed, Player killer){
+		killer.getWorld().strikeLightningEffect(killer.getLocation());
+		PotionEffect effect =  new PotionEffect(PotionEffectType.CONFUSION,5*20,0,false,true);
+		killer.addPotionEffect(effect);
+		giveSkull(killed,killer, true);
+	}
+
+	private void giveSkull(Player killed, Player killer, boolean isOnline){
+		if (killer==null)return;
+		ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (short) SkullType.PLAYER.ordinal());
+		SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
+		skullMeta.setOwner(killed.getName());
+		skullMeta.setDisplayName(killed.getDisplayName());
+		skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+		skullMeta.addEnchant(Enchantment.LUCK,1,true);
+		List<String> lorelist = new ArrayList<>();
+		lorelist.add("The Head of " + killed.getDisplayName());
+		Date date = new Date(System.currentTimeMillis());
+		DateFormat df = DateFormat.getDateTimeInstance(2,2);
+		df.format(date);
+		lorelist.add("Killed on " + df.format(date) + " by " + killer.getDisplayName());
+		skullMeta.setLore(lorelist);
+		skull.setItemMeta(skullMeta);
+		killer.getWorld().dropItem(killer.getLocation(),skull);
+		ISpecialPlayerInventory inv = plugin.openInv.getInventory(killer,isOnline);
+		Inventory binv = inv.getBukkitInventory();
+		HashMap<Integer, ItemStack> left = binv.addItem(skull);
+		if(!left.isEmpty()){
+			plugin.DebugLog("Unable to add item to normal inventory: " + skull.toString());
+
+			for (Map.Entry<Integer,ItemStack> e: left.entrySet()){
+				if(e.getKey()>0){
+					ISpecialEnderChest sec = plugin.openInv.getEnderChest(killer,isOnline);
+					Inventory enderInv = sec.getBukkitInventory();
+					ItemStack item = e.getValue();
+					item.setAmount(e.getKey());
+					HashMap<Integer, ItemStack> leftnew = enderInv.addItem(item);
+					if(!leftnew.isEmpty()){
+						plugin.Log("Unable to add item to enderchest: " + item.toString());
+					}
+
+				}
+			}
+		}
+	}
+
+
 }
