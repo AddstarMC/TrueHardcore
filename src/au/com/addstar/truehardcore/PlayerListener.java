@@ -318,10 +318,15 @@ class PlayerListener implements Listener {
 			damagers.add(Material.TNT);
 			damagers.add(Material.EXPLOSIVE_MINECART);
 			if (!damagers.contains(causeB.getDamager().getType()))return;
-			Bukkit.getScheduler().runTaskAsynchronously(plugin,()->{
-				findPlacer(causeB);
-			});
-			return;
+			Location blockLoc = new Location(causeB.getDamager().getWorld(),causeB.getDamager().getX(),causeB.getDamager().getY(),causeB.getDamager().getZ());
+			if (ent instanceof Player) { //we wont count tnt kills that are not players
+				String killedName = ent.getName();
+				String killedDisplayName = ((Player)ent).getDisplayName();
+				Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+					findPlacer(blockLoc, blockLoc.getWorld().getName(),killedName,killedDisplayName);
+				});
+				return;
+			}
 		}
 		if (!(ent.getLastDamageCause() instanceof EntityDamageByEntityEvent)) { return; }
 
@@ -337,7 +342,7 @@ class PlayerListener implements Listener {
 					Player killed = (Player) ent;
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
 					hcp.setPlayerKills(hcp.getPlayerKills()+1);
-					giveSkullOnline(killed,killer);
+					giveSkullOnline(killed.getName(),killed.getDisplayName(),killer);
 					plugin.BroadcastToAllServers(killer.getDisplayName() + "has taken the life of " + killed.getDisplayName()+ "...in the end there can be only one...");
 				} else {
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
@@ -416,10 +421,10 @@ class PlayerListener implements Listener {
 		}
 	}
 
-	private void findPlacer(EntityDamageByBlockEvent e){
+	private void findPlacer(Location location,String worldName, String killedName, String killedDN){
 		if(!plugin.LBHooked)return;//if Prism isnt loaded ...this wont work.
 		QueryParameters parameters = new QueryParameters();
-		parameters.setSpecificBlockLocation(e.getDamager().getLocation());
+		parameters.setSpecificBlockLocation(location);
 		parameters.setProcessType(PrismProcessType.LOOKUP);
 		parameters.setLimit(1);
 		parameters.addActionType("block-place", MatchRule.INCLUDE);
@@ -427,104 +432,55 @@ class PlayerListener implements Listener {
 		QueryResult lookupResult = aq.lookup( parameters);
 		if(lookupResult.getActionResults().size() > 0){
 			Handler handle = lookupResult.getActionResults().get(0);
-			OfflinePlayer killer =  Bukkit.getOfflinePlayer(handle.getPlayerName());
-			HardcorePlayer hcp = HCPlayers.Get(e.getDamager().getWorld().getName(),killer.getUniqueId());
-			if ((hcp != null)) {
-				if (e.getEntity() instanceof Player) {
-					Player killed = (Player) e.getEntity();
-					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
-					hcp.setPlayerKills(hcp.getPlayerKills()+1);
-					if((hcp.getState() == PlayerState.IN_GAME)){
-					Bukkit.getScheduler().runTask(plugin,()->{
-						giveSkullOnline(killed,Bukkit.getPlayer(killer.getUniqueId()));
+			String killerName = handle.getPlayerName();
+			Bukkit.getScheduler().runTask(plugin,()->{
+						updateGame(worldName,killedName, killedDN,killerName);
 					});
-					}else{
-						Bukkit.getScheduler().runTask(plugin,()->{
-							giveSkullOffline(killed,killer);
-						});
-
-
-					}
-
 					return;
-				} else {
-					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + e.getEntity().getType());
-					switch (e.getEntity().getType()) {
-						case COW:
-							hcp.setCowKills(hcp.getCowKills() + 1);
-							break;
-						case PIG:
-							hcp.setPigKills(hcp.getPigKills() + 1);
-							break;
-						case SHEEP:
-							hcp.setSheepKills(hcp.getSheepKills() + 1);
-							break;
-						case CHICKEN:
-							hcp.setChickenKills(hcp.getChickenKills() + 1);
-							break;
-						case CREEPER:
-							hcp.setCreeperKills(hcp.getCreeperKills() + 1);
-							break;
-						case ZOMBIE:
-							hcp.setZombieKills(hcp.getZombieKills() + 1);
-							break;
-						case SKELETON:
-							hcp.setSkeletonKills(hcp.getSkeletonKills() + 1);
-							break;
-						case SPIDER:
-						case CAVE_SPIDER:
-							hcp.setSpiderKills(hcp.getSpiderKills() + 1);
-							break;
-						case ENDERMAN:
-							hcp.setEnderKills(hcp.getEnderKills() + 1);
-							break;
-						case SLIME:
-							hcp.setSlimeKills(hcp.getSlimeKills() + 1);
-							break;
-						case MUSHROOM_COW:
-							hcp.setMooshKills(hcp.getMooshKills() + 1);
-							break;
-						case PLAYER:
-							hcp.setPlayerKills(hcp.getPlayerKills() + 1);
-							break;
-						default:
-							hcp.setOtherKills(hcp.getOtherKills() + 1);
-							break;
-					}
-				}
-			}else {
 
-			plugin.DebugLog("Ignoring hardcore death: " + killer.getName() + " killed " + e.getEntity().getType());
-		}
-		}else{
-			return;
+			}
+	}
+
+	private void updateGame(String worldName, String killedName, String killedDN, String killerName){
+		OfflinePlayer killer =  Bukkit.getOfflinePlayer(killerName);
+		HardcorePlayer hcp = HCPlayers.Get(worldName,killer.getUniqueId());
+		if(hcp != null) {
+			plugin.DebugLog("EntityDeath: " + killerName + " killed " + killedDN);
+			hcp.setPlayerKills(hcp.getPlayerKills()+1);
+			if (killer.isOnline()) {
+				Player killerOnline = Bukkit.getPlayer(killer.getUniqueId());
+				if (killerOnline != null) giveSkullOnline(killedName,killedDN, killerOnline);
+			} else {
+				giveSkullOffline(killedName,killedDN,killer);
+			}
 		}
 	}
 
-	private void giveSkullOffline(Player killed, OfflinePlayer killer){
+
+	private void giveSkullOffline(String killedName, String killedDN, OfflinePlayer killer){
 		IOpenInv openInv = plugin.openInv;
 		Player loadedKiller = openInv.loadPlayer(killer);
 		openInv.retainPlayer(loadedKiller,plugin);
-		giveSkull(killed,loadedKiller, false);
+		giveSkull(killedName,killedDN,loadedKiller, false);
 		openInv.releasePlayer(loadedKiller,plugin);
 	}
-	private void giveSkullOnline(Player killed, Player killer){
+	private void giveSkullOnline(String killedName, String killedDN, Player killer){
 		killer.getWorld().strikeLightningEffect(killer.getLocation());
 		PotionEffect effect =  new PotionEffect(PotionEffectType.CONFUSION,5*20,0,false,true);
 		killer.addPotionEffect(effect);
-		giveSkull(killed,killer, true);
+		giveSkull(killedName,killedDN,killer, true);
 	}
 
-	private void giveSkull(Player killed, Player killer, boolean isOnline){
+	private void giveSkull(String killedName, String killedDN, Player killer, boolean isOnline){
 		if (killer==null)return;
 		ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (short) SkullType.PLAYER.ordinal());
 		SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
-		skullMeta.setOwner(killed.getName());
-		skullMeta.setDisplayName(killed.getDisplayName());
+		skullMeta.setOwner(killedName);
+		skullMeta.setDisplayName(killedDN);
 		skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 		skullMeta.addEnchant(Enchantment.LUCK,1,true);
 		List<String> lorelist = new ArrayList<>();
-		lorelist.add("The Head of " + killed.getDisplayName());
+		lorelist.add("The Head of " + killedDN);
 		Date date = new Date(System.currentTimeMillis());
 		DateFormat df = DateFormat.getDateTimeInstance(2,2);
 		df.format(date);
