@@ -23,16 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.spigotmc.SpigotConfig;
 
 import au.com.addstar.monolith.lookup.Lookup;
 import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
@@ -394,7 +389,7 @@ class CommandTH implements CommandExecutor {
 				if (type.equals("ADD")) {
 					OfflinePlayer player = Bukkit.getOfflinePlayer(args[2]);
 					
-					if (player.getUniqueId().version() == 4 || (!Bukkit.getOnlineMode() && !SpigotConfig.bungee)) {
+					if (player.getUniqueId().version() == 4 ){
 						if (plugin.AddToWhitelist(player.getUniqueId())) {
 							sender.sendMessage(ChatColor.GREEN + "Player " + player.getName() + " added to TrueHardcore whitelist.");
 						} else {
@@ -423,7 +418,7 @@ class CommandTH implements CommandExecutor {
                                         sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
                                     }
                                 } else {
-                                    sender.sendMessage(ChatColor.RED + "ERROR: Failed to lookup the UUID for that player");
+                                    sender.sendMessage(ChatColor.RED + "ERROR: Failed to lookup the UUID for that player: "+error.getMessage());
                                 }
                             });
 						}

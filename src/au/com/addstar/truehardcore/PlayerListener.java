@@ -316,14 +316,15 @@ class PlayerListener implements Listener {
 			EntityDamageByBlockEvent causeB = (EntityDamageByBlockEvent) ent.getLastDamageCause();
 			List<Material> damagers = new ArrayList<>();
 			damagers.add(Material.TNT);
-			damagers.add(Material.EXPLOSIVE_MINECART);
+			damagers.add(Material.TNT_MINECART);
 			if (!damagers.contains(causeB.getDamager().getType()))return;
 			Location blockLoc = new Location(causeB.getDamager().getWorld(),causeB.getDamager().getX(),causeB.getDamager().getY(),causeB.getDamager().getZ());
 			if (ent instanceof Player) { //we wont count tnt kills that are not players
-				String killedName = ent.getName();
+				OfflinePlayer killed = ((Player) ent).getPlayer();
 				String killedDisplayName = ((Player)ent).getDisplayName();
 				Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-					findPlacer(blockLoc, blockLoc.getWorld().getName(),killedName,killedDisplayName);
+
+					findPlacer(blockLoc, blockLoc.getWorld().getName(),killed,killedDisplayName);
 				});
 				return;
 			}
@@ -342,7 +343,7 @@ class PlayerListener implements Listener {
 					Player killed = (Player) ent;
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
 					hcp.setPlayerKills(hcp.getPlayerKills()+1);
-					giveSkullOnline(killed.getName(),killed.getDisplayName(),killer);
+					giveSkullOnline(killed,killed.getDisplayName(),killer);
 					plugin.BroadcastToAllServers(killer.getDisplayName() + "has taken the life of " + killed.getDisplayName()+ "...in the end there can be only one...");
 				} else {
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
@@ -421,7 +422,7 @@ class PlayerListener implements Listener {
 		}
 	}
 
-	private void findPlacer(Location location,String worldName, String killedName, String killedDN){
+	private void findPlacer(Location location,String worldName, OfflinePlayer killed,String displayName){
 		if(!plugin.LBHooked)return;//if Prism isnt loaded ...this wont work.
 		QueryParameters parameters = new QueryParameters();
 		parameters.setSpecificBlockLocation(location);
@@ -432,50 +433,51 @@ class PlayerListener implements Listener {
 		QueryResult lookupResult = aq.lookup( parameters);
 		if(lookupResult.getActionResults().size() > 0){
 			Handler handle = lookupResult.getActionResults().get(0);
-			String killerName = handle.getPlayerName();
+			UUID killerUUID = handle.getUUID();
+			OfflinePlayer killer = Bukkit.getOfflinePlayer(killerUUID);
 			Bukkit.getScheduler().runTask(plugin,()->{
-						updateGame(worldName,killedName, killedDN,killerName);
+						updateGame(worldName,killed, killer,displayName);
 					});
 					return;
 
 			}
 	}
 
-	private void updateGame(String worldName, String killedName, String killedDN, String killerName){
-		OfflinePlayer killer =  Bukkit.getOfflinePlayer(killerName);
+	private void updateGame(String worldName, OfflinePlayer killed, OfflinePlayer killer, String killedDN){
 		HardcorePlayer hcp = HCPlayers.Get(worldName,killer.getUniqueId());
 		if(hcp != null) {
-			plugin.DebugLog("EntityDeath: " + killerName + " killed " + killedDN);
+			plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killedDN);
 			hcp.setPlayerKills(hcp.getPlayerKills()+1);
 			if (killer.isOnline()) {
 				Player killerOnline = Bukkit.getPlayer(killer.getUniqueId());
-				if (killerOnline != null) giveSkullOnline(killedName,killedDN, killerOnline);
+				if (killerOnline != null) giveSkullOnline(killed,killedDN, killerOnline);
 			} else {
-				giveSkullOffline(killedName,killedDN,killer);
+				giveSkullOffline(killed,killedDN,killer);
 			}
 		}
 	}
 
 
-	private void giveSkullOffline(String killedName, String killedDN, OfflinePlayer killer){
+	private void giveSkullOffline(OfflinePlayer killedName, String killedDN, OfflinePlayer killer){
 		IOpenInv openInv = plugin.openInv;
 		Player loadedKiller = openInv.loadPlayer(killer);
 		openInv.retainPlayer(loadedKiller,plugin);
 		giveSkull(killedName,killedDN,loadedKiller, false);
 		openInv.releasePlayer(loadedKiller,plugin);
 	}
-	private void giveSkullOnline(String killedName, String killedDN, Player killer){
+	private void giveSkullOnline(OfflinePlayer killedName, String killedDN, Player killer){
 		killer.getWorld().strikeLightningEffect(killer.getLocation());
 		PotionEffect effect =  new PotionEffect(PotionEffectType.CONFUSION,5*20,0,false,true);
 		killer.addPotionEffect(effect);
 		giveSkull(killedName,killedDN,killer, true);
 	}
 
-	private void giveSkull(String killedName, String killedDN, Player killer, boolean isOnline){
+	private void giveSkull(OfflinePlayer killed, String killedDN, Player killer, boolean isOnline){
 		if (killer==null)return;
-		ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (short) SkullType.PLAYER.ordinal());
+		ItemStack skull =new ItemStack(Material.PLAYER_HEAD,1);
+
 		SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
-		skullMeta.setOwner(killedName);
+		skullMeta.setOwningPlayer(killed);
 		skullMeta.setDisplayName(killedDN);
 		skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 		skullMeta.addEnchant(Enchantment.LUCK,1,true);
@@ -488,26 +490,30 @@ class PlayerListener implements Listener {
 		skullMeta.setLore(lorelist);
 		skull.setItemMeta(skullMeta);
 		killer.getWorld().dropItem(killer.getLocation(),skull);
-		ISpecialPlayerInventory inv = plugin.openInv.getInventory(killer,isOnline);
-		Inventory binv = inv.getBukkitInventory();
-		HashMap<Integer, ItemStack> left = binv.addItem(skull);
-		if(!left.isEmpty()){
-			plugin.DebugLog("Unable to add item to normal inventory: " + skull.toString());
+		try {
+            ISpecialPlayerInventory inv = plugin.openInv.getSpecialInventory(killer, isOnline);
+            Inventory binv = inv.getBukkitInventory();
+            HashMap<Integer, ItemStack> left = binv.addItem(skull);
+            if(!left.isEmpty()){
+                plugin.DebugLog("Unable to add item to normal inventory: " + skull.toString());
+                for (Map.Entry<Integer,ItemStack> e: left.entrySet()){
+                    if(e.getKey()>0){
+                            ISpecialEnderChest sec = plugin.openInv.getSpecialEnderChest(killer, isOnline);
+                            Inventory enderInv = sec.getBukkitInventory();
+                            ItemStack item = e.getValue();
+                            item.setAmount(e.getKey());
+                            HashMap<Integer, ItemStack> leftnew = enderInv.addItem(item);
+                            if(!leftnew.isEmpty()){
+                                plugin.Log("Unable to add item to enderchest: " + item.toString());
+                            }
+                            plugin.Log("Unable to add item to enderchest: " + item.toString());
+                    }
+                }
+            }
+        }catch (InstantiationException e){
+		   plugin.Log(e.getMessage());
+        }
 
-			for (Map.Entry<Integer,ItemStack> e: left.entrySet()){
-				if(e.getKey()>0){
-					ISpecialEnderChest sec = plugin.openInv.getEnderChest(killer,isOnline);
-					Inventory enderInv = sec.getBukkitInventory();
-					ItemStack item = e.getValue();
-					item.setAmount(e.getKey());
-					HashMap<Integer, ItemStack> leftnew = enderInv.addItem(item);
-					if(!leftnew.isEmpty()){
-						plugin.Log("Unable to add item to enderchest: " + item.toString());
-					}
-
-				}
-			}
-		}
 	}
 
 
