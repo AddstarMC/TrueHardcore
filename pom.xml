@@ -69,7 +69,7 @@
         </repository>
         <repository>
             <id>addstar-snapshot-repo</id>
-            <url>http://maven.addstar.com.au/artifactory/ext-snapshot-local</url>
+            <url>http://maven.addstar.com.au/artifactory/all-snapshot</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -77,7 +77,16 @@
                 <enabled>false</enabled>
             </releases>
         </repository>
-
+        <repository>
+            <id>addstar-release-repo</id>
+            <url>http://maven.addstar.com.au/artifactory/all-release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
         <!-- Repository for other dependencies of SK's -->
         <repository>
             <id>sk89q-mvn2</id>
@@ -143,7 +152,7 @@
         <dependency>
             <groupId>com.griefcraft</groupId>
             <artifactId>lwc</artifactId>
-            <version>4.4.0</version>
+            <version>4.7.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 
@@ -211,7 +220,7 @@
     <build>
         <resources>
             <resource>
-                <targetPath>.</targetPath>
+                <targetPath>src/main/resources</targetPath>
                 <filtering>true</filtering>
                 <directory>${basedir}/</directory>
                 <includes>
@@ -221,7 +230,7 @@
             </resource>
         </resources>
 
-        <sourceDirectory>src</sourceDirectory>
+        <sourceDirectory>src/main/java</sourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
