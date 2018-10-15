@@ -15,8 +15,8 @@ public class HardcorePlayers {
 	public HardcorePlayers() {
 		Players = new HashMap<>();
 	}
-	
-	public static enum PlayerState {
+
+	public enum PlayerState {
 		NOT_IN_GAME,
 		IN_GAME,
 		ALIVE,
@@ -48,6 +48,9 @@ public class HardcorePlayers {
 		private boolean Modified = false;
 		private boolean LoadDataOnly = false;
 		private boolean GodMode = false;
+		
+		private boolean combat = false;
+		private long combatTime = 0;
 		
 		public boolean isLoadDataOnly() {
 			return LoadDataOnly;
@@ -370,6 +373,22 @@ public class HardcorePlayers {
 		public void setGodMode(boolean godMode) {
 			GodMode = godMode;
 		}
+        
+        public boolean isCombat() {
+            return combat;
+        }
+        
+        public void setCombat(boolean combat) {
+            this.combat = combat;
+        }
+        
+        public long getCombatTime() {
+            return combatTime;
+        }
+        
+        public void setCombatTime(long combatTime) {
+            this.combatTime = combatTime;
+        }
 	}
 	
 	public HardcorePlayer NewPlayer(String world, UUID id, String name) {

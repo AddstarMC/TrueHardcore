@@ -92,7 +92,6 @@ class PlayerListener implements Listener {
 
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
-
 		// We only care about existing hardcore players
 		HardcorePlayer hcp = HCPlayers.Get(player);
 		if (hcp == null) { return; }
@@ -130,6 +129,7 @@ class PlayerListener implements Listener {
 			plugin.BroadcastToHardcore(plugin.Header + ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
 		}
 	}
+	
 
 	/*
 	 * Handle players joining the server in the hardcore world
@@ -297,16 +297,25 @@ class PlayerListener implements Listener {
 	 */
 	@EventHandler(ignoreCancelled=true)
 	public void onPlayerDamage(EntityDamageEvent event) {
+		checkDamagedPlayer(event);
+	}
+	
+	private void checkDamagedPlayer(EntityDamageEvent event){
 		if (!(event.getEntity() instanceof Player)) { return; }
 		if (!plugin.IsHardcoreWorld(event.getEntity().getWorld())) { return; }
-
+		
 		Player player = (Player) event.getEntity();
 		HardcorePlayer hcp = HCPlayers.Get(player);
 		
 		if ((hcp != null) && (hcp.isGodMode())) {
 			event.setCancelled(true);
-	    }
+		}
 	}
+	
+	/*
+	 * Tag a player causing damage to another or being damaged by another
+	 */
+
 
 	@EventHandler(ignoreCancelled=true)
 	public void onEntityDeath(EntityDeathEvent event) {
@@ -322,10 +331,7 @@ class PlayerListener implements Listener {
 			if (ent instanceof Player) { //we wont count tnt kills that are not players
 				OfflinePlayer killed = ((Player) ent).getPlayer();
 				String killedDisplayName = ((Player)ent).getDisplayName();
-				Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-
-					findPlacer(blockLoc, blockLoc.getWorld().getName(),killed,killedDisplayName);
-				});
+				Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> findPlacer(blockLoc, blockLoc.getWorld().getName(), killed, killedDisplayName));
 				return;
 			}
 		}
@@ -333,8 +339,8 @@ class PlayerListener implements Listener {
 
 		// Find out who did the last damage
 		EntityDamageByEntityEvent cause = (EntityDamageByEntityEvent) ent.getLastDamageCause();
+		if (cause.isCancelled())return;
 		Entity damager = cause.getDamager();
-
 		if (damager instanceof Player) {
 			Player killer = (Player) damager;
 			HardcorePlayer hcp = HCPlayers.Get(killer);
@@ -435,12 +441,9 @@ class PlayerListener implements Listener {
 			Handler handle = lookupResult.getActionResults().get(0);
 			UUID killerUUID = handle.getUUID();
 			OfflinePlayer killer = Bukkit.getOfflinePlayer(killerUUID);
-			Bukkit.getScheduler().runTask(plugin,()->{
-						updateGame(worldName,killed, killer,displayName);
-					});
-					return;
+			Bukkit.getScheduler().runTask(plugin, () -> updateGame(worldName, killed, killer, displayName));
 
-			}
+		}
 	}
 
 	private void updateGame(String worldName, OfflinePlayer killed, OfflinePlayer killer, String killedDN){

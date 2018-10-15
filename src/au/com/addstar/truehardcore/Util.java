@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -117,7 +118,7 @@ class Util {
 
 	// TODO: add exception checking
 	public static Date Mysql2Date(String mysqldate) {
-		if ((mysqldate == "") || (mysqldate == null) || (mysqldate == "0000-00-00 00:00:00")) {
+		if ((Objects.equals(mysqldate, "")) || (mysqldate == null) || (Objects.equals(mysqldate, "0000-00-00 00:00:00"))) {
 			return null;
 		}
 		
@@ -146,16 +147,11 @@ class Util {
 		return true;
 	}
 
-	public static ItemStack CreateStack(Material item, int datavalue, int amount) {
-		ItemStack itemstack = new ItemStack(item, amount, (short)datavalue);
-		return itemstack;
-	}
-
 	/*
 	 * Check if the player has the specified permission
 	 */
 	private static boolean HasPermission(Player player, String perm) {
-		if (player instanceof Player) {
+		if (player != null) {
 			// Real player
 			if (player.hasPermission(perm)) {
 				return true;
@@ -172,10 +168,8 @@ class Util {
 	 */
 	public static boolean RequirePermission(Player player, String perm) {
 		if (!HasPermission(player, perm)) {
-			if (player instanceof Player) {
-				player.sendMessage(ChatColor.RED + "Sorry, you do not have permission for this command.");
-				return false;
-			}
+			player.sendMessage(ChatColor.RED + "Sorry, you do not have permission for this command.");
+			return false;
 		}
 		return true;
 	}
@@ -185,7 +179,9 @@ class Util {
 	 */
 	public static boolean IsPlayerOnline(String player) {
 		if (player == null) { return false; }
-		if (player == "") { return false; }
+		if (Objects.equals(player, "")) {
+			return false;
+		}
 		if (TrueHardcore.instance.getServer().getPlayer(player) != null) {
 			// Found player.. they must be online!
 			return true;
