@@ -220,9 +220,9 @@
     <build>
         <resources>
             <resource>
-                <targetPath>src/main/resources</targetPath>
+                <targetPath>.</targetPath>
                 <filtering>true</filtering>
-                <directory>${basedir}/</directory>
+                <directory>${basedir}/src/main/resources</directory>
                 <includes>
                     <include>config.yml</include>
                     <include>plugin.yml</include>
