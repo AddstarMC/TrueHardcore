@@ -252,7 +252,7 @@ public final class TrueHardcore extends JavaPlugin {
     @Override
     public void onDisable(){
         // cancel all tasks we created
-        cTracker.onDisable();
+        if(cTracker!= null)cTracker.onDisable();
         getServer().getScheduler().cancelTasks(this);
         SaveAllPlayers();
         Log(pdfFile.getName() + " has been disabled!");
