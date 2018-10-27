@@ -472,9 +472,13 @@ public final class TrueHardcore extends JavaPlugin {
     }
     
     public boolean PlayGame(String world, Player player) {
-        if (!IsOnWhiteList(world, player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
-            return false;
+        // Only check whitelist if world is whitelisted
+        HardcoreWorld hcw = HardcoreWorlds.Get(world);
+        if (hcw.isWhitelisted()) {
+            if (!IsOnWhiteList(world, player.getUniqueId())) {
+                player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
+                return false;
+            }
         }
 
         if (!GameEnabled && !player.hasPermission("truehardcore.admin")) {
@@ -482,7 +486,6 @@ public final class TrueHardcore extends JavaPlugin {
             return false;
         }
         
-        HardcoreWorld hcw = HardcoreWorlds.Get(world);
         HardcorePlayer hcp = HCPlayers.Get(world, player.getUniqueId());
         if (hcp != null) {
             if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
