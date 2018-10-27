@@ -250,14 +250,15 @@ class CommandTH implements CommandExecutor {
 			if (args.length == 1) {
 				for (Map.Entry<String, HardcoreWorld> entry: plugin.HardcoreWorlds.AllRecords().entrySet()) {
 					HardcoreWorld hcw = entry.getValue();
-					sender.sendMessage(ChatColor.YELLOW + "World Name     : " + ChatColor.AQUA + hcw.getWorld().getName());
-					sender.sendMessage(ChatColor.YELLOW + "Greeting       : " + ChatColor.AQUA + ChatColor.translateAlternateColorCodes('&', hcw.getGreeting()));
-					sender.sendMessage(ChatColor.YELLOW + "Ban Time       : " + ChatColor.AQUA + hcw.getBantime());
-					sender.sendMessage(ChatColor.YELLOW + "Distance       : " + ChatColor.AQUA + hcw.getSpawnDistance());
-					sender.sendMessage(ChatColor.YELLOW + "Protection     : " + ChatColor.AQUA + hcw.getSpawnProtection());
-					sender.sendMessage(ChatColor.YELLOW + "ExitPos        : " + ChatColor.AQUA + hcw.getExitPos());
-					sender.sendMessage(ChatColor.YELLOW + "Rollback delay : " + ChatColor.AQUA + hcw.getRollbackDelay());
-					sender.sendMessage(ChatColor.YELLOW + "DeathDrops     : " + ChatColor.AQUA + hcw.getDeathDrops());
+					sender.sendMessage(ChatColor.RED + "World Name     : " + ChatColor.AQUA + hcw.getWorld().getName());
+					sender.sendMessage(ChatColor.YELLOW + " Greeting      : " + ChatColor.AQUA + ChatColor.translateAlternateColorCodes('&', hcw.getGreeting()));
+					sender.sendMessage(ChatColor.YELLOW + " Ban Time      : " + ChatColor.AQUA + hcw.getBantime());
+					sender.sendMessage(ChatColor.YELLOW + " Distance      : " + ChatColor.AQUA + hcw.getSpawnDistance());
+					sender.sendMessage(ChatColor.YELLOW + " Protection    : " + ChatColor.AQUA + hcw.getSpawnProtection());
+					sender.sendMessage(ChatColor.YELLOW + " ExitPos       : " + ChatColor.AQUA + hcw.getExitPos());
+					sender.sendMessage(ChatColor.YELLOW + " Rollback delay: " + ChatColor.AQUA + hcw.getRollbackDelay());
+					sender.sendMessage(ChatColor.YELLOW + " DeathDrops    : " + ChatColor.AQUA + hcw.getDeathDrops());
+					sender.sendMessage(ChatColor.YELLOW + " Whitelisted   : " + ChatColor.AQUA + hcw.isWhitelisted());
 				}
 			}
 		}
