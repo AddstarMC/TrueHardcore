@@ -59,6 +59,7 @@ class ConfigManager {
 					hcw.setExitPos(Util.Str2Loc(Config().getString("worlds." + w + ".exitpos")));	    // Default = null
 					hcw.setRollbackDelay(Config().getInt("worlds." + w + ".rollback-delay", 0));		// Default = 0
 					hcw.setDeathDrops(Config().getBoolean("worlds." + w + ".death-drops", false));		// Default = false
+					hcw.setWhitelisted(Config().getBoolean("worlds." + w + ".whitelisted", true));		// Default = true
 					plugin.HardcoreWorlds.AddWorld(world.getName(), hcw);
 				}
 			}

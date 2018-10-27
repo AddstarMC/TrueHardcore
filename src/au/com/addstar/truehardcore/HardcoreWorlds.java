@@ -29,6 +29,7 @@ public class HardcoreWorlds {
 		private Location exitpos;
 		private Integer rollbackdelay;
 		private Boolean deathdrops;
+		private Boolean whitelisted;
 
 		public World getWorld() {
 			return world;
@@ -40,7 +41,6 @@ public class HardcoreWorlds {
 		public String getGreeting() {
 			return greeting;
 		}
-
 		public void setGreeting(String greeting) {
 			this.greeting = greeting;
 		}
@@ -48,7 +48,6 @@ public class HardcoreWorlds {
 		public Integer getBantime() {
 			return bantime;
 		}
-
 		public void setBantime(Integer bantime) {
 			this.bantime = bantime;
 		}
@@ -56,7 +55,6 @@ public class HardcoreWorlds {
 		public Integer getSpawnDistance() {
 			return spawndistance;
 		}
-
 		public void setSpawnDistance(Integer spawndistance) {
 			this.spawndistance = spawndistance;
 		}
@@ -64,27 +62,36 @@ public class HardcoreWorlds {
 		public Integer getSpawnProtection() {
 			return spawnprotection;
 		}
-
 		public void setSpawnProtection(Integer spawnprotection) {
 			this.spawnprotection = spawnprotection;
 		}
+
 		public Location getExitPos() {
 			return exitpos;
 		}
 		public void setExitPos(Location exitpos) {
 			this.exitpos = exitpos;
 		}
+
 		public Integer getRollbackDelay() {
 			return rollbackdelay;
 		}
 		public void setRollbackDelay(Integer rollbackdelay) {
 			this.rollbackdelay = rollbackdelay;
 		}
+
 		public Boolean getDeathDrops() {
 			return deathdrops;
 		}
 		public void setDeathDrops(Boolean deathdrops) {
 			this.deathdrops = deathdrops;
+		}
+
+		public Boolean isWhitelisted() {
+			return whitelisted;
+		}
+		public void setWhitelisted(Boolean whitelisted) {
+			this.whitelisted = whitelisted;
 		}
 	}
 

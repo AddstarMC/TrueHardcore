@@ -424,7 +424,10 @@ public final class TrueHardcore extends JavaPlugin {
 	}
 	
 	public boolean PlayGame(String world, Player player) {
-		if (!IsOnWhiteList(world, player.getUniqueId())) {
+		HardcoreWorld hcw = HardcoreWorlds.Get(world);
+
+		// Only check whitelist if world is whitelisted
+		if (hcw.isWhitelisted() && (!IsOnWhiteList(world, player.getUniqueId()))) {
 			player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
 			return false;
 		}
@@ -434,7 +437,6 @@ public final class TrueHardcore extends JavaPlugin {
 			return false;
 		}
 		
-		HardcoreWorld hcw = HardcoreWorlds.Get(world);
 		HardcorePlayer hcp = HCPlayers.Get(world, player.getUniqueId());
 		if (hcp != null) {
 			if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
