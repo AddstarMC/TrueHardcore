@@ -427,9 +427,11 @@ public final class TrueHardcore extends JavaPlugin {
 		HardcoreWorld hcw = HardcoreWorlds.Get(world);
 
 		// Only check whitelist if world is whitelisted
-		if (hcw.isWhitelisted() && (!IsOnWhiteList(world, player.getUniqueId()))) {
-			player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
-			return false;
+		if (hcw.isWhitelisted()) {
+			if (!IsOnWhiteList(world, player.getUniqueId())) {
+				player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
+				return false;
+			}
 		}
 
 		if (!GameEnabled && !player.hasPermission("truehardcore.admin")) {
