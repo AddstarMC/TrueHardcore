@@ -321,19 +321,19 @@ class PlayerListener implements Listener {
 	public void onEntityDeath(EntityDeathEvent event) {
 		Entity ent = event.getEntity();
 		if (!plugin.IsHardcoreWorld(ent.getWorld())) { return; }
+
 		if(ent.getLastDamageCause() instanceof EntityDamageByBlockEvent){
+			if (!(ent instanceof Player)) return;
+
+			// We only care about TNT events
 			EntityDamageByBlockEvent causeB = (EntityDamageByBlockEvent) ent.getLastDamageCause();
-			List<Material> damagers = new ArrayList<>();
-			damagers.add(Material.TNT);
-			damagers.add(Material.TNT_MINECART);
-			if (!damagers.contains(causeB.getDamager().getType()))return;
+			if ((causeB.getDamager().getType() != Material.TNT) && (causeB.getDamager().getType() != Material.TNT_MINECART)) return;
+
 			Location blockLoc = new Location(causeB.getDamager().getWorld(),causeB.getDamager().getX(),causeB.getDamager().getY(),causeB.getDamager().getZ());
-			if (ent instanceof Player) { //we wont count tnt kills that are not players
-				OfflinePlayer killed = ((Player) ent).getPlayer();
-				String killedDisplayName = ((Player)ent).getDisplayName();
-				Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> findPlacer(blockLoc, blockLoc.getWorld().getName(), killed, killedDisplayName));
-				return;
-			}
+			OfflinePlayer killed = ((Player) ent).getPlayer();
+			String killedDisplayName = ((Player)ent).getDisplayName();
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> findPlacer(blockLoc, blockLoc.getWorld().getName(), killed, killedDisplayName));
+			return;
 		}
 		if (!(ent.getLastDamageCause() instanceof EntityDamageByEntityEvent)) { return; }
 
