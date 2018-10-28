@@ -113,16 +113,28 @@ public final class TrueHardcore extends JavaPlugin {
     
     private final List<Material> SpawnBlocks = Arrays.asList(
             Material.DIRT,
+            Material.COARSE_DIRT,
+            Material.PODZOL,
             Material.GRASS,
+            Material.GRASS_BLOCK,
+            Material.GRASS_PATH,
             Material.SAND,
+            Material.SANDSTONE,
+            Material.SMOOTH_SANDSTONE,
+            Material.SMOOTH_RED_SANDSTONE,
+            Material.SMOOTH_STONE,
             Material.STONE,
+            Material.DIORITE,
             Material.COBBLESTONE,
+            Material.SMOOTH_STONE,
             Material.BEDROCK,
             Material.SNOW,
             Material.SNOW_BLOCK,
             Material.CLAY,
-            Material.OBSIDIAN,
-            Material.SANDSTONE
+            Material.TERRACOTTA,
+            Material.ICE,
+            Material.PACKED_ICE,
+            Material.BLUE_ICE,
     );
     
     @Override
@@ -502,65 +514,67 @@ public final class TrueHardcore extends JavaPlugin {
         }
         
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
-                Location spawn = null;
-                World w = getServer().getWorld(world);
-                
-                // Never played before... create them!
-                if (hcp == null) {
-                    Debug("New hardcore player: " + player.getName() + " (" + world + ")");
-                    hcp = HCPlayers.NewPlayer(world, player.getUniqueId(), player.getName());
-                    spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
-                }
-                else if (hcp.getDeathPos() == null) {
-                    Warn("No previous position found for known " + player.getName());
-                    spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
-                } else {
-                    Debug(player.getName() + " is restarting game (" + world + ")");
-                    spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
-                }
-                
-                if (spawn != null) {
-                    hcp.setState(PlayerState.IN_GAME);
-                    if (NewSpawn(player, spawn)) {
-                        SetProtected(hcp, hcw.getSpawnProtection());
-                        hcp.setGameTime(0);
-                        hcp.setChickenKills(0);
-                        hcp.setCowKills(0);
-                        hcp.setPigKills(0);
-                        hcp.setSheepKills(0);
-                        hcp.setChickenKills(0);
-                        hcp.setCreeperKills(0);
-                        hcp.setZombieKills(0);
-                        hcp.setSkeletonKills(0);
-                        hcp.setSpiderKills(0);
-                        hcp.setEnderKills(0);
-                        hcp.setSlimeKills(0);
-                        hcp.setMooshKills(0);
-                        hcp.setOtherKills(0);
-                        hcp.setPlayerKills(0);
-                        hcp.updatePlayer(player);
-                        SavePlayer(hcp);
-                        UnvanishPlayer(player);
+            player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..";
+            Location spawn = null;
+            World w = getServer().getWorld(world);
 
-                        String greeting = HardcoreWorlds.Get(world).getGreeting();
-                        if ((greeting != null) && (!greeting.isEmpty())) {
-                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
-                        }
-                        return true;
-                    } else {
-                        return false;
+            // Never played before... create them!
+            if (hcp == null) {
+                Debug("New hardcore player: " + player.getName() + " (" + world + ")");
+                hcp = HCPlayers.NewPlayer(world, player.getUniqueId(), player.getName());
+                spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
+            }
+            else if (hcp.getDeathPos() == null) {
+                Warn("No previous position found for known " + player.getName());
+                spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
+            } else {
+                Debug(player.getName() + " is restarting game (" + world + ")");
+                spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
+            }
+
+            if (spawn != null) {
+                hcp.setState(PlayerState.IN_GAME);
+                if (NewSpawn(player, spawn)) {
+                    SetProtected(hcp, hcw.getSpawnProtection());
+                    hcp.setGameTime(0);
+                    hcp.setChickenKills(0);
+                    hcp.setCowKills(0);
+                    hcp.setPigKills(0);
+                    hcp.setSheepKills(0);
+                    hcp.setChickenKills(0);
+                    hcp.setCreeperKills(0);
+                    hcp.setZombieKills(0);
+                    hcp.setSkeletonKills(0);
+                    hcp.setSpiderKills(0);
+                    hcp.setEnderKills(0);
+                    hcp.setSlimeKills(0);
+                    hcp.setMooshKills(0);
+                    hcp.setOtherKills(0);
+                    hcp.setPlayerKills(0);
+                    hcp.updatePlayer(player);
+                    SavePlayer(hcp);
+                    UnvanishPlayer(player);
+
+                    String greeting = HardcoreWorlds.Get(world).getGreeting();
+                    if ((greeting != null) && (!greeting.isEmpty())) {
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
                     }
+                    return true;
                 } else {
-                    player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location. Please try again.");
-                    Warn("Unable to find suitable spawn location for " + player.getName() + " (" + world + ")");
                     return false;
                 }
+            } else {
+                player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location. Please try again.");
+                Warn("Unable to find suitable spawn location for " + player.getName() + " (" + world + ")");
+                return false;
+            }
         }
         else if (hcp.getState() == PlayerState.IN_GAME) {
             player.sendMessage(ChatColor.RED + "You are already playing hardcore!");
             return false;
         } else {
             // Resume existing game
+            player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
             Debug(player.getName() + " is returning to " + hcw.getWorld().getName());
             hcp.setState(PlayerState.IN_GAME);
             JoinGame(world, player);
@@ -570,7 +584,6 @@ public final class TrueHardcore extends JavaPlugin {
             if ((greeting != null) && (!greeting.isEmpty())) {
                 player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
             }
-            player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
             return true;
         }
     }
