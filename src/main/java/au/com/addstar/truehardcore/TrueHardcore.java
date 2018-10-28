@@ -134,7 +134,7 @@ public final class TrueHardcore extends JavaPlugin {
             Material.TERRACOTTA,
             Material.ICE,
             Material.PACKED_ICE,
-            Material.BLUE_ICE,
+            Material.BLUE_ICE
     );
     
     @Override
@@ -514,7 +514,7 @@ public final class TrueHardcore extends JavaPlugin {
         }
         
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
-            player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..";
+            player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..");
             Location spawn = null;
             World w = getServer().getWorld(world);
 
