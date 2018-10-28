@@ -324,10 +324,15 @@ class PlayerListener implements Listener {
 
 		if(ent.getLastDamageCause() instanceof EntityDamageByBlockEvent){
 			if (!(ent instanceof Player)) return;
+			plugin.DebugLog("EntityDeathByBlock: " + ent.getName() + " killed by " + ent.getLastDamageCause());
 
 			// We only care about TNT events
 			EntityDamageByBlockEvent causeB = (EntityDamageByBlockEvent) ent.getLastDamageCause();
-			if ((causeB.getDamager().getType() != Material.TNT) && (causeB.getDamager().getType() != Material.TNT_MINECART)) return;
+			if (
+					(causeB == null) ||
+					(causeB.getDamager() == null) ||
+					((causeB.getDamager().getType() != Material.TNT) && (causeB.getDamager().getType() != Material.TNT_MINECART))
+				) return;
 
 			Location blockLoc = new Location(causeB.getDamager().getWorld(),causeB.getDamager().getX(),causeB.getDamager().getY(),causeB.getDamager().getZ());
 			OfflinePlayer killed = ((Player) ent).getPlayer();
@@ -350,7 +355,7 @@ class PlayerListener implements Listener {
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
 					hcp.setPlayerKills(hcp.getPlayerKills()+1);
 					giveSkullOnline(killed,killed.getDisplayName(),killer);
-					plugin.BroadcastToAllServers(killer.getDisplayName() + "has taken the life of " + killed.getDisplayName()+ "...in the end there can be only one...");
+					plugin.BroadcastToAllServers(ChatColor.RED + killer.getDisplayName() + " has taken the life of " + killed.getDisplayName() + " and gained a trophy!");
 				} else {
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
 					switch (ent.getType()) {
