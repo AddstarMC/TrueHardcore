@@ -250,38 +250,45 @@ class PlayerListener implements Listener {
 		// Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
 		if (from.getWorld().equals(to.getWorld()) && (from.distance(to) <= 30)) { return; }
 
-		//plugin.DebugLog("EVENT: " + event.getEventName());
-		//plugin.DebugLog("FROM : " + from);
-		//plugin.DebugLog("TO   : " + to);
-
 		if (plugin.IsHardcoreWorld(from.getWorld())) {
-			// Prevent unauthorised exit from hardcore
+			// Prevent unauthorised teleports while in hardcore worlds
 			HardcorePlayer hcp = HCPlayers.Get(from.getWorld(), player);
-			if (hcp == null) { return; }
+			if (hcp == null) {
+				return;
+			}
 			if (hcp.getState() == PlayerState.IN_GAME) {
-				if (player.isOp()) {
-					plugin.Debug("OP override! Teleport allowed.");
-				} else {
-					event.setCancelled(true);
-					if (from.getWorld().equals(to.getWorld())) {
+				if (from.getWorld().equals(to.getWorld())) {
+					// Prevent unauthorised teleports within hardcore worlds
+					if (player.isOp() || player.hasPermission("truehardcore.bypass.teleport")) {
+						plugin.Debug("Teleport override (within world) allowed for " + player.getName());
+						return;
+					} else {
 						plugin.Debug(player.getName() + " teleport within hardcore cancelled!");
 						player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
+					}
+				} else {
+					// Prevent unauthorised exit from hardcore
+					if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportout")) {
+						plugin.Debug("Teleport override (out of world) allowed for " + player.getName());
+						return;
 					} else {
 						plugin.Debug(player.getName() + " teleport out of hardcore cancelled!");
 						player.sendMessage(ChatColor.RED + "You are not allowed to teleport out of hardcore!");
 					}
-					player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
-					plugin.Debug("From: " + from);
-					plugin.Debug("To  : " + to);
 				}
+				player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+				plugin.Debug("From: " + from);
+				plugin.Debug("To  : " + to);
+				event.setCancelled(true);
 			}
 		}
 		else if (plugin.IsHardcoreWorld(to.getWorld())) {
 			// Prevent unauthorised entry into hardcore worlds
 			HardcorePlayer hcp = HCPlayers.Get(to.getWorld(), player);
 			if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
-				if (player.isOp()) {
-					plugin.Debug("OP override! Teleport allowed.");
+				if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportin")) {
+					plugin.Debug("Teleport override (into world) allowed for " + player.getName());
+					return;
 				} else { 
 					event.setCancelled(true);
 					plugin.Debug(player.getName() + "teleport into hardcore was cancelled!");
