@@ -75,6 +75,8 @@ public final class TrueHardcore extends JavaPlugin {
     public long combatTime = (30000);//Combat time in millseconds;
     public CombatTracker cTracker;
     public boolean antiCombatLog = false;
+    public WorldRollback RollbackHandler;
+
     private static final Logger logger = Logger.getLogger("Minecraft");
     private static final Logger debuglog = Logger.getLogger("DebugLog");
     private FileHandler debugfh;
@@ -91,7 +93,7 @@ public final class TrueHardcore extends JavaPlugin {
     String DBPass;
 
     private Boolean LWCHooked = false;
-    Boolean LBHooked = false;
+    Boolean PrismHooked = false;
     Boolean OIHooked = false;
     IOpenInv openInv;
     private Boolean WBHooked = false;
@@ -175,11 +177,12 @@ public final class TrueHardcore extends JavaPlugin {
         }
         p = pm.getPlugin("Prism");
         if (p instanceof Prism) {
-            LBHooked = true;
+            PrismHooked = true;
             prism = (Prism)p;
             Log("Prism found, hooking it.");
+            RollbackHandler = new WorldRollback(prism);
         } else {
-            LBHooked = false;
+            PrismHooked = false;
             Log("Prism not found! This won't work very well...");
         }
 
@@ -302,12 +305,12 @@ public final class TrueHardcore extends JavaPlugin {
         return false;
     }
     
-    public void Log(String data) {
+    public static void Log(String data) {
         logger.info("[" + pdfFile.getName() + "] " + data);
         debuglog.info(data);
     }
 
-    public void Warn(String data) {
+    public static void Warn(String data) {
         logger.warning("[" + pdfFile.getName() + "] " + data);
         debuglog.warning(data);
     }
@@ -462,18 +465,14 @@ public final class TrueHardcore extends JavaPlugin {
                     instance.Debug("Removed " + count + " LWC protections.");
                 }
 
-                if (LBHooked) {
-                    // Overworld rollback
-                    Runnable rb1 = new WorldRollback(prism, player, world, 30,lock);
-                    instance.getServer().getScheduler().runTaskLaterAsynchronously(instance, rb1,
-                            40L + (hcw.getRollbackDelay() * 20L));
+                if (PrismHooked) {
+                    // Queue rollback for the Overworld
+                    RollbackHandler.QueueRollback("ROLLBACK", player, world, hcw.getRollbackDelay());
 
-                    // Nether rollback (delayed by 5s to reduce collisions)
+                    // Queue rollback for The Nether
                     World netherworld = instance.getServer().getWorld(world.getName() + "_nether");
                     if (netherworld != null) {
-                        Runnable rb2 = new WorldRollback(prism, player, netherworld, 30,lock);
-                        instance.getServer().getScheduler().runTaskLaterAsynchronously(instance, rb2,
-                                40L + ((hcw.getRollbackDelay() * 20L) + (5 * 20L)));
+                        RollbackHandler.QueueRollback("ROLLBACK", player, netherworld, hcw.getRollbackDelay());
                     }
                 }
             } catch (Exception e) {

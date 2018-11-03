@@ -441,7 +441,7 @@ class PlayerListener implements Listener {
 	}
 
 	private void findPlacer(Location location,String worldName, OfflinePlayer killed,String displayName){
-		if(!plugin.LBHooked)return;//if Prism isnt loaded ...this wont work.
+		if(!plugin.PrismHooked)return;//if Prism isnt loaded ...this wont work.
 		QueryParameters parameters = new QueryParameters();
 		parameters.setSpecificBlockLocation(location);
 		parameters.setProcessType(PrismProcessType.LOOKUP);
