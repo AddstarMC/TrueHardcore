@@ -119,27 +119,33 @@ class WorldRollback {
 
 				switch (req.type) {
 					case "ROLLBACK":
-						// Rollback found changes
-						if (!result.getActionResults().isEmpty()) {
-							Debug("Rolling back " + result.getActionResults().size() + " changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
-							Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(), result.getActionResults(), params, null);
-							rollback.apply();
-						}
-
 						// Always add a purge query for this death to the end of the queue
 						QueueRollback("PURGE", req.player, req.world, 20);
+
+						// Rollback found changes
+						try {
+							if (result.getActionResults().size() > 0) {
+								Debug("Rolling back " + result.getActionResults().size() + " changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
+								Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(), result.getActionResults(), params, null);
+								rollback.apply();
+							} else {
+								Debug("Nothing to rollback for " + req.player.getName() + " (" + req.world.getName() + ")");
+							}
+						} catch (Exception e) {
+							Warn("Rollback failed for " + req.player.getName() + "/" + req.world.getName() + "!");
+							e.printStackTrace();
+						}
 						break;
 
 					case "PURGE":
-						synchronized (RollbackQueue) {
-							try {
-								Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
-								params.setProcessType(PrismProcessType.DELETE);
-								aq.delete(params);
-								Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
+						try {
+							Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
+							params.setProcessType(PrismProcessType.DELETE);
+							aq.delete(params);
+							Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
+						} catch (Exception e) {
+							Warn("Activity purge failed for " + req.player.getName() + "/" + req.world.getName() + "!");
+							e.printStackTrace();
 						}
 						break;
 					default:
