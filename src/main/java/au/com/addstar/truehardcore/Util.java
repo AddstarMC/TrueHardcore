@@ -23,7 +23,7 @@ class Util {
 	    //
 	    // Create a DateFormat to format the logger timestamp.
 	    //
-	    private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+	    private static final DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	 
 	    public String format(LogRecord record) {
 	        StringBuilder builder = new StringBuilder(1000);
