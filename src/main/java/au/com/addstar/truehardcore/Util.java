@@ -150,7 +150,7 @@ class Util {
 	/*
 	 * Check if the player has the specified permission
 	 */
-	private static boolean HasPermission(Player player, String perm) {
+	public static boolean HasPermission(Player player, String perm) {
 		if (player != null) {
 			// Real player
 			if (player.hasPermission(perm)) {

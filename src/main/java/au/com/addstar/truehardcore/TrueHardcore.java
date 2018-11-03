@@ -492,7 +492,7 @@ public final class TrueHardcore extends JavaPlugin {
             }
         }
 
-        if (!GameEnabled && !player.hasPermission("truehardcore.admin")) {
+        if (!GameEnabled && !Util.HasPermission(player, "truehardcore.admin")) {
             player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
             return false;
         }
