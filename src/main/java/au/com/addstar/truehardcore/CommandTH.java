@@ -568,6 +568,23 @@ class CommandTH implements CommandExecutor {
                 plugin.DebugEnabled = !plugin.DebugEnabled;
                 sender.sendMessage(ChatColor.RED + "Debug Status:" + plugin.DebugEnabled);
                 break;
+            case "QUEUE":
+                if (sender instanceof Player) {
+                    if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+                sender.sendMessage(ChatColor.GREEN + "Hardcore rollback queue:");
+                //for (WorldRollback.RollbackRequest req : plugin.RollbackHandler.GetQueue()) {
+                for (int x = 0; x < plugin.RollbackHandler.GetQueue().size(); x++) {
+                    WorldRollback.RollbackRequest req = plugin.RollbackHandler.GetQueue().get(x);
+                    sender.sendMessage(ChatColor.RED + Integer.toString(x) + ": "
+                            + ChatColor.AQUA + req.type + " "
+                            + ChatColor.YELLOW + req.world.getName() + " "
+                            + ChatColor.GREEN + req.player.getName() + " "
+                            + ChatColor.WHITE + req.taskTime);
+                }
+                break;
             default:
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
                 sender.sendMessage(ChatColor.AQUA + "/th play       " + ChatColor.YELLOW + ": Start or resume your game");
