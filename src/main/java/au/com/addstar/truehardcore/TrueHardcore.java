@@ -558,6 +558,7 @@ public final class TrueHardcore extends JavaPlugin {
                     if ((greeting != null) && (!greeting.isEmpty())) {
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
                     }
+                    BroadcastToHardcore(Header + ChatColor.GREEN + player.getDisplayName() + " has " + ChatColor.AQUA + " started " + ChatColor.GREEN + hcp.getWorld(), player.getName());
                     return true;
                 } else {
                     return false;
@@ -1118,7 +1119,7 @@ public final class TrueHardcore extends JavaPlugin {
     
     public void BroadcastToHardcore(String rawmsg, String excludePlayer) {
         String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
-        Debug(msg);
+        Debug("HardcoreBroadcast: " + msg);
         for (final Player p : getServer().getOnlinePlayers()) {
             // Skip the excluded player (if specified)
             if ((excludePlayer != null) && (excludePlayer.equals(p.getName())))
