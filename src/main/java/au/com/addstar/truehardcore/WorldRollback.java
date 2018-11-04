@@ -84,7 +84,7 @@ class WorldRollback {
 		@Override
 		public void run() {
 			try {
-				RollbackRequest req = GetNextRequest();
+				final RollbackRequest req = GetNextRequest();
 				if (req == null) return;
 
 				Debug("Handling " + req.type.toLowerCase() + " task for: " + req.world.getName() + "/" + req.player.getName());
@@ -119,12 +119,12 @@ class WorldRollback {
 
 				switch (req.type) {
 					case "ROLLBACK":
-						// Always add a purge query for this death to the end of the queue
-						QueueRollback("PURGE", req.player, req.world, 20);
-
 						// Rollback found changes
 						try {
 							if (result.getActionResults().size() > 0) {
+								// Always add a purge query for this death to the end of the queue
+								QueueRollback("PURGE", req.player, req.world, 20);
+
 								Debug("Rolling back " + result.getActionResults().size() + " changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
 								Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(), result.getActionResults(), params, null);
 								rollback.apply();
@@ -136,17 +136,24 @@ class WorldRollback {
 							e.printStackTrace();
 						}
 						break;
-
 					case "PURGE":
-						try {
-							Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
-							params.setProcessType(PrismProcessType.DELETE);
-							aq.delete(params);
-							Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
-						} catch (Exception e) {
-							Warn("Activity purge failed for " + req.player.getName() + "/" + req.world.getName() + "!");
-							e.printStackTrace();
-						}
+						// We can't do this on the main thread or the server will lock up too long
+						// This will cause Prism connection locking issues sometimes - eventually we'll figure out
+						// a better way to do this without causing server lag or DB connection issues
+						plugin.getServer().getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+							@Override
+							public void run() {
+								try {
+									Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
+									params.setProcessType(PrismProcessType.DELETE);
+									aq.delete(params);
+									Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
+								} catch (Exception e) {
+									Warn("Activity purge failed for " + req.player.getName() + "/" + req.world.getName() + "!");
+									e.printStackTrace();
+								}
+							}
+						});
 						break;
 					default:
 						Warn("WARNING: Unknown rollback task \"" + req.type + "\"!");
