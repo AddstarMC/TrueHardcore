@@ -585,6 +585,36 @@ class CommandTH implements CommandExecutor {
                             + ChatColor.WHITE + req.taskTime);
                 }
                 break;
+            case "FORCEALIVE":
+                if (sender instanceof Player) {
+                    if (!Util.RequirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+                if (args.length < 3) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th forceupdate <player> <world>");
+                    return true;
+                } else if (args.length == 3) {
+                    Player target =  Bukkit.getPlayer(args[1]);
+                    if(target == null){
+                        sender.sendMessage("Player must be online to peform the force alive..." + args[1] + " could not be found.");
+                        return true;
+                    }
+                    if(TrueHardcore.instance.IsHardcoreWorld(target.getWorld())){
+                        sender.sendMessage(target.getDisplayName() + " is in " + target.getWorld() +
+                                " ask them to return to lobby before updating.");
+                        return true;
+                    }
+                    if (plugin.LoadPlayer(args[2],target.getUniqueId())) {
+                        sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/" + args[1] + " has been reloaded.");
+                        HardcorePlayer hcplayer = TrueHardcore.instance.HCPlayers.Get(args[2], target.getUniqueId());
+                        if(hcplayer.getState() == PlayerState.IN_GAME)hcplayer.setState(PlayerState.ALIVE);
+                        TrueHardcore.instance.SavePlayer(hcplayer);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Player record failed to load!");
+                    }
+                }
+                break;
             default:
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
                 sender.sendMessage(ChatColor.AQUA + "/th play       " + ChatColor.YELLOW + ": Start or resume your game");
@@ -602,7 +632,9 @@ class CommandTH implements CommandExecutor {
                     sender.sendMessage(ChatColor.AQUA + "/th load       " + ChatColor.YELLOW + ": Load player data from DB");
                     sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW + ": Add/remove player to whitelist");
                     sender.sendMessage(ChatColor.AQUA + "/th debug  " + ChatColor.YELLOW + ": Toggle debug until restart");
-
+                    sender.sendMessage(ChatColor.AQUA + "/th queue  " + ChatColor.YELLOW + ": Show the hardcore rollback queue.");
+                    sender.sendMessage(ChatColor.AQUA + "/th forceupdate <player> <world>  " + ChatColor.YELLOW +
+                            ": Forces an update the the player - removing them from game and setting state to alive.");
                 }
                 break;
         }
