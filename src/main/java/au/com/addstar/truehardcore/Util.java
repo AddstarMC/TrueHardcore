@@ -112,8 +112,7 @@ class Util {
 		if (date == null) { return null; }
 
 		SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		String mysqldate = sdf.format(date);
-		return mysqldate;
+		return sdf.format(date);
 	}
 
 	// TODO: add exception checking
@@ -153,14 +152,11 @@ class Util {
 	public static boolean HasPermission(Player player, String perm) {
 		if (player != null) {
 			// Real player
-			if (player.hasPermission(perm)) {
-				return true;
-			}
+			return player.hasPermission(perm);
 		} else {
 			// Console has permissions for everything
 			return true;
 		}
-		return false;
 	}
 	
 	/*
@@ -191,10 +187,10 @@ class Util {
 
 	public static boolean Teleport(Player player, Location loc) {
 		if ((loc == null) || (player == null)) {
-			TrueHardcore.instance.DebugLog("Teleport location or player null!");
+			TrueHardcore.DebugLog("Teleport location or player null!");
 			return false;
 		} else {
-			TrueHardcore.instance.DebugLog("Teleport (" + player.getName() + "): " + loc);
+			TrueHardcore.DebugLog("Teleport (" + player.getName() + "): " + loc);
 			/*Location newloc = new Location(
 					loc.getWorld(),
 					(double) loc.getBlockX() + 0.5,

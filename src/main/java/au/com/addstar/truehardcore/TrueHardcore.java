@@ -136,8 +136,12 @@ public final class TrueHardcore extends JavaPlugin {
             Material.TERRACOTTA,
             Material.ICE,
             Material.PACKED_ICE,
-            Material.BLUE_ICE
-    );
+            Material.BLUE_ICE,
+            Material.RED_SAND,
+            Material.RED_SANDSTONE,
+            Material.CUT_SANDSTONE
+        
+            );
     
     @Override
     public void onEnable(){
@@ -323,7 +327,7 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     // Write data to debug log
-    public void DebugLog(String data) {
+    public static void DebugLog(String data) {
         debuglog.info(data);
     }
     

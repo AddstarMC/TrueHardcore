@@ -97,9 +97,7 @@ public class HardcoreWorlds {
 
     public HardcoreWorld NewWorld(String world) {
         HardcoreWorld hcw = new HardcoreWorld();
-        if (hcw != null) {
-            AddWorld(world, hcw);
-        }
+        AddWorld(world, hcw);
         return hcw;
     }
 
@@ -111,8 +109,7 @@ public class HardcoreWorlds {
     public HardcoreWorld Get(String world) {
         String key = StringUtils.replace(world, "_nether", "");
         if (Worlds.containsKey(key)) {
-            HardcoreWorld hcw = Worlds.get(key);
-            return hcw;
+            return Worlds.get(key);
         }
         return null;
     }

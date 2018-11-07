@@ -26,58 +26,58 @@ import au.com.addstar.truehardcore.HardcoreWorlds.*;
 
 class ConfigManager {
 
-	private final TrueHardcore plugin;
-	public ConfigManager(TrueHardcore instance) {
-		plugin = instance;
-	}
-	
-	private FileConfiguration Config() {
-		return plugin.getConfig();
-	}
-	
-	public void LoadConfig(FileConfiguration config) {
-		config.options().copyDefaults(true);
+    private final TrueHardcore plugin;
+    public ConfigManager(TrueHardcore instance) {
+        plugin = instance;
+    }
+    
+    private FileConfiguration Config() {
+        return plugin.getConfig();
+    }
+    
+    public void LoadConfig(FileConfiguration config) {
+        config.options().copyDefaults(true);
+        
+        TrueHardcore.DebugEnabled = Config().getBoolean("debug");
 
-		plugin.DebugEnabled = Config().getBoolean("debug");
+        // Get the list of worlds
+        Set<String> worlds = Config().getConfigurationSection("worlds").getKeys(false);
 
-		// Get the list of worlds
-		Set<String> worlds = Config().getConfigurationSection("worlds").getKeys(false);
+        // Load each world's settings
+        TrueHardcore.Debug("Loading worlds...");
+        if (worlds != null) {
+            for (String w : worlds) {
+                TrueHardcore.Debug("Found World: " + w);
+                World world = plugin.getServer().getWorld(w);
+                if (world != null) {
+                    HardcoreWorld hcw = plugin.HardcoreWorlds.NewWorld(world.getName());
+                    hcw.setWorld(world);
+                    hcw.setGreeting(Config().getString("worlds." + w + ".greeting"));
+                    hcw.setBantime(Config().getInt("worlds." + w + ".ban-time", 43200));				// Default = 12h
+                    hcw.setSpawnDistance(Config().getInt("worlds." + w + ".spawn-distance", 5000));		// Default = 5000
+                    hcw.setSpawnProtection(Config().getInt("worlds." + w + ".protection-time", 60));	// Default = 5000
+                    hcw.setExitPos(Util.Str2Loc(Config().getString("worlds." + w + ".exitpos")));	    // Default = null
+                    hcw.setRollbackDelay(Config().getInt("worlds." + w + ".rollback-delay", 0));		// Default = 0
+                    hcw.setDeathDrops(Config().getBoolean("worlds." + w + ".death-drops", false));		// Default = false
+                    hcw.setWhitelisted(Config().getBoolean("worlds." + w + ".whitelisted", true));		// Default = true
+                    plugin.HardcoreWorlds.AddWorld(world.getName(), hcw);
+                }
+            }
+        } else {
+            TrueHardcore.Warn("No worlds configured! Things will not work!");
+        }
 
-		// Load each world's settings
-		plugin.Debug("Loading worlds...");
-		if (worlds != null) {
-			for (String w : worlds) {
-				plugin.Debug("Found World: " + w);
-				World world = plugin.getServer().getWorld(w);
-				if (world != null) {
-					HardcoreWorld hcw = plugin.HardcoreWorlds.NewWorld(world.getName());
-					hcw.setWorld(world);
-					hcw.setGreeting(Config().getString("worlds." + w + ".greeting"));
-					hcw.setBantime(Config().getInt("worlds." + w + ".ban-time", 43200));				// Default = 12h
-					hcw.setSpawnDistance(Config().getInt("worlds." + w + ".spawn-distance", 5000));		// Default = 5000
-					hcw.setSpawnProtection(Config().getInt("worlds." + w + ".protection-time", 60));	// Default = 5000
-					hcw.setExitPos(Util.Str2Loc(Config().getString("worlds." + w + ".exitpos")));	    // Default = null
-					hcw.setRollbackDelay(Config().getInt("worlds." + w + ".rollback-delay", 0));		// Default = 0
-					hcw.setDeathDrops(Config().getBoolean("worlds." + w + ".death-drops", false));		// Default = false
-					hcw.setWhitelisted(Config().getBoolean("worlds." + w + ".whitelisted", true));		// Default = true
-					plugin.HardcoreWorlds.AddWorld(world.getName(), hcw);
-				}
-			}
-		} else {
-			plugin.Warn("No worlds configured! Things will not work!");
-		}
+        // Database settings
+        plugin.DBHost = Config().getString("mysql.host", "localhost");
+        plugin.DBPort = Config().getString("mysql.port", "3306");
+        plugin.DBName = Config().getString("mysql.database", "truehardcore");
+        plugin.DBUser = Config().getString("mysql.username", "truehardcore");
+        plugin.DBPass = Config().getString("mysql.password", "truehardcore");
 
-		// Database settings
-		plugin.DBHost = Config().getString("mysql.host", "localhost");
-		plugin.DBPort = Config().getString("mysql.port", "3306");
-		plugin.DBName = Config().getString("mysql.database", "truehardcore");
-		plugin.DBUser = Config().getString("mysql.username", "truehardcore");
-		plugin.DBPass = Config().getString("mysql.password", "truehardcore");
-
-		// BungeeChat broadcast channel
-		plugin.BroadcastChannel = Config().getString("broadcast-channel", "GamesBCast");
-		plugin.AutoSaveEnabled = Config().getBoolean("auto-save", false);
-		plugin.antiCombatLog = Config().getBoolean("combat.Anti-Log", false);
-		plugin.combatTime = Config().getInt("combat.time",30)*1000;
-	}
+        // BungeeChat broadcast channel
+        plugin.BroadcastChannel = Config().getString("broadcast-channel", "GamesBCast");
+        plugin.AutoSaveEnabled = Config().getBoolean("auto-save", false);
+        plugin.antiCombatLog = Config().getBoolean("combat.Anti-Log", false);
+        plugin.combatTime = Config().getInt("combat.time",30)*1000;
+    }
 }

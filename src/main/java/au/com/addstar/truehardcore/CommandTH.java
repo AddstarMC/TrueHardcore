@@ -446,9 +446,9 @@ class CommandTH implements CommandExecutor {
                         case "ADD":
                             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
 
-                            if (offlinePlayer.getUniqueId().version() == 4) {
-                                if (plugin.AddToWhitelist(player.getUniqueId())) {
-                                    sender.sendMessage(ChatColor.GREEN + "Player " + player.getName() + " added to TrueHardcore whitelist.");
+                            if (offlinePlayer != null && offlinePlayer.getUniqueId().version() == 4) {
+                                if (plugin.AddToWhitelist(offlinePlayer.getUniqueId())) {
+                                    sender.sendMessage(ChatColor.GREEN + "Player " + offlinePlayer.getName() + " added to TrueHardcore whitelist.");
                                 } else {
                                     sender.sendMessage(ChatColor.RED + "ERROR: Failed to add player to whitelist!");
                                 }
@@ -457,9 +457,8 @@ class CommandTH implements CommandExecutor {
 
                                 // We cannot do this lookup without there being at least one player on this server
                                 boolean hasPlayers = false;
-                                for (Player p : Bukkit.getOnlinePlayers()) {
+                                if (Bukkit.getOnlinePlayers().size() > 0) {
                                     hasPlayers = true;
-                                    break;
                                 }
 
                                 if (!hasPlayers) {
@@ -499,7 +498,7 @@ class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                plugin.Debug("Saving buffered data...");
+                TrueHardcore.Debug("Saving buffered data...");
                 plugin.SaveAllPlayers();
                 break;
             case "LOAD":
@@ -527,7 +526,7 @@ class CommandTH implements CommandExecutor {
                     }
                 }
                 plugin.GameEnabled = false;
-                plugin.DebugLog("TrueHardcore has been disabled.");
+                TrueHardcore.DebugLog("TrueHardcore has been disabled.");
                 sender.sendMessage(ChatColor.RED + "TrueHardcore has been disabled.");
                 break;
             case "ENABLE":
@@ -538,7 +537,7 @@ class CommandTH implements CommandExecutor {
                     }
                 }
                 plugin.GameEnabled = true;
-                plugin.DebugLog("TrueHardcore has been enabled.");
+                TrueHardcore.DebugLog("TrueHardcore has been enabled.");
                 sender.sendMessage(ChatColor.GREEN + "TrueHardcore has been enabled.");
                 break;
             case "BCAST":
@@ -565,8 +564,8 @@ class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                plugin.DebugEnabled = !plugin.DebugEnabled;
-                sender.sendMessage(ChatColor.RED + "Debug Status:" + plugin.DebugEnabled);
+                TrueHardcore.DebugEnabled = !TrueHardcore.DebugEnabled;
+                sender.sendMessage(ChatColor.RED + "Debug Status:" + TrueHardcore.DebugEnabled);
                 break;
             case "QUEUE":
                 if (sender instanceof Player) {
