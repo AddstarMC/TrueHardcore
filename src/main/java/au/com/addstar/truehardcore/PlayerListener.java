@@ -17,16 +17,26 @@ package au.com.addstar.truehardcore;
 * along with this program.  If not, see <http://www.gnu.org/licenses/>
 */
 
+import com.lishid.openinv.IOpenInv;
+import com.lishid.openinv.internal.ISpecialEnderChest;
+import com.lishid.openinv.internal.ISpecialPlayerInventory;
+import me.botsko.prism.actionlibs.ActionsQuery;
+import me.botsko.prism.actionlibs.MatchRule;
+import me.botsko.prism.actionlibs.QueryParameters;
+import me.botsko.prism.actionlibs.QueryResult;
+import me.botsko.prism.actions.Handler;
+import me.botsko.prism.appliers.PrismProcessType;
 import org.bukkit.*;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.inventory.CraftItemEvent;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
@@ -37,11 +47,18 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
 import au.com.addstar.truehardcore.HardcorePlayers.*;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.text.DateFormat;
+import java.util.*;
+
 class PlayerListener implements Listener {
-	
+
 	private final TrueHardcore plugin;
 	private final HardcorePlayers HCPlayers;
 	public PlayerListener(TrueHardcore instance) {
@@ -78,7 +95,6 @@ class PlayerListener implements Listener {
 
 		plugin.DebugLog("EVENT: " + event.getEventName());
 		plugin.DebugLog("LOCATION: " + player.getLocation().toString());
-
 		// We only care about existing hardcore players
 		HardcorePlayer hcp = HCPlayers.Get(player);
 		if (hcp == null) { return; }
@@ -116,6 +132,7 @@ class PlayerListener implements Listener {
 			plugin.BroadcastToHardcore(plugin.Header + ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
 		}
 	}
+	
 
 	/*
 	 * Handle players joining the server in the hardcore world
@@ -236,38 +253,45 @@ class PlayerListener implements Listener {
 		// Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
 		if (from.getWorld().equals(to.getWorld()) && (from.distance(to) <= 30)) { return; }
 
-		//plugin.DebugLog("EVENT: " + event.getEventName());
-		//plugin.DebugLog("FROM : " + from);
-		//plugin.DebugLog("TO   : " + to);
-
 		if (plugin.IsHardcoreWorld(from.getWorld())) {
-			// Prevent unauthorised exit from hardcore
+			// Prevent unauthorised teleports while in hardcore worlds
 			HardcorePlayer hcp = HCPlayers.Get(from.getWorld(), player);
-			if (hcp == null) { return; }
+			if (hcp == null) {
+				return;
+			}
 			if (hcp.getState() == PlayerState.IN_GAME) {
-				if (player.isOp()) {
-					plugin.Debug("OP override! Teleport allowed.");
-				} else {
-					event.setCancelled(true);
-					if (from.getWorld().equals(to.getWorld())) {
+				if (from.getWorld().equals(to.getWorld())) {
+					// Prevent unauthorised teleports within hardcore worlds
+					if (player.isOp() || player.hasPermission("truehardcore.bypass.teleport")) {
+						plugin.Debug("Teleport override (within world) allowed for " + player.getName());
+						return;
+					} else {
 						plugin.Debug(player.getName() + " teleport within hardcore cancelled!");
 						player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
+					}
+				} else {
+					// Prevent unauthorised exit from hardcore
+					if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportout")) {
+						plugin.Debug("Teleport override (out of world) allowed for " + player.getName());
+						return;
 					} else {
 						plugin.Debug(player.getName() + " teleport out of hardcore cancelled!");
 						player.sendMessage(ChatColor.RED + "You are not allowed to teleport out of hardcore!");
 					}
-					player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
-					plugin.Debug("From: " + from);
-					plugin.Debug("To  : " + to);
 				}
+				player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+				plugin.Debug("From: " + from);
+				plugin.Debug("To  : " + to);
+				event.setCancelled(true);
 			}
 		}
 		else if (plugin.IsHardcoreWorld(to.getWorld())) {
 			// Prevent unauthorised entry into hardcore worlds
 			HardcorePlayer hcp = HCPlayers.Get(to.getWorld(), player);
 			if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
-				if (player.isOp()) {
-					plugin.Debug("OP override! Teleport allowed.");
+				if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportin")) {
+					plugin.Debug("Teleport override (into world) allowed for " + player.getName());
+					return;
 				} else { 
 					event.setCancelled(true);
 					plugin.Debug(player.getName() + "teleport into hardcore was cancelled!");
@@ -283,27 +307,55 @@ class PlayerListener implements Listener {
 	 */
 	@EventHandler(ignoreCancelled=true)
 	public void onPlayerDamage(EntityDamageEvent event) {
+		checkDamagedPlayer(event);
+	}
+	
+	private void checkDamagedPlayer(EntityDamageEvent event){
 		if (!(event.getEntity() instanceof Player)) { return; }
 		if (!plugin.IsHardcoreWorld(event.getEntity().getWorld())) { return; }
-
+		
 		Player player = (Player) event.getEntity();
 		HardcorePlayer hcp = HCPlayers.Get(player);
 		
 		if ((hcp != null) && (hcp.isGodMode())) {
 			event.setCancelled(true);
-	    }
+		}
 	}
+	
+	/*
+	 * Tag a player causing damage to another or being damaged by another
+	 */
+
 
 	@EventHandler(ignoreCancelled=true)
 	public void onEntityDeath(EntityDeathEvent event) {
 		Entity ent = event.getEntity();
 		if (!plugin.IsHardcoreWorld(ent.getWorld())) { return; }
+
+		if(ent.getLastDamageCause() instanceof EntityDamageByBlockEvent){
+			if (!(ent instanceof Player)) return;
+			plugin.DebugLog("EntityDeathByBlock: " + ent.getName() + " killed by " + ent.getLastDamageCause());
+
+			// We only care about TNT events
+			EntityDamageByBlockEvent causeB = (EntityDamageByBlockEvent) ent.getLastDamageCause();
+			if (
+					(causeB == null) ||
+					(causeB.getDamager() == null) ||
+					((causeB.getDamager().getType() != Material.TNT) && (causeB.getDamager().getType() != Material.TNT_MINECART))
+				) return;
+
+			Location blockLoc = new Location(causeB.getDamager().getWorld(),causeB.getDamager().getX(),causeB.getDamager().getY(),causeB.getDamager().getZ());
+			OfflinePlayer killed = ((Player) ent).getPlayer();
+			String killedDisplayName = ((Player)ent).getDisplayName();
+			Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> findPlacer(blockLoc, blockLoc.getWorld().getName(), killed, killedDisplayName));
+			return;
+		}
 		if (!(ent.getLastDamageCause() instanceof EntityDamageByEntityEvent)) { return; }
 
 		// Find out who did the last damage
 		EntityDamageByEntityEvent cause = (EntityDamageByEntityEvent) ent.getLastDamageCause();
+		if (cause.isCancelled())return;
 		Entity damager = cause.getDamager();
-
 		if (damager instanceof Player) {
 			Player killer = (Player) damager;
 			HardcorePlayer hcp = HCPlayers.Get(killer);
@@ -312,6 +364,8 @@ class PlayerListener implements Listener {
 					Player killed = (Player) ent;
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killed.getName());
 					hcp.setPlayerKills(hcp.getPlayerKills()+1);
+					giveSkullOnline(killed,killed.getDisplayName(),killer);
+					plugin.BroadcastToAllServers(ChatColor.RED + killer.getDisplayName() + " has taken the life of " + killed.getDisplayName() + " and gained a trophy!");
 				} else {
 					plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + ent.getType());
 					switch (ent.getType()) {
@@ -388,4 +442,97 @@ class PlayerListener implements Listener {
 			player.playNote(event.getPlayer().getLocation(), Instrument.PIANO, Note.natural(1, Note.Tone.B));
 		}
 	}
+
+	private void findPlacer(Location location,String worldName, OfflinePlayer killed,String displayName){
+		if(!plugin.PrismHooked)return;//if Prism isnt loaded ...this wont work.
+		QueryParameters parameters = new QueryParameters();
+		parameters.setSpecificBlockLocation(location);
+		parameters.setProcessType(PrismProcessType.LOOKUP);
+		parameters.setLimit(1);
+		parameters.addActionType("block-place", MatchRule.INCLUDE);
+		ActionsQuery aq = new ActionsQuery(plugin.prism);
+		QueryResult lookupResult = aq.lookup( parameters);
+		if(lookupResult.getActionResults().size() > 0){
+			Handler handle = lookupResult.getActionResults().get(0);
+			UUID killerUUID = handle.getUUID();
+			OfflinePlayer killer = Bukkit.getOfflinePlayer(killerUUID);
+			Bukkit.getScheduler().runTask(plugin, () -> updateGame(worldName, killed, killer, displayName));
+
+		}
+	}
+
+	private void updateGame(String worldName, OfflinePlayer killed, OfflinePlayer killer, String killedDN){
+		HardcorePlayer hcp = HCPlayers.Get(worldName,killer.getUniqueId());
+		if(hcp != null) {
+			plugin.DebugLog("EntityDeath: " + killer.getName() + " killed " + killedDN);
+			hcp.setPlayerKills(hcp.getPlayerKills()+1);
+			if (killer.isOnline()) {
+				Player killerOnline = Bukkit.getPlayer(killer.getUniqueId());
+				if (killerOnline != null) giveSkullOnline(killed,killedDN, killerOnline);
+			} else {
+				giveSkullOffline(killed,killedDN,killer);
+			}
+		}
+	}
+
+
+	private void giveSkullOffline(OfflinePlayer killedName, String killedDN, OfflinePlayer killer){
+		IOpenInv openInv = plugin.openInv;
+		Player loadedKiller = openInv.loadPlayer(killer);
+		openInv.retainPlayer(loadedKiller,plugin);
+		giveSkull(killedName,killedDN,loadedKiller, false);
+		openInv.releasePlayer(loadedKiller,plugin);
+	}
+	private void giveSkullOnline(OfflinePlayer killedName, String killedDN, Player killer){
+		killer.getWorld().strikeLightningEffect(killer.getLocation());
+		PotionEffect effect =  new PotionEffect(PotionEffectType.CONFUSION,5*20,0,false,true);
+		killer.addPotionEffect(effect);
+		giveSkull(killedName,killedDN,killer, true);
+	}
+
+	private void giveSkull(OfflinePlayer killed, String killedDN, Player killer, boolean isOnline){
+		if (killer==null)return;
+		ItemStack skull =new ItemStack(Material.PLAYER_HEAD,1);
+
+		SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
+		skullMeta.setOwningPlayer(killed);
+		skullMeta.setDisplayName(killedDN);
+		skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+		skullMeta.addEnchant(Enchantment.LUCK,1,true);
+		List<String> lorelist = new ArrayList<>();
+		lorelist.add("The Head of " + killedDN);
+		Date date = new Date(System.currentTimeMillis());
+		DateFormat df = DateFormat.getDateTimeInstance(2,2);
+		df.format(date);
+		lorelist.add("Killed on " + df.format(date) + " by " + killer.getDisplayName());
+		skullMeta.setLore(lorelist);
+		skull.setItemMeta(skullMeta);
+		killer.getWorld().dropItem(killer.getLocation(),skull);
+		try {
+            ISpecialPlayerInventory inv = plugin.openInv.getSpecialInventory(killer, isOnline);
+            Inventory binv = inv.getBukkitInventory();
+            HashMap<Integer, ItemStack> left = binv.addItem(skull);
+            if(!left.isEmpty()){
+                plugin.DebugLog("Unable to add item to normal inventory: " + skull.toString());
+                for (Map.Entry<Integer,ItemStack> e: left.entrySet()){
+                    if(e.getKey()>0){
+                            ISpecialEnderChest sec = plugin.openInv.getSpecialEnderChest(killer, isOnline);
+                            Inventory enderInv = sec.getBukkitInventory();
+                            ItemStack item = e.getValue();
+                            item.setAmount(e.getKey());
+                            HashMap<Integer, ItemStack> leftnew = enderInv.addItem(item);
+                            if(!leftnew.isEmpty()){
+                                plugin.Log("Unable to add item to enderchest: " + item.toString());
+                            }
+                            plugin.Log("Unable to add item to enderchest: " + item.toString());
+                    }
+                }
+            }
+        }catch (InstantiationException e){
+		   plugin.Log(e.getMessage());
+        }
+
+	}
+
+
 }

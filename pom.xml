@@ -2,11 +2,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>TrueHardcore</groupId>
   <artifactId>TrueHardcore</artifactId>
-  <version>1.2-SNAPSHOT</version>
+  <version>1.3-SNAPSHOT</version>
   <name>TrueHardcore</name>
   <url>http://dev.bukkit.org/bukkit-plugins/truehardcore</url>
   <properties>
-    <build.number />
+    <build.number/>
+      <spigot.api.version>1.13</spigot.api.version>
+      <spigot.version>1.13.2-R0.1-SNAPSHOT</spigot.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -42,173 +44,201 @@
   </distributionManagement>
   <repositories>
     <!-- For spigot -->
-    <repository>
-      <id>md5-repo</id>
-      <url>http://repo.md-5.net/content/groups/public/</url>
-      <releases><enabled>true</enabled></releases>
-      <snapshots><enabled>true</enabled></snapshots>
-    </repository>
-
+      <repository>
+          <id>md5-repo</id>
+          <url>http://repo.md-5.net/content/groups/public/</url>
+          <releases>
+              <enabled>true</enabled>
+          </releases>
+          <snapshots>
+              <enabled>true</enabled>
+          </snapshots>
+      </repository>
+      <repository>
+          <id>papermc</id>
+          <url>https://papermc.io/repo/repository/maven-public/</url>
+      </repository>
     <!-- Addstar repos -->
-    <repository>
-      <id>addstar-repo</id>
-      <url>http://maven.addstar.com.au/artifactory/ext-release-local</url>
-      <snapshots>
-      	<enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>addstar-snapshot-repo</id>
-      <url>http://maven.addstar.com.au/artifactory/ext-snapshot-local</url>
-      <snapshots>
-      	<enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
+      <repository>
+          <id>addstar-release-repo</id>
+          <url>http://maven.addstar.com.au/artifactory/all-release</url>
+          <snapshots>
+              <enabled>false</enabled>
+          </snapshots>
+          <releases>
+              <enabled>true</enabled>
+          </releases>
+      </repository>
+      <repository>
+          <id>addstar-snapshot-repo</id>
+          <url>http://maven.addstar.com.au/artifactory/all-snapshot</url>
+          <snapshots>
+              <enabled>true</enabled>
+          </snapshots>
+          <releases>
+              <enabled>false</enabled>
+          </releases>
+      </repository>
 
     <!-- Repository for other dependencies of SK's -->
     <repository>
       <id>sk89q-mvn2</id>
-      <url>http://maven.sk89q.com/repo</url>
+      <url>http://mvn2.sk89q.com/repo</url>
     </repository>
   
     <!-- For Vault -->
-    <repository>
-      <id>vault-repo</id>
-      <name>Public Releases</name>
-      <url>http://nexus.hc.to/content/repositories/pub_releases/</url>
-    </repository>
+      <repository>
+          <id>vault-repo</id>
+          <url>http://nexus.hc.to/content/repositories/pub_releases</url>
+      </repository>
 
-    <!-- Other repositories -->
-    <repository>
-      <id>maven-central</id>
-      <url>http://repo1.maven.org/maven2/</url>
-    </repository>
-  </repositories>
+        <!-- Other repositories -->
+        <repository>
+            <id>maven-central</id>
+            <url>http://repo1.maven.org/maven2/</url>
+        </repository>
+        <!--Jitpack to assist with Bstats resolution-->
+        <repository>
+                <id>jitpack.io</id>
+                <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
   <dependencies>
     <!-- Spigot -->
-    <dependency>
-      <groupId>org.spigotmc</groupId>
-      <artifactId>spigot</artifactId>
-      <version>1.11.2-R0.1-SNAPSHOT</version>
-    </dependency>
+      <dependency>
+          <groupId>org.spigotmc</groupId>
+          <artifactId>spigot-api</artifactId>
+          <version>${spigot.version}</version>
+          <scope>provided</scope>
+      </dependency>
     
     <!-- WorldGuard for some of the sk functions -->
-    <dependency>
-      <groupId>com.sk89q</groupId>
-      <artifactId>worldguard</artifactId>
-      <version>6.1.1-SNAPSHOT</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.bukkit</groupId>
-          <artifactId>bukkit</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+      <dependency>
+          <groupId>com.sk89q.worldguard</groupId>
+          <artifactId>worldguard-legacy</artifactId>
+          <version>7.0.0-SNAPSHOT</version>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.bukkit</groupId>
+                  <artifactId>bukkit</artifactId>
+              </exclusion>
+          </exclusions>
+          <scope>provided</scope>
+      </dependency>
     
     <!-- Used for Economy interop -->
-    <dependency>
-      <groupId>net.milkbowl.vault</groupId>
-      <artifactId>Vault</artifactId>
-      <version>1.6.6</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.bukkit</groupId>
-          <artifactId>bukkit</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+      <dependency>
+          <groupId>net.milkbowl.vault</groupId>
+          <artifactId>VaultAPI</artifactId>
+          <version>1.7</version>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.bukkit</groupId>
+                  <artifactId>bukkit</artifactId>
+              </exclusion>
+          </exclusions>
+          <scope>provided</scope>
+      </dependency>
 
-    <!-- Used for LWC stuff -->
-    <dependency>
-      <groupId>com.griefcraft</groupId>
-      <artifactId>lwc</artifactId>
-      <version>4.4.0</version>
-    </dependency>
+        <!-- Used for LWC stuff -->
+        <dependency>
+            <groupId>com.griefcraft</groupId>
+            <artifactId>lwc</artifactId>
+            <version>4.7.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
 
-    <!--Used for Prism stuff -->
-    <dependency>
-      <groupId>me.botsko</groupId>
-      <artifactId>prism</artifactId>
-      <version>2.0.6</version>
-      <exclusions>
-        <exclusion>
-          <groupId>mo.botsko</groupId>
-          <artifactId>elixr</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.bukkit</groupId>
-          <artifactId>bukkit</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+        <!--Used for Prism stuff -->
+        <dependency>
+            <groupId>me.botsko</groupId>
+            <artifactId>prism</artifactId>
+            <version>2.1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>mo.botsko</groupId>
+                    <artifactId>elixr</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.lishid</groupId>
+            <artifactId>openinvapi</artifactId>
+            <version>3.3.7-SNAPSHOT</version>
+        </dependency>
 
-    <dependency>
-      <groupId>com.wimbli.WorldBorder</groupId>
-      <artifactId>WorldBorder</artifactId>
-      <version>1.8.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.bukkit</groupId>
-          <artifactId>bukkit</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+        <dependency>
+            <groupId>com.wimbli.WorldBorder</groupId>
+            <artifactId>WorldBorder</artifactId>
+            <version>1.9.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
+        </dependency>
 
-    <dependency>
-      <groupId>org.kitteh</groupId>
-      <artifactId>VanishNoPacket</artifactId>
-      <version>3.19.2bungee-SNAPSHOT</version>
-    </dependency>
+        <dependency>
+            <groupId>org.kitteh</groupId>
+            <artifactId>VanishNoPacket</artifactId>
+            <version>3.21-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
 
-    <!-- Used for Proxy-wide broadcast -->
-    <dependency>
-      <groupId>au.com.addstar</groupId>
-      <artifactId>BungeeChat-Bukkit</artifactId>
-      <version>1.1.0-SNAPSHOT</version>
-    </dependency>
-    
-    <!-- Used for uuid resolution for unknown players -->
-    <dependency>
-      <groupId>au.com.addstar</groupId>
-      <artifactId>Monolith</artifactId>
-      <version>1.4.4-SNAPSHOT</version>
-    </dependency>
+        <!-- Used for Proxy-wide broadcast -->
+        <dependency>
+            <groupId>au.com.addstar</groupId>
+            <artifactId>BungeeChat-Bukkit</artifactId>
+            <version>1.3.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
 
-  </dependencies>
+        <!-- Used for uuid resolution for unknown players -->
+        <dependency>
+            <groupId>au.com.addstar</groupId>
+            <artifactId>Monolith</artifactId>
+            <version>1.5.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
 
-  <build>
-    <resources>
-      <resource>
-        <targetPath>.</targetPath>
-        <filtering>true</filtering>
-        <directory>${basedir}/</directory>
-        <includes>
-          <include>config.yml</include>
-          <include>plugin.yml</include>
-        </includes>
-      </resource>
-    </resources>
+    </dependencies>
 
-    <sourceDirectory>src</sourceDirectory>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.1</version>
-      </plugin>
-    </plugins>
-  </build>
+    <build>
+        <resources>
+            <resource>
+                <targetPath>.</targetPath>
+                <filtering>true</filtering>
+                <directory>${basedir}/src/main/resources</directory>
+                <includes>
+                    <include>config.yml</include>
+                    <include>plugin.yml</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.1</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>
