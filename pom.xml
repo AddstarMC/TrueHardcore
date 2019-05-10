@@ -8,7 +8,7 @@
   <properties>
     <build.number/>
       <spigot.api.version>1.13</spigot.api.version>
-      <spigot.version>1.13.2-R0.1-SNAPSHOT</spigot.version>
+      <spigot.version>1.14-R0.1-SNAPSHOT</spigot.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -34,12 +34,12 @@
     <repository>
       <id>maven.addstar.com.au</id>
       <name>maven.addstar.com.au-releases</name>
-      <url>http://maven.addstar.com.au/artifactory/ext-release-local</url>
+      <url>https://maven.addstar.com.au/artifactory/ext-release-local</url>
     </repository>
     <snapshotRepository>
       <id>maven.addstar.com.au</id>
       <name>maven.addstar.com.au-snapshots</name>
-      <url>http://maven.addstar.com.au/artifactory/ext-snapshot-local</url>
+      <url>https://maven.addstar.com.au/artifactory/ext-snapshot-local</url>
     </snapshotRepository>
   </distributionManagement>
   <repositories>
@@ -61,7 +61,7 @@
     <!-- Addstar repos -->
       <repository>
           <id>addstar-release-repo</id>
-          <url>http://maven.addstar.com.au/artifactory/all-release</url>
+          <url>https://maven.addstar.com.au/artifactory/all-release</url>
           <snapshots>
               <enabled>false</enabled>
           </snapshots>
@@ -71,7 +71,7 @@
       </repository>
       <repository>
           <id>addstar-snapshot-repo</id>
-          <url>http://maven.addstar.com.au/artifactory/all-snapshot</url>
+          <url>https://maven.addstar.com.au/artifactory/all-snapshot</url>
           <snapshots>
               <enabled>true</enabled>
           </snapshots>
@@ -204,7 +204,7 @@
         <dependency>
             <groupId>au.com.addstar</groupId>
             <artifactId>Monolith</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
+            <version>1.5.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 

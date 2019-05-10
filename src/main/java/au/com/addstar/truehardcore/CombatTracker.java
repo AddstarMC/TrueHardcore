@@ -8,6 +8,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * This class will track players in combat and remove the status when adequate time has passed...
  * Created for the AddstarMC Project. Created by Narimm on 15/10/2018.
@@ -34,25 +36,33 @@ public class CombatTracker implements Listener {
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         task.cancel();
     }
-    
+
+    /**
+     * Runs Aysnc
+     * @return Runnable combat monitor
+     */
     public Runnable combatMonitor(){
         return () -> {
             long currTime = System.currentTimeMillis();
-            for(Player player : Bukkit.getOnlinePlayers()){
-                if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
-                HardcorePlayer hcPlayer  = plugin.HCPlayers.Get(player);
-                if(hcPlayer == null)continue;
-                if(hcPlayer.isCombat()) {
-                    if(hcPlayer.getCombatTime() <= currTime){
-                        hcPlayer.setCombatTime(0);
-                        hcPlayer.setCombat(false);
-                        player.sendMessage(" You have exited combat mode...");
-                    }//else{
-                    //   player.sendMessage(" Your are in combat  - exiting the game will have" +
-                     //           " consequence.");
-                    //}
+            try {
+                for (Player player : Bukkit.getScheduler().callSyncMethod(TrueHardcore.instance, Bukkit::getOnlinePlayers).get()) {
+                    if (!plugin.IsHardcoreWorld(player.getWorld())) {
+                        return;
+                    }
+                    HardcorePlayer hcPlayer = plugin.HCPlayers.Get(player);
+                    if (hcPlayer == null) continue;
+                    if (hcPlayer.isCombat()) {
+                        if (hcPlayer.getCombatTime() <= currTime) {
+                            hcPlayer.setCombatTime(0);
+                            hcPlayer.setCombat(false);
+                            Bukkit.getScheduler().runTask(TrueHardcore.instance,()->
+                                {player.sendMessage(" You have exited combat mode...");});
+                        }
+                    }
                 }
-            }
+            } catch (InterruptedException | ExecutionException e){
+                e.printStackTrace();
+            };
         };
     }
 
