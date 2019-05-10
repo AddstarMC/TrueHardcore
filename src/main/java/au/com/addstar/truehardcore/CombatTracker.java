@@ -56,13 +56,13 @@ public class CombatTracker implements Listener {
                             hcPlayer.setCombatTime(0);
                             hcPlayer.setCombat(false);
                             Bukkit.getScheduler().runTask(TrueHardcore.instance,()->
-                                {player.sendMessage(" You have exited combat mode...");});
+                                    player.sendMessage(" You have exited combat mode..."));
                         }
                     }
                 }
             } catch (InterruptedException | ExecutionException e){
                 e.printStackTrace();
-            };
+            }
         };
     }
 

@@ -178,12 +178,9 @@ class Util {
 		if (Objects.equals(player, "")) {
 			return false;
 		}
-		if (TrueHardcore.instance.getServer().getPlayer(player) != null) {
-			// Found player.. they must be online!
-			return true;
-		}
-		return false;
-	}
+        // Found player.. they must be online!
+        return TrueHardcore.instance.getServer().getPlayer(player) != null;
+    }
 
 	public static boolean Teleport(Player player, Location loc) {
 		if ((loc == null) || (player == null)) {

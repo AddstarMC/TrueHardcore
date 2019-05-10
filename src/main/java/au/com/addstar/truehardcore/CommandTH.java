@@ -207,7 +207,7 @@ class CommandTH implements CommandExecutor {
                                             Util.padLeft(hcp.getTopScore() + "", 8) +
                                             "   " + hcp.getState());
                         } else {
-                            plugin.Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
+                            TrueHardcore.Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
                         }
                     }
                 } else if (args.length == 3) {
@@ -242,19 +242,7 @@ class CommandTH implements CommandExecutor {
                         sender.sendMessage(ChatColor.YELLOW + "DeathPos       : " + ChatColor.AQUA + hcp.getDeathPos());
                         sender.sendMessage(ChatColor.YELLOW + "Deaths         : " + ChatColor.AQUA + hcp.getDeaths());
                         sender.sendMessage(ChatColor.YELLOW + "Modified       : " + ChatColor.AQUA + hcp.isModified());
-                        sender.sendMessage(ChatColor.YELLOW + "Cow Kills      : " + ChatColor.AQUA + hcp.getCowKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Pig Kills      : " + ChatColor.AQUA + hcp.getPigKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Sheep Kills    : " + ChatColor.AQUA + hcp.getSheepKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Chicken Kills  : " + ChatColor.AQUA + hcp.getChickenKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Creeper Kills  : " + ChatColor.AQUA + hcp.getCreeperKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Zombie Kills   : " + ChatColor.AQUA + hcp.getZombieKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Skeleton Kills : " + ChatColor.AQUA + hcp.getSkeletonKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Spider Kills   : " + ChatColor.AQUA + hcp.getSpiderKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Ender Kills    : " + ChatColor.AQUA + hcp.getEnderKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Slime Kills    : " + ChatColor.AQUA + hcp.getSlimeKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Moosh Kills    : " + ChatColor.AQUA + hcp.getMooshKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Other Kills    : " + ChatColor.AQUA + hcp.getOtherKills());
-                        sender.sendMessage(ChatColor.YELLOW + "Player Kills   : " + ChatColor.AQUA + hcp.getPlayerKills());
+                        outputKillScores(sender, hcp);
                         sender.sendMessage(ChatColor.YELLOW + "Player in Combat?   : " + ChatColor.AQUA + hcp.isCombat() + " : " + Util.Long2Time(hcp.getCombatTime()));
 
                     }
@@ -295,7 +283,7 @@ class CommandTH implements CommandExecutor {
                                 World world = plugin.getServer().getWorld(args[2]);
                                 if ((plugin.IsHardcoreWorld(world))) {
                                     HardcoreWorld hcw = plugin.HardcoreWorlds.Get(world.getName());
-                                    plugin.Debug("Setting ExitPos for " + hcw.getWorld().getName());
+                                    TrueHardcore.Debug("Setting ExitPos for " + hcw.getWorld().getName());
                                     player = (Player) sender;
                                     hcw.setExitPos(player.getLocation());
                                     plugin.Config().set("worlds." + world.getName() + ".exitpos", Util.Loc2Str(player.getLocation()));
@@ -341,31 +329,11 @@ class CommandTH implements CommandExecutor {
                 for (Map.Entry<String, HardcoreWorld> entry : plugin.HardcoreWorlds.AllRecords().entrySet()) {
                     // Check hardcore world
                     World world = plugin.getServer().getWorld(entry.getKey());
-                    if ((world != null) && (world.getPlayers().size() > 0)) {
-                        ArrayList<String> players = new ArrayList<>();
-                        for (Player p : world.getPlayers()) {
-                            if (plugin.IsPlayerVanished(p)) continue;
-                            Playing = true;
-                            players.add(p.getDisplayName());
-                        }
-                        if (players.size() > 0) {
-                            sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ChatColor.AQUA + ", "));
-                        }
-                    }
+                    Playing = outputPlayingforWorld(sender, Playing, world);
 
                     // Corresponding nether world
                     world = plugin.getServer().getWorld(entry.getKey() + "_nether");
-                    if ((world != null) && (world.getPlayers().size() > 0)) {
-                        ArrayList<String> players = new ArrayList<>();
-                        for (Player p : world.getPlayers()) {
-                            if (plugin.IsPlayerVanished(p)) continue;
-                            Playing = true;
-                            players.add(p.getDisplayName());
-                        }
-                        if (players.size() > 0) {
-                            sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ChatColor.AQUA + ", "));
-                        }
-                    }
+                    Playing = outputPlayingforWorld(sender, Playing, world);
                 }
                 if (!Playing) {
                     sender.sendMessage(ChatColor.RED + "None");
@@ -417,19 +385,7 @@ class CommandTH implements CommandExecutor {
 
                 if (hcp != null) {
                     sender.sendMessage(ChatColor.GREEN + "Hardcore player statistics:");
-                    sender.sendMessage(ChatColor.YELLOW + "Cow Kills      : " + ChatColor.AQUA + hcp.getCowKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Pig Kills      : " + ChatColor.AQUA + hcp.getPigKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Sheep Kills    : " + ChatColor.AQUA + hcp.getSheepKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Chicken Kills  : " + ChatColor.AQUA + hcp.getChickenKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Creeper Kills  : " + ChatColor.AQUA + hcp.getCreeperKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Zombie Kills   : " + ChatColor.AQUA + hcp.getZombieKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Skeleton Kills : " + ChatColor.AQUA + hcp.getSkeletonKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Spider Kills   : " + ChatColor.AQUA + hcp.getSpiderKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Ender Kills    : " + ChatColor.AQUA + hcp.getEnderKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Slime Kills    : " + ChatColor.AQUA + hcp.getSlimeKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Moosh Kills    : " + ChatColor.AQUA + hcp.getMooshKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Other Kills    : " + ChatColor.AQUA + hcp.getOtherKills());
-                    sender.sendMessage(ChatColor.YELLOW + "Player Kills   : " + ChatColor.AQUA + hcp.getPlayerKills());
+                    outputKillScores(sender, hcp);
                 }
                 break;
             case "WHITELIST":
@@ -548,10 +504,7 @@ class CommandTH implements CommandExecutor {
                 }
 
                 if (args.length > 1) {
-                    List<String> msg = new ArrayList<>();
-                    for (int x = 1; x < args.length; x++) {
-                        msg.add(args[x]);
-                    }
+                    List<String> msg = new ArrayList<>(Arrays.asList(args).subList(1, args.length));
                     plugin.BroadcastToHardcore(plugin.Header + StringUtils.join(msg, " "));
                 } else {
                     sender.sendMessage(ChatColor.RED + "You must provide a message to broadcast");
@@ -591,7 +544,7 @@ class CommandTH implements CommandExecutor {
                     }
                 }
                 if (args.length < 3) {
-                    sender.sendMessage(ChatColor.RED + "Usage: /th forceupdate <player> <world>");
+                    sender.sendMessage(ChatColor.RED + "Usage: /th forcealive <player> <world>");
                     return true;
                 } else if (args.length == 3) {
                     Player target =  Bukkit.getPlayer(args[1]);
@@ -607,7 +560,11 @@ class CommandTH implements CommandExecutor {
                     if (plugin.LoadPlayer(args[2],target.getUniqueId())) {
                         sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/" + args[1] + " has been reloaded.");
                         HardcorePlayer hcplayer = TrueHardcore.instance.HCPlayers.Get(args[2], target.getUniqueId());
-                        if(hcplayer.getState() == PlayerState.IN_GAME)hcplayer.setState(PlayerState.ALIVE);
+                        if(hcplayer.getState() == PlayerState.IN_GAME){
+                            hcplayer.setLoadDataOnly(true);
+                            hcplayer.setState(PlayerState.ALIVE);
+                            hcplayer.setLoadDataOnly(false);
+                        }
                         TrueHardcore.instance.SavePlayer(hcplayer);
                     } else {
                         sender.sendMessage(ChatColor.RED + "Player record failed to load!");
@@ -632,11 +589,42 @@ class CommandTH implements CommandExecutor {
                     sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW + ": Add/remove player to whitelist");
                     sender.sendMessage(ChatColor.AQUA + "/th debug  " + ChatColor.YELLOW + ": Toggle debug until restart");
                     sender.sendMessage(ChatColor.AQUA + "/th queue  " + ChatColor.YELLOW + ": Show the hardcore rollback queue.");
-                    sender.sendMessage(ChatColor.AQUA + "/th forceupdate <player> <world>  " + ChatColor.YELLOW +
+                    sender.sendMessage(ChatColor.AQUA + "/th forcealive <player> <world>  " + ChatColor.YELLOW +
                             ": Forces an update the the player - removing them from game and setting state to alive.");
                 }
                 break;
         }
 		return true;
 	}
+
+    private boolean outputPlayingforWorld(CommandSender sender, boolean playing, World world) {
+        if ((world != null) && (world.getPlayers().size() > 0)) {
+            ArrayList<String> players = new ArrayList<>();
+            for (Player p : world.getPlayers()) {
+                if (plugin.IsPlayerVanished(p)) continue;
+                playing = true;
+                players.add(p.getDisplayName());
+            }
+            if (players.size() > 0) {
+                sender.sendMessage(ChatColor.YELLOW + world.getName() + ": " + ChatColor.AQUA + StringUtils.join(players, ChatColor.AQUA + ", "));
+            }
+        }
+        return playing;
+    }
+
+    private void outputKillScores(CommandSender sender, HardcorePlayer hcp) {
+        sender.sendMessage(ChatColor.YELLOW + "Cow Kills      : " + ChatColor.AQUA + hcp.getCowKills());
+        sender.sendMessage(ChatColor.YELLOW + "Pig Kills      : " + ChatColor.AQUA + hcp.getPigKills());
+        sender.sendMessage(ChatColor.YELLOW + "Sheep Kills    : " + ChatColor.AQUA + hcp.getSheepKills());
+        sender.sendMessage(ChatColor.YELLOW + "Chicken Kills  : " + ChatColor.AQUA + hcp.getChickenKills());
+        sender.sendMessage(ChatColor.YELLOW + "Creeper Kills  : " + ChatColor.AQUA + hcp.getCreeperKills());
+        sender.sendMessage(ChatColor.YELLOW + "Zombie Kills   : " + ChatColor.AQUA + hcp.getZombieKills());
+        sender.sendMessage(ChatColor.YELLOW + "Skeleton Kills : " + ChatColor.AQUA + hcp.getSkeletonKills());
+        sender.sendMessage(ChatColor.YELLOW + "Spider Kills   : " + ChatColor.AQUA + hcp.getSpiderKills());
+        sender.sendMessage(ChatColor.YELLOW + "Ender Kills    : " + ChatColor.AQUA + hcp.getEnderKills());
+        sender.sendMessage(ChatColor.YELLOW + "Slime Kills    : " + ChatColor.AQUA + hcp.getSlimeKills());
+        sender.sendMessage(ChatColor.YELLOW + "Moosh Kills    : " + ChatColor.AQUA + hcp.getMooshKills());
+        sender.sendMessage(ChatColor.YELLOW + "Other Kills    : " + ChatColor.AQUA + hcp.getOtherKills());
+        sender.sendMessage(ChatColor.YELLOW + "Player Kills   : " + ChatColor.AQUA + hcp.getPlayerKills());
+    }
 }

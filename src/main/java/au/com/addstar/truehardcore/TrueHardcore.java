@@ -449,7 +449,7 @@ public final class TrueHardcore extends JavaPlugin {
             try {
                 if (instance.LWCHooked) {
                     // Always remove the locks straight away!
-                    instance.Debug("Removing LWC locks...");
+                    Debug("Removing LWC locks...");
                     int count = 0;
                     if (lwc.getPhysicalDatabase() != null) {
                         List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getUniqueId().toString());
@@ -464,9 +464,9 @@ public final class TrueHardcore extends JavaPlugin {
                             }
                         }
                     } else {
-                        instance.Log("WARNING: LWC.getPhysicalDatabase() failed!");
+                        Log("WARNING: LWC.getPhysicalDatabase() failed!");
                     }
-                    instance.Debug("Removed " + count + " LWC protections.");
+                    Debug("Removed " + count + " LWC protections.");
                 }
 
                 if (PrismHooked) {
@@ -555,12 +555,7 @@ public final class TrueHardcore extends JavaPlugin {
                     hcp.setPlayerKills(0);
                     hcp.updatePlayer(player);
                     SavePlayer(hcp);
-                    UnvanishPlayer(player);
-
-                    String greeting = HardcoreWorlds.Get(world).getGreeting();
-                    if ((greeting != null) && (!greeting.isEmpty())) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
-                    }
+                    cleanAndGreet(player,world);
                     BroadcastToHardcore(Header + ChatColor.GREEN + player.getDisplayName() + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN + hcp.getWorld(), player.getName());
                     return true;
                 } else {
@@ -582,12 +577,16 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setState(PlayerState.IN_GAME);
             JoinGame(world, player);
             SavePlayer(hcp);
-            UnvanishPlayer(player);
-            String greeting = HardcoreWorlds.Get(world).getGreeting();
-            if ((greeting != null) && (!greeting.isEmpty())) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
-            }
+            cleanAndGreet(player,world);
             return true;
+        }
+    }
+
+    private void cleanAndGreet(Player player,String world){
+        UnvanishPlayer(player);
+        String greeting = HardcoreWorlds.Get(world).getGreeting();
+        if ((greeting != null) && (!greeting.isEmpty())) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
         }
     }
     
@@ -1055,10 +1054,7 @@ public final class TrueHardcore extends JavaPlugin {
     }
     
     public boolean IsPlayerVanished(Player player) {
-        if ((VNPHooked) && (vnp.isVanished(player))) {
-            return true;
-        }
-        return false;
+        return (VNPHooked) && (vnp.isVanished(player));
     }
     
     private boolean SetProtected(HardcorePlayer hcp, long seconds) {
@@ -1141,10 +1137,7 @@ public final class TrueHardcore extends JavaPlugin {
         BorderData bd = null;
         if (!WBHooked) return true;
         bd = wb.getWorldBorder(loc.getWorld().getName());
-        if ((bd != null) && (bd.insideBorder(loc))) {
-            return true;
-        }
-        return false;
+        return (bd != null) && (bd.insideBorder(loc));
     }
     
     public void BroadcastToAllServers(String msg) {

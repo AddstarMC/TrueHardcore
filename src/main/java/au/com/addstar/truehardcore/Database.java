@@ -328,7 +328,7 @@ class Database {
     }
 
     public boolean ColumnExists(Connection conn, String tname, String cname) {
-        DatabaseMetaData md;
+          DatabaseMetaData md;
         ResultSet rs;
         
         try {

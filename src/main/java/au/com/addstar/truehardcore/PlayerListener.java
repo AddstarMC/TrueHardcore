@@ -34,12 +34,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.*;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 import au.com.addstar.truehardcore.HardcoreWorlds.*;
@@ -87,6 +82,9 @@ class PlayerListener implements Listener {
      */
     @EventHandler(ignoreCancelled=true)
     public void onPlayerKick(PlayerKickEvent event) {
+        handlePlayerExit(event);
+    }
+    private void handlePlayerExit(PlayerEvent event){
         final Player player = event.getPlayer();
         if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
 
@@ -104,30 +102,13 @@ class PlayerListener implements Listener {
             plugin.BroadcastToHardcore(plugin.Header + ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
         }
     }
-
     /*
      * Handle player quits inside the hardcore world
      * Change their player state if they were "in-game"
      */
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        final Player player = event.getPlayer();
-        if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
-    
-        TrueHardcore.DebugLog("EVENT: " + event.getEventName());
-        TrueHardcore.DebugLog("LOCATION: " + player.getLocation().toString());
-
-        // We only care about existing hardcore players
-        HardcorePlayer hcp = HCPlayers.Get(player);
-        if (hcp == null) { return; }
-        if (hcp.getState() == PlayerState.IN_GAME) {
-            // Mark the player at no longer in game
-            hcp.setState(PlayerState.ALIVE);
-            hcp.updatePlayer(player);
-            hcp.calcGameTime();
-            plugin.SavePlayer(hcp);
-            plugin.BroadcastToHardcore(plugin.Header + ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
-        }
+        handlePlayerExit(event);
     }
     
 
