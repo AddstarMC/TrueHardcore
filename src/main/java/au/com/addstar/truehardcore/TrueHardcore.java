@@ -744,7 +744,7 @@ public final class TrueHardcore extends JavaPlugin {
         // CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
         // OtherKills, PlayerKills;
         
-        final String query = "INSERT INTO `truehardcore`.`players` \n" +
+        final String query = "INSERT INTO `players` \n" +
                 "(`id`, `player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
                 "`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
                 "`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
