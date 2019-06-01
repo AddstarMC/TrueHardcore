@@ -7,7 +7,6 @@ import me.botsko.prism.actionlibs.QueryParameters;
 import me.botsko.prism.actionlibs.QueryResult;
 import me.botsko.prism.appliers.PrismProcessType;
 import me.botsko.prism.appliers.Rollback;
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -144,6 +143,7 @@ class WorldRollback {
 							try {
 								Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
 								params.setProcessType(PrismProcessType.DELETE);
+                                aq.setShouldPauseDB(true);
 								aq.delete(params);
 								Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
 							} catch (Exception e) {
