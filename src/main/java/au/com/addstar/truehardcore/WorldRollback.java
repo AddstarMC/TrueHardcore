@@ -111,15 +111,16 @@ class WorldRollback {
                 params.addActionType("water-bucket");
                 params.addActionType("lighter");
 
-                // Lookup changes for specified world+player
-                Debug("Querying changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
-                final ActionsQuery aq = new ActionsQuery(prism);
-                final QueryResult result = aq.lookup(params);
 
                 switch (req.type) {
                     case "ROLLBACK":
                         // Rollback found changes
                         try {
+                            // Lookup changes for specified world+player
+                            ActionsQuery aq = new ActionsQuery(prism);
+                            Debug("Querying changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
+                            QueryResult result = aq.lookup(params);
+
                             if (result.getActionResults().size() > 0) {
                                 // Always add a purge query for this death to the end of the queue
                                 QueueRollback("PURGE", req.player, req.world, 20);
@@ -140,12 +141,13 @@ class WorldRollback {
                         // This will cause Prism connection locking issues sometimes - eventually we'll figure out
                         // a better way to do this without causing server lag or DB connection issues
                         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-							try {
-								Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
-								params.setProcessType(PrismProcessType.DELETE);
+                            try {
+                                Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
+                                ActionsQuery aq = new ActionsQuery(prism);
+                                params.setProcessType(PrismProcessType.DELETE);
                                 aq.setShouldPauseDB(true);
-								aq.delete(params);
-								Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
+                                aq.delete(params);
+                                Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
 							} catch (Exception e) {
 								Warn("Activity purge failed for " + req.player.getName() + "/" + req.world.getName() + "!");
 								e.printStackTrace();
