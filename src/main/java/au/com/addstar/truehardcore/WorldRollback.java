@@ -145,7 +145,8 @@ class WorldRollback {
                                 Debug("Purging changes for " + req.player.getName() + " (" + req.world.getName() + ")...");
                                 ActionsQuery aq = new ActionsQuery(prism);
                                 params.setProcessType(PrismProcessType.DELETE);
-                                aq.setShouldPauseDB(true);
+                                // Temporarily removed until new Prism is working
+                                //aq.setShouldPauseDB(true);
                                 aq.delete(params);
                                 Debug("Purge completed for " + req.player.getName() + " (" + req.world.getName() + ")...");
 							} catch (Exception e) {
