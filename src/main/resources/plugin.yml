@@ -20,14 +20,14 @@ permissions:
   truehardcore.use:
     description: Standard permission for players
   truehardcore.info:
-    description: 
+    description: Get your Info
   truehardcore.info.other:
-    description:
+    description: Get Anothers info
   truehardcore.admin:
-    description:
+    description: Admin
   truehardcore.stats:
-    description:
+    description: stats
   truehardcore.stats.other:
-    description:
+    description: Other State
   truehardcore.endteleport:
     description: people with this perm can teleport to the end.

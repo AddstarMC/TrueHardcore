@@ -1,21 +1,23 @@
-package au.com.addstar.truehardcore;
 /*
-* TrueHardcore
-* Copyright (C) 2013 add5tar <copyright at addstar dot com dot au>
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>
-*/
+ * TrueHardcore
+ * Copyright (C) 2013 - 2020  AddstarMC <copyright at addstar dot com dot au>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>
+ *
+ */
+
+package au.com.addstar.truehardcore;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -55,10 +57,10 @@ class Database {
             
             tryConvert();
         } catch (SQLException e) {
-			TrueHardcore.Warn("Unable to open database!");
+            TrueHardcore.Warn("Unable to open database!");
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
-			TrueHardcore.Warn("Unable to find a suitable MySQL driver!");
+            TrueHardcore.Warn("Unable to find a suitable MySQL driver!");
             e.printStackTrace();
         }
         return IsConnected;
@@ -150,8 +152,9 @@ class Database {
         // Now convert the whitelist
         log.info("- Converting whitelist");
         st.executeUpdate("ALTER TABLE `whitelist` ADD COLUMN (`id` CHAR(36));");
+        //noinspection SqlResolve
         update = Conn.prepareStatement("UPDATE `whitelist` SET `id`= ? WHERE `player`=?;");
-        
+        //noinspection SqlResolve
         rs = st.executeQuery("SELECT `player` from `whitelist`");
         while (rs.next()) {
             String name = rs.getString("player");
@@ -190,6 +193,7 @@ class Database {
         log.info("  Finished converting " + count + " entries. " + failCount + " failed");
         
         st.executeUpdate("ALTER TABLE `whitelist` DROP PRIMARY KEY;");
+        //noinspection SqlResolve
         st.executeUpdate("ALTER TABLE `whitelist` DROP `player`;");
         st.executeUpdate("ALTER TABLE `whitelist` ADD PRIMARY KEY (`id`);");
         rs.close();
@@ -204,11 +208,11 @@ class Database {
         
         try {
             st = Conn.createStatement();
-			TrueHardcore.Debug("SQL Query: " + query);
+            TrueHardcore.Debug("SQL Query: " + query);
             return st.executeQuery(query);
         } catch (SQLException e) {
-			TrueHardcore.Warn("Query execution failed!");
-			TrueHardcore.Log("SQL: " + query);
+            TrueHardcore.Warn("Query execution failed!");
+            TrueHardcore.Log("SQL: " + query);
             e.printStackTrace();
             return null;
         }
@@ -222,17 +226,17 @@ class Database {
         try {
             ps = Conn.prepareStatement(query);
             // Construct PreparedStatement by adding all supplied params to the query
-			TrueHardcore.DebugLog("SQL Query: " + query);
+            TrueHardcore.DebugLog("SQL Query: " + query);
             if (params != null) {
                 for (int x=0; x < params.length; x++) {
-					TrueHardcore.DebugLog("Param " + (x+1) + ": "+ params[x]);
+                    TrueHardcore.DebugLog("Param " + (x+1) + ": "+ params[x]);
                     ps.setString(x+1, params[x]);
                 }
             }
             return ps.executeQuery();
         } catch (SQLException e) {
-			TrueHardcore.Warn("Prepared query execution failed!");
-			TrueHardcore.DebugLog("SQL: " + query);
+            TrueHardcore.Warn("Prepared query execution failed!");
+            TrueHardcore.DebugLog("SQL: " + query);
             e.printStackTrace();
             return null;
         }
@@ -245,11 +249,11 @@ class Database {
         
         try {
             st = Conn.createStatement();
-			TrueHardcore.Debug("SQL Update: " + query);
+            TrueHardcore.Debug("SQL Update: " + query);
             return st.executeUpdate(query);
         } catch (SQLException e) {
-			TrueHardcore.Warn("Query execution failed!");
-			TrueHardcore.Log("SQL: " + query);
+            TrueHardcore.Warn("Query execution failed!");
+            TrueHardcore.Log("SQL: " + query);
             e.printStackTrace();
             return -1;
         }
@@ -274,8 +278,8 @@ class Database {
             }
             return ps.executeUpdate();
         } catch (SQLException e) {
-			TrueHardcore.Warn("Prepared query execution failed!");
-			TrueHardcore.DebugLog("SQL: " + query);
+            TrueHardcore.Warn("Prepared query execution failed!");
+            TrueHardcore.DebugLog("SQL: " + query);
             e.printStackTrace();
             return -1;
         }
@@ -285,7 +289,7 @@ class Database {
         try {
             Conn.close();
         } catch (SQLException e) {
-			TrueHardcore.Warn("Close database failed!");
+            TrueHardcore.Warn("Close database failed!");
             e.printStackTrace();
         }
         return true;
@@ -299,17 +303,17 @@ class Database {
             md = conn.getMetaData();
         } catch (SQLException e) {
             // This shouldn't really happen
-			TrueHardcore.Warn("Unable to read DatabaseMetaData from DB connection!");
+            TrueHardcore.Warn("Unable to read DatabaseMetaData from DB connection!");
             e.printStackTrace();
             return false;
         }
 
         try {
-			TrueHardcore.Debug("Getting list of database tables");
+            TrueHardcore.Debug("Getting list of database tables");
             rs = md.getTables(null, null, tname, null);
         } catch (SQLException e) {
             // This shouldn't really happen
-			TrueHardcore.Warn("Unable to getTables from DatabaseMetaData!");
+            TrueHardcore.Warn("Unable to getTables from DatabaseMetaData!");
             e.printStackTrace();
             return false;
         }
@@ -321,7 +325,7 @@ class Database {
             }
         } catch (SQLException e) {
             // This shouldn't really happen
-			TrueHardcore.Warn("Unable to iterate table resultSet!");
+            TrueHardcore.Warn("Unable to iterate table resultSet!");
             e.printStackTrace();
         }
         return false;
@@ -335,17 +339,17 @@ class Database {
             md = conn.getMetaData();
         } catch (SQLException e) {
             // This shouldn't really happen
-			TrueHardcore.Warn("Unable to read DatabaseMetaData from DB connection!");
+            TrueHardcore.Warn("Unable to read DatabaseMetaData from DB connection!");
             e.printStackTrace();
             return false;
         }
 
         try {
-			TrueHardcore.Debug("Getting list of table columns");
+            TrueHardcore.Debug("Getting list of table columns");
             rs = md.getColumns(null, null, tname, cname);
         } catch (SQLException e) {
             // This shouldn't really happen
-			TrueHardcore.Warn("Unable to getColumns from DatabaseMetaData!");
+            TrueHardcore.Warn("Unable to getColumns from DatabaseMetaData!");
             e.printStackTrace();
             return false;
         }
@@ -357,7 +361,7 @@ class Database {
             }
         } catch (SQLException e) {
             // This shouldn't really happen
-			TrueHardcore.Warn("Unable to iterate column resultSet!");
+            TrueHardcore.Warn("Unable to iterate column resultSet!");
             e.printStackTrace();
         }
         return false;
