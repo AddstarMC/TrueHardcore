@@ -19,6 +19,7 @@ package au.com.addstar.truehardcore;
 
 import java.util.Set;
 
+import org.bukkit.Difficulty;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -60,6 +61,19 @@ class ConfigManager {
                     hcw.setRollbackDelay(Config().getInt("worlds." + w + ".rollback-delay", 0));		// Default = 0
                     hcw.setDeathDrops(Config().getBoolean("worlds." + w + ".death-drops", false));		// Default = false
                     hcw.setWhitelisted(Config().getBoolean("worlds." + w + ".whitelisted", true));		// Default = true
+                    Difficulty difficulty;
+                    if(Config().getString("worlds." + w +".difficulty",null) != null) {
+                        try {
+                            difficulty = Difficulty.valueOf(Config().getString("worlds." + w + ".difficulty", "HARD"));
+                        } catch (IllegalArgumentException e) {
+                            plugin.getLogger().warning("Config for " + w + " world chunk difficulty was not formatted correctly");
+                            difficulty = Difficulty.HARD;
+                        }
+                        hcw.setDifficulty(difficulty);
+                        world.setDifficulty(difficulty);
+                    } else {
+                        hcw.setDifficulty(world.getDifficulty());
+                    }
                     plugin.HardcoreWorlds.AddWorld(world.getName(), hcw);
                 }
             }
@@ -79,5 +93,9 @@ class ConfigManager {
         plugin.AutoSaveEnabled = Config().getBoolean("auto-save", false);
         plugin.antiCombatLog = Config().getBoolean("combat.Anti-Log", false);
         plugin.combatTime = Config().getInt("combat.time",30)*1000;
+
+        //Difficulty Settings
+        //Chunk Base time in hours - minimum 0 maximum 50
+        plugin.baseChunkTime =  Config().getInt("chunk.baseTime",0)*60*60*20;
     }
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.World;
 
@@ -30,6 +31,7 @@ public class HardcoreWorlds {
         private Integer rollbackdelay;
         private Boolean deathdrops;
         private Boolean whitelisted;
+        private Difficulty difficulty;
 
         public World getWorld() {
             return world;
@@ -93,6 +95,21 @@ public class HardcoreWorlds {
         public void setWhitelisted(Boolean whitelisted) {
             this.whitelisted = whitelisted;
         }
+
+        public Difficulty getDifficulty() {
+            return difficulty;
+        }
+
+        public void setDifficulty(Difficulty difficulty) {
+            this.difficulty = difficulty;
+        }
+
+        protected boolean checkandSetDifficulty(){
+            if(world.getDifficulty() != difficulty){
+                world.setDifficulty(difficulty);
+            }
+            return world.getDifficulty() == difficulty;
+        }
     }
 
     public HardcoreWorld NewWorld(String world) {
@@ -127,4 +144,5 @@ public class HardcoreWorlds {
         List<String> names = new ArrayList<>(Worlds.keySet());
         return StringUtils.join(names, ",");
     }
+
 }

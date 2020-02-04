@@ -128,7 +128,6 @@ class PlayerListener implements Listener {
             TrueHardcore.Debug(player.getName() + " joined " + player.getWorld() + " while dead! Ignoring event...");
             return;
         }
-
         // Check if player is resuming a game or somehow stuck in the world but not playing
         Location loc;
         HardcorePlayer hcp = HCPlayers.Get(player);
@@ -210,69 +209,82 @@ class PlayerListener implements Listener {
         final Player player = event.getPlayer();
         final Location from = event.getFrom();
         final Location to   = event.getTo();
-
-        // Ignore if neither from/to are related to hardcore
-        if (!plugin.IsHardcoreWorld(to.getWorld()) && !plugin.IsHardcoreWorld(from.getWorld())) { return; }
-
-        TeleportCause cause = event.getCause();
-        TrueHardcore.DebugLog(
-                "PlayerTeleportEvent (" + player.getName() + "): " +
-                from.getWorld().getName() + " " + from.getX() + " " + from.getY() + " " + from.getZ() +
-                " [TO] " +
-                to.getWorld().getName() + " " + to.getX() + " " + to.getY() + " " + to.getZ() +
-                " (" + cause + ")"
-        );
-
-        // Some teleport methods are fine.. let them go
-        if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL) || (cause == TeleportCause.NETHER_PORTAL)) {
-            return;
-        }
-        
-        // Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
-        if (from.getWorld().equals(to.getWorld()) && (from.distance(to) <= 30)) { return; }
-
-        if (plugin.IsHardcoreWorld(from.getWorld())) {
-            // Prevent unauthorised teleports while in hardcore worlds
-            HardcorePlayer hcp = HCPlayers.Get(from.getWorld(), player);
-            if (hcp == null) {
+        final World worldFrom = from.getWorld();
+        final World worldTo = to.getWorld();
+        if(worldFrom == null || worldTo == null) {
+            plugin.getLogger().warning("Teleport Event from or to a null world:");
+            if (worldFrom != null) {
+                plugin.getLogger().warning("Teleport TO was NULL");
+            } else {
+                plugin.getLogger().warning("Teleport FROM was NULL");
+            }
+            plugin.getLogger().warning(" Teleport Event: "+event.toString());
+        } else {
+            // Ignore if neither from/to are related to hardcore
+            if (!plugin.IsHardcoreWorld(worldTo) && !plugin.IsHardcoreWorld(worldFrom)) {
                 return;
             }
-            if (hcp.getState() == PlayerState.IN_GAME) {
-                if (from.getWorld().equals(to.getWorld())) {
-                    // Prevent unauthorised teleports within hardcore worlds
-                    if (player.isOp() || player.hasPermission("truehardcore.bypass.teleport")) {
-                        TrueHardcore.Debug("Teleport override (within world) allowed for " + player.getName());
-                        return;
-                    } else {
-                        TrueHardcore.Debug(player.getName() + " teleport within hardcore cancelled!");
-                        player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
-                    }
-                } else {
-                    // Prevent unauthorised exit from hardcore
-                    if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportout")) {
-                        TrueHardcore.Debug("Teleport override (out of world) allowed for " + player.getName());
-                        return;
-                    } else {
-                        TrueHardcore.Debug(player.getName() + " teleport out of hardcore cancelled!");
-                        player.sendMessage(ChatColor.RED + "You are not allowed to teleport out of hardcore!");
-                    }
-                }
-                player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
-                TrueHardcore.Debug("From: " + from);
-                TrueHardcore.Debug("To  : " + to);
-                event.setCancelled(true);
+            TeleportCause cause = event.getCause();
+            TrueHardcore.DebugLog(
+                  "PlayerTeleportEvent (" + player.getName() + "): " +
+                        worldFrom.getName() + " " + from.getX() + " " + from.getY() + " " + from.getZ() +
+                        " [TO] " +
+                        worldTo.getName() + " " + to.getX() + " " + to.getY() + " " + to.getZ() +
+                        " (" + cause + ")"
+            );
+
+            // Some teleport methods are fine.. let them go
+            if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL) || (cause == TeleportCause.NETHER_PORTAL)) {
+                return;
             }
-        }
-        else if (plugin.IsHardcoreWorld(to.getWorld())) {
-            // Prevent unauthorised entry into hardcore worlds
-            HardcorePlayer hcp = HCPlayers.Get(to.getWorld(), player);
-            if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
-                if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportin")) {
-                    TrueHardcore.Debug("Teleport override (into world) allowed for " + player.getName());
-                } else {
+
+            // Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
+            if (worldFrom.equals(worldTo) && (from.distance(to) <= 30)) {
+                return;
+            }
+
+            if (plugin.IsHardcoreWorld(worldFrom)) {
+                // Prevent unauthorised teleports while in hardcore worlds
+                HardcorePlayer hcp = HCPlayers.Get(worldFrom, player);
+                if (hcp == null) {
+                    return;
+                }
+                if (hcp.getState() == PlayerState.IN_GAME) {
+                    if (worldFrom.equals(worldTo)) {
+                        // Prevent unauthorised teleports within hardcore worlds
+                        if (player.isOp() || player.hasPermission("truehardcore.bypass.teleport")) {
+                            TrueHardcore.Debug("Teleport override (within world) allowed for " + player.getName());
+                            return;
+                        } else {
+                            TrueHardcore.Debug(player.getName() + " teleport within hardcore cancelled!");
+                            player.sendMessage(ChatColor.RED + "You are not allowed to teleport while in hardcore!");
+                        }
+                    } else {
+                        // Prevent unauthorised exit from hardcore
+                        if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportout")) {
+                            TrueHardcore.Debug("Teleport override (out of world) allowed for " + player.getName());
+                            return;
+                        } else {
+                            TrueHardcore.Debug(player.getName() + " teleport out of hardcore cancelled!");
+                            player.sendMessage(ChatColor.RED + "You are not allowed to teleport out of hardcore!");
+                        }
+                    }
+                    player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+                    TrueHardcore.Debug("From: " + from);
+                    TrueHardcore.Debug("To  : " + to);
                     event.setCancelled(true);
-                    TrueHardcore.Debug(player.getName() + "teleport into hardcore was cancelled!");
-                    player.sendMessage(ChatColor.RED + "You are not allowed to teleport to a hardcore world.");
+                }
+            } else if (plugin.IsHardcoreWorld(worldTo)) {
+                // Prevent unauthorised entry into hardcore worlds
+                HardcorePlayer hcp = HCPlayers.Get(worldTo, player);
+                if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
+                    if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportin")) {
+                        TrueHardcore.Debug("Teleport override (into world) allowed for " + player.getName());
+                    } else {
+                        event.setCancelled(true);
+                        TrueHardcore.Debug(player.getName() + "teleport into hardcore was cancelled!");
+                        player.sendMessage(ChatColor.RED + "You are not allowed to teleport to a hardcore world.");
+                    }
                 }
             }
         }
@@ -470,19 +482,20 @@ class PlayerListener implements Listener {
     private void giveSkull(OfflinePlayer killed, String killedDN, Player killer, boolean isOnline){
         if (killer==null)return;
         ItemStack skull =new ItemStack(Material.PLAYER_HEAD,1);
-
         SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
-        skullMeta.setOwningPlayer(killed);
-        skullMeta.setDisplayName(killedDN);
-        skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        skullMeta.addEnchant(Enchantment.LUCK,1,true);
-        List<String> lorelist = new ArrayList<>();
-        lorelist.add("The Head of " + killedDN);
-        Date date = new Date(System.currentTimeMillis());
-        DateFormat df = DateFormat.getDateTimeInstance(2,2);
-        df.format(date);
-        lorelist.add("Killed on " + df.format(date) + " by " + killer.getDisplayName());
-        skullMeta.setLore(lorelist);
+        if(skullMeta != null) {
+            skullMeta.setOwningPlayer(killed);
+            skullMeta.setDisplayName(killedDN);
+            skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            skullMeta.addEnchant(Enchantment.LUCK, 1, true);
+            List<String> loreList = new ArrayList<>();
+            loreList.add("The Head of " + killedDN);
+            Date date = new Date(System.currentTimeMillis());
+            DateFormat df = DateFormat.getDateTimeInstance(2, 2);
+            df.format(date);
+            loreList.add("Killed on " + df.format(date) + " by " + killer.getDisplayName());
+            skullMeta.setLore(loreList);
+        }
         skull.setItemMeta(skullMeta);
         killer.getWorld().dropItem(killer.getLocation(),skull);
         try {

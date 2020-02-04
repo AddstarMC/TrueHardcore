@@ -8,7 +8,7 @@
   <properties>
     <build.number/>
       <spigot.api.version>1.13</spigot.api.version>
-      <spigot.version>1.14-R0.1-SNAPSHOT</spigot.version>
+      <spigot.version>1.15.2-R0.1-SNAPSHOT</spigot.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -82,8 +82,8 @@
 
     <!-- Repository for other dependencies of SK's -->
     <repository>
-      <id>sk89q-mvn2</id>
-      <url>http://maven.sk89q.com/repo/</url>
+            <id>sk89q-repo</id>
+            <url>https://maven.enginehub.org/repo/</url>
     </repository>
 
     <!-- For Vault -->
@@ -97,11 +97,11 @@
             <id>maven-central</id>
             <url>http://repo1.maven.org/maven2/</url>
         </repository>
-        <!--Jitpack to assist with Bstats resolution-->
-        <repository>
-                <id>jitpack.io</id>
-                <url>https://jitpack.io</url>
-        </repository>
+      <repository>
+          <!-- BStats-->
+          <id>CodeMC</id>
+          <url>https://repo.codemc.org/repository/maven-public</url>
+      </repository>
     </repositories>
 
   <dependencies>
@@ -112,18 +112,11 @@
           <version>${spigot.version}</version>
           <scope>provided</scope>
       </dependency>
-
     <!-- WorldGuard for some of the sk functions -->
       <dependency>
           <groupId>com.sk89q.worldguard</groupId>
-          <artifactId>worldguard-legacy</artifactId>
-          <version>7.0.0-SNAPSHOT</version>
-          <exclusions>
-              <exclusion>
-                  <groupId>org.bukkit</groupId>
-                  <artifactId>bukkit</artifactId>
-              </exclusion>
-          </exclusions>
+          <artifactId>worldguard-bukkit</artifactId>
+          <version>7.0.3-SNAPSHOT</version>
           <scope>provided</scope>
       </dependency>
 
@@ -200,7 +193,7 @@
         <dependency>
             <groupId>au.com.addstar</groupId>
             <artifactId>Monolith</artifactId>
-            <version>1.6.0-SNAPSHOT</version>
+            <version>1.15.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
 

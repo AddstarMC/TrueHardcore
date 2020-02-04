@@ -73,6 +73,7 @@ public final class TrueHardcore extends JavaPlugin {
     public String BroadcastChannel = null;
     public boolean AutoSaveEnabled = false;
     public long combatTime = (30000);//Combat time in millseconds;
+    public long baseChunkTime = 0; //chunkInhabited in ticks
     public CombatTracker cTracker;
     public boolean antiCombatLog = false;
     public WorldRollback RollbackHandler;
@@ -241,6 +242,10 @@ public final class TrueHardcore extends JavaPlugin {
         getCommand("truehardcore").setExecutor(new CommandTH(this));
         getCommand("th").setExecutor(new CommandTH(this));
         pm.registerEvents(new PlayerListener(this), this);
+        if(baseChunkTime>0){
+            pm.registerEvents(new ChunkListener(baseChunkTime), p);
+        }
+
         //enable combatlog if true
         enableCombatLog(antiCombatLog);
         // Set auto save timer
@@ -248,7 +253,7 @@ public final class TrueHardcore extends JavaPlugin {
             Log("Launching auto-save timer (every 5 minutes)...");
             getServer().getScheduler().runTaskTimer(this, this::SaveIngamePlayers, 300 * 20L, 300 * 20L);
         }
-        
+
         Log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 

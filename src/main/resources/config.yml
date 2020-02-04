@@ -16,11 +16,14 @@ worlds:
     ban-time: 3600
     spawn-distance: 5000
     spawn-protection: 60
+    difficulty: "HARD"
   hardcore2:
     greeting: "&f[&cHardcore2&f] &cPVP and raiding are encouraged here!"
     ban-time: 7200
     spawn-distance: 4000
     protection-time: 30
+    difficulty: "HARD"
+
 
 # Database settings
 mysql:
@@ -29,3 +32,7 @@ mysql:
   database: truehardcore
   username: truehardcore
   password: "truehardcore"
+
+#Difficulty Settings
+chunk:
+  baseTime: 0
