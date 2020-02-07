@@ -17,8 +17,9 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.objects;
 
+import au.com.addstar.truehardcore.config.HardcoreWorldConfig;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,27 +31,20 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 public class HardcoreWorlds {
-    private final Map<String, HardcoreWorld> Worlds;
+    private final Map<String, HardcoreWorld> worlds;
 
     public HardcoreWorlds() {
-        Worlds = new HashMap<>();
+        worlds = new HashMap<>();
     }
     
-    static class HardcoreWorld {
-        public HardcoreWorld() {
-            // Nothing needed here yet
+    public static class HardcoreWorld {
+        public HardcoreWorld(World world, HardcoreWorldConfig config) {
+            this.world = world;
+            this.config = config;
         }
         
         private World world;
-        private String greeting;
-        private Integer bantime;
-        private Integer spawndistance;
-        private Integer spawnprotection;
-        private Location exitpos;
-        private Integer rollbackdelay;
-        private Boolean deathdrops;
-        private Boolean whitelisted;
-        private Difficulty difficulty;
+        private HardcoreWorldConfig config;
 
         public World getWorld() {
             return world;
@@ -60,107 +54,102 @@ public class HardcoreWorlds {
         }
 
         public String getGreeting() {
-            return greeting;
+            return config.greeting;
         }
         public void setGreeting(String greeting) {
-            this.greeting = greeting;
+            this.config.greeting = greeting;
         }
 
         public Integer getBantime() {
-            return bantime;
+            return config.banTime;
         }
         public void setBantime(Integer bantime) {
-            this.bantime = bantime;
+            this.config.banTime = bantime;
         }
 
         public Integer getSpawnDistance() {
-            return spawndistance;
+            return config.spawnDistance;
         }
         public void setSpawnDistance(Integer spawndistance) {
-            this.spawndistance = spawndistance;
+            this.config.spawnDistance = spawndistance;
         }
 
         public Integer getSpawnProtection() {
-            return spawnprotection;
+            return config.spawnProtection;
         }
         public void setSpawnProtection(Integer spawnprotection) {
-            this.spawnprotection = spawnprotection;
+            this.config.spawnProtection = spawnprotection;
         }
 
         public Location getExitPos() {
-            return exitpos;
+            return config.exitLocation;
         }
         public void setExitPos(Location exitpos) {
-            this.exitpos = exitpos;
+            this.config.exitLocation = exitpos;
         }
 
         public Integer getRollbackDelay() {
-            return rollbackdelay;
+            return config.rollbackdelay;
         }
         public void setRollbackDelay(Integer rollbackdelay) {
-            this.rollbackdelay = rollbackdelay;
+            this.config.rollbackdelay = rollbackdelay;
         }
 
         public Boolean getDeathDrops() {
-            return deathdrops;
+            return config.deathdrops;
         }
         public void setDeathDrops(Boolean deathdrops) {
-            this.deathdrops = deathdrops;
+            this.config.deathdrops = deathdrops;
         }
 
         public Boolean isWhitelisted() {
-            return whitelisted;
+            return config.whitelisted;
         }
         public void setWhitelisted(Boolean whitelisted) {
-            this.whitelisted = whitelisted;
+            this.config.whitelisted = whitelisted;
         }
 
         public Difficulty getDifficulty() {
-            return difficulty;
+            return config.bukkitDifficulty;
         }
 
         public void setDifficulty(Difficulty difficulty) {
-            this.difficulty = difficulty;
+            this.config.bukkitDifficulty = difficulty;
         }
 
         protected boolean checkandSetDifficulty(){
-            if(world.getDifficulty() != difficulty){
-                world.setDifficulty(difficulty);
+            if (world.getDifficulty() != getDifficulty()) {
+                world.setDifficulty(getDifficulty());
             }
-            return world.getDifficulty() == difficulty;
+            return world.getDifficulty() == getDifficulty();
         }
     }
 
-    public HardcoreWorld NewWorld(String world) {
-        HardcoreWorld hcw = new HardcoreWorld();
-        AddWorld(world, hcw);
-        return hcw;
-    }
 
-    public boolean AddWorld(String world, HardcoreWorld hcw) {
-        Worlds.put(world, hcw);
+    public boolean addWorld(String world, HardcoreWorld hcw) {
+        worlds.put(world, hcw);
         return true;
     }
 
     public HardcoreWorld Get(String world) {
         String key = StringUtils.replace(world, "_nether", "");
-        if (Worlds.containsKey(key)) {
-            return Worlds.get(key);
+        if (worlds.containsKey(key)) {
+            return worlds.get(key);
         }
         return null;
     }
 
     public boolean Contains(String world) {
         String key = StringUtils.replace(world, "_nether", "");
-        return Worlds.containsKey(key);
+        return worlds.containsKey(key);
     }
     
     public Map<String, HardcoreWorld> AllRecords() {
-        return Worlds;
+        return worlds;
     }
     
     public String GetNames() {
-        List<String> names = new ArrayList<>(Worlds.keySet());
+        List<String> names = new ArrayList<>(worlds.keySet());
         return StringUtils.join(names, ",");
     }
 

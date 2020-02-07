@@ -17,7 +17,7 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.database;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -30,30 +30,38 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import au.com.addstar.truehardcore.TrueHardcore;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
-class Database {
-    private final TrueHardcore plugin;
-    public String DBFilename;
-    private Connection Conn;
-    public boolean IsConnected = false;
+public class Database {
+    private Connection conn;
+    public boolean isConnected = false;
     
-    public Database(TrueHardcore instance) {
-        plugin = instance;
-        OpenDatabase();
+    public Database() {
     }
 
-    private boolean OpenDatabase() {
+    private boolean openDatabase() {
         try {
-            Class.forName ("com.mysql.jdbc.Driver");
-            if (plugin.DBHost == null) { TrueHardcore.Log("Host is null"); }
-            if (plugin.DBPort == null) { TrueHardcore.Log("Port is null"); }
-            if (plugin.DBName == null) { TrueHardcore.Log("Name is null"); }
-            String url = "jdbc:mysql://" + plugin.DBHost + ":" + plugin.DBPort + "/" + plugin.DBName;
-            Conn = DriverManager.getConnection(url, plugin.DBUser, plugin.DBPass);
+            Class.forName("com.mysql.jdbc.Driver");
+            String host = TrueHardcore.getCfg().host;
+            String port = TrueHardcore.getCfg().port;
+            String name = TrueHardcore.getCfg().name;
+            if (host == null) {
+                TrueHardcore.Log("Host is null");
+            }
+            if (port == null) {
+                TrueHardcore.Log("Port is null");
+            }
+            if (name == null) {
+                TrueHardcore.Log("Name is null");
+            }
+            String user = TrueHardcore.getCfg().user;
+            String password = TrueHardcore.getCfg().password;
+            String url = "jdbc:mysql://" + host + ":" + port + "/" + name;
+            conn = DriverManager.getConnection(url, user, password);
             
-            IsConnected = true;
+            isConnected = true;
             
             tryConvert();
         } catch (SQLException e) {
@@ -63,13 +71,13 @@ class Database {
             TrueHardcore.Warn("Unable to find a suitable MySQL driver!");
             e.printStackTrace();
         }
-        return IsConnected;
+        return isConnected;
     }
     
     private void tryConvert() throws SQLException {
         
         // Schema check for new id column
-        Statement st = Conn.createStatement();
+        Statement st = conn.createStatement();
         try {
             st.executeQuery("SELECT `id` from `players`");
             return;
@@ -85,9 +93,11 @@ class Database {
         log.info("- Building name cache");
         HashMap<String, UUID> lookup = new HashMap<>();
         for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
-            lookup.put(player.getName().toLowerCase(), player.getUniqueId());
+            if (player.getName() != null) {
+                lookup.put(player.getName().toLowerCase(), player.getUniqueId());
+            }
         }
-        
+
         // Next update the schema for the table
         log.info("- Updating db schema");
         st.executeUpdate("ALTER TABLE `players` ADD COLUMN (`id` CHAR(36));");
@@ -95,7 +105,7 @@ class Database {
         // Now query for all entries for an inplace update
         log.info("- Converting players ...");
         
-        PreparedStatement update = Conn.prepareStatement("UPDATE `players` SET `id`= ? WHERE `player`=? AND `world`=?;");
+        PreparedStatement update = conn.prepareStatement("UPDATE `players` SET `id`= ? WHERE `player`=? AND `world`=?;");
         
         int pending = 0;
         int count = 0;
@@ -153,7 +163,7 @@ class Database {
         log.info("- Converting whitelist");
         st.executeUpdate("ALTER TABLE `whitelist` ADD COLUMN (`id` CHAR(36));");
         //noinspection SqlResolve
-        update = Conn.prepareStatement("UPDATE `whitelist` SET `id`= ? WHERE `player`=?;");
+        update = conn.prepareStatement("UPDATE `whitelist` SET `id`= ? WHERE `player`=?;");
         //noinspection SqlResolve
         rs = st.executeQuery("SELECT `player` from `whitelist`");
         while (rs.next()) {
@@ -204,10 +214,10 @@ class Database {
     public ResultSet ExecuteQuery(String query) {
         Statement st;
         
-        if (!IsConnected) { return null; }
+        if (!isConnected) { return null; }
         
         try {
-            st = Conn.createStatement();
+            st = conn.createStatement();
             TrueHardcore.Debug("SQL Query: " + query);
             return st.executeQuery(query);
         } catch (SQLException e) {
@@ -221,10 +231,10 @@ class Database {
     public ResultSet PreparedQuery(String query, String[] params) {
         PreparedStatement ps;
         
-        if (!IsConnected) { return null; }
+        if (!isConnected) { return null; }
         
         try {
-            ps = Conn.prepareStatement(query);
+            ps = conn.prepareStatement(query);
             // Construct PreparedStatement by adding all supplied params to the query
             TrueHardcore.DebugLog("SQL Query: " + query);
             if (params != null) {
@@ -245,10 +255,10 @@ class Database {
     public int ExecuteUpdate(String query) {
         Statement st;
         
-        if (!IsConnected) { return -1; }
+        if (!isConnected) { return -1; }
         
         try {
-            st = Conn.createStatement();
+            st = conn.createStatement();
             TrueHardcore.Debug("SQL Update: " + query);
             return st.executeUpdate(query);
         } catch (SQLException e) {
@@ -266,10 +276,10 @@ class Database {
     public int PreparedUpdate(String query, String[] params, boolean silent) {
         PreparedStatement ps;
         
-        if (!IsConnected) { return -1; }
+        if (!isConnected) { return -1; }
         
         try {
-            ps = Conn.prepareStatement(query);
+            ps = conn.prepareStatement(query);
             // Construct PreparedStatement by adding all supplied params to the query
             if (!silent) TrueHardcore.DebugLog("SQL Update: " + query);
             for (int x=0; x < params.length; x++) {
@@ -287,7 +297,7 @@ class Database {
     
     public boolean CloseDatabase() {
         try {
-            Conn.close();
+            conn.close();
         } catch (SQLException e) {
             TrueHardcore.Warn("Close database failed!");
             e.printStackTrace();

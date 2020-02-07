@@ -17,12 +17,13 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.objects;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import au.com.addstar.truehardcore.TrueHardcore;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -30,9 +31,8 @@ import org.bukkit.entity.Player;
 
 public class HardcorePlayers {
 
-    private final Map<String, HardcorePlayer> Players;
-    public HardcorePlayers() {
-        Players = new HashMap<>();
+    private final Map<String, HardcorePlayer> players;
+    public HardcorePlayers() { players = new HashMap<>();
     }
 
     public enum PlayerState {
@@ -41,8 +41,8 @@ public class HardcorePlayers {
         ALIVE,
         DEAD
     }
-    
-    static class HardcorePlayer {
+
+    public static class HardcorePlayer {
         private String PlayerName;
         private UUID PlayerId;
         private String World;
@@ -410,7 +410,7 @@ public class HardcorePlayers {
         }
     }
     
-    public HardcorePlayer NewPlayer(String world, UUID id, String name) {
+    public HardcorePlayer newPlayer(String world, UUID id, String name) {
         HardcorePlayer hcp = new HardcorePlayer();
 		TrueHardcore.Debug("Creating new player record: " + world + "/" + name);
 		hcp.LoadDataOnly = true;
@@ -418,48 +418,48 @@ public class HardcorePlayers {
 		hcp.setUniqueId(id);
 		hcp.setWorld(world);
 		hcp.LoadDataOnly = false;
-		AddPlayer(world, id, hcp);
+		addPlayer(world, id, hcp);
 		return hcp;
     }
 
-    public HardcorePlayer Get(String world, UUID id) {
+    public HardcorePlayer get(String world, UUID id) {
         String key = StringUtils.replace(world, "_nether", "") + "/" + id;
-        if (Players.containsKey(key)) {
-			return Players.get(key);
+        if (players.containsKey(key)) {
+			return players.get(key);
         }
         return null;
     }
     
-    public HardcorePlayer Get(World world, Player player) {
+    public HardcorePlayer get(World world, Player player) {
         if ((world == null) || (player == null)) { return null; }
-        return Get(world.getName(), player.getUniqueId());
+        return get(world.getName(), player.getUniqueId());
     }
 
-    public HardcorePlayer Get(Player player) {
+    public HardcorePlayer get(Player player) {
         if (player == null) { return null; }
-        return Get(player.getWorld().getName(), player.getUniqueId());
+        return get(player.getWorld().getName(), player.getUniqueId());
     }
     
-    public HardcorePlayer Get(String key) {
-        if (Players.containsKey(key)) { return null; }
-        return Players.get(StringUtils.replace(key, "_nether", ""));
+    public HardcorePlayer get(String key) {
+        if (players.containsKey(key)) { return null; }
+        return players.get(StringUtils.replace(key, "_nether", ""));
     }
     
-    private boolean AddPlayer(String world, UUID id, HardcorePlayer hcp) {
+    private boolean addPlayer(String world, UUID id, HardcorePlayer hcp) {
         String key = world + "/" + id.toString();
-        Players.put(key, hcp);
+        players.put(key, hcp);
         return true;
     }
     
-    public boolean IsHardcorePlayer(Player player) {
-        return (Get(player) != null);
+    public boolean isHardcorePlayer(Player player) {
+        return (get(player) != null);
     }
     
-    public void Clear() {
-        Players.clear();
+    public void clear() {
+        players.clear();
     }
     
-    public Map<String, HardcorePlayer> AllRecords() {
-        return Players;
+    public Map<String, HardcorePlayer> allRecords() {
+        return players;
     }
 }

@@ -17,37 +17,57 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.commands;
 
-import java.util.*;
-
+import au.com.addstar.monolith.lookup.Lookup;
+import au.com.addstar.truehardcore.TrueHardcore;
+import au.com.addstar.truehardcore.config.ThConfig;
+import au.com.addstar.truehardcore.functions.Util;
+import au.com.addstar.truehardcore.functions.WorldRollback;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
+import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
-import au.com.addstar.monolith.lookup.Lookup;
-import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
-import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
-import au.com.addstar.truehardcore.HardcoreWorlds.HardcoreWorld;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-class CommandTH implements CommandExecutor {
-	private final TrueHardcore plugin;
-	
-	public CommandTH(TrueHardcore instance) {
-		plugin = instance;
-	}
-	
-	/*
-	 * Handle the /truehardcore command
-	 */
-	public boolean onCommand(final CommandSender sender, Command cmd, String commandLabel, String[] args) {
-		String action = "";
-		if (args.length > 0) {
-			action = args[0].toUpperCase();
-		}
+
+public class CommandTH implements CommandExecutor {
+    private final TrueHardcore plugin;
+
+    public CommandTH(TrueHardcore instance) {
+        plugin = instance;
+    }
+
+    /**
+     * Handle the TH command.
+     * @param sender the command sender
+     * @param cmd the commands
+     * @param commandLabel labels
+     * @param args arguments
+     * @return true on success
+     */
+    public boolean onCommand(@NotNull final CommandSender sender, @NotNull Command cmd,
+                             @NotNull String commandLabel, String[] args) {
+        String action = "";
+        if (args.length > 0) {
+            action = args[0].toUpperCase();
+        }
         Player player = null;
         switch (action) {
             case "PLAY":
@@ -91,7 +111,7 @@ class CommandTH implements CommandExecutor {
                     player.sendMessage(ChatColor.RED + "It's not safe to leave.. there are monsters around..");
                     return true;
                 }
-                HardcorePlayer hcPlayer = plugin.HCPlayers.Get(player);
+                HardcorePlayer hcPlayer = plugin.HCPlayers.get(player);
                 if (hcPlayer.isCombat() && hcPlayer.getCombatTime() > System.currentTimeMillis()) {
                     player.sendMessage(ChatColor.RED + "It's not safe to leave.. you are in combat " +
                             "until " + Util.Long2Time(hcPlayer.getCombatTime() - System.currentTimeMillis()));
@@ -121,7 +141,7 @@ class CommandTH implements CommandExecutor {
                         }
 
                         player = (Player) sender;
-                        hcp = plugin.HCPlayers.Get(player);
+                        hcp = plugin.HCPlayers.get(player);
                         if (hcp != null) {
                             hcp.updatePlayer(player);
                         } else {
@@ -138,7 +158,7 @@ class CommandTH implements CommandExecutor {
                     }
                     player = plugin.getServer().getPlayer(args[1]);
                     if (player != null) {
-                        hcp = plugin.HCPlayers.Get(player);
+                        hcp = plugin.HCPlayers.get(player);
                         if (plugin.IsHardcoreWorld(player.getWorld())) {
                             hcp.updatePlayer(player);
                         } else {
@@ -157,7 +177,7 @@ class CommandTH implements CommandExecutor {
                     if (!lookup.hasPlayedBefore()) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
                     } else {
-                        hcp = plugin.HCPlayers.Get(args[1], lookup.getUniqueId());
+                        hcp = plugin.HCPlayers.get(args[1], lookup.getUniqueId());
                         if (hcp != null) {
                             player = plugin.getServer().getPlayer(args[2]);
                             if (player != null) {
@@ -200,7 +220,7 @@ class CommandTH implements CommandExecutor {
                     }
                 }
                 if (args.length == 1) {
-                    for (Map.Entry<String, HardcorePlayer> entry : plugin.HCPlayers.AllRecords().entrySet()) {
+                    for (Map.Entry<String, HardcorePlayer> entry : plugin.HCPlayers.allRecords().entrySet()) {
                         hcp = entry.getValue();
                         if (hcp != null) {
                             sender.sendMessage(
@@ -215,7 +235,7 @@ class CommandTH implements CommandExecutor {
                 } else if (args.length == 3) {
                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
 
-                    hcp = plugin.HCPlayers.Get(args[2], offlinePlayer.getUniqueId());
+                    hcp = plugin.HCPlayers.get(args[2], offlinePlayer.getUniqueId());
                     if (hcp != null) {
                         String sincedeath = "";
                         if (hcp.getGameEnd() != null) {
@@ -259,7 +279,7 @@ class CommandTH implements CommandExecutor {
                 if (args.length == 1) {
                     for (Map.Entry<String, HardcoreWorld> entry : plugin.HardcoreWorlds.AllRecords().entrySet()) {
                         HardcoreWorld hcw = entry.getValue();
-                        sender.sendMessage(ChatColor.RED    + "World Name     : " + ChatColor.AQUA + hcw.getWorld().getName());
+                        sender.sendMessage(ChatColor.RED + "World Name     : " + ChatColor.AQUA + hcw.getWorld().getName());
                         sender.sendMessage(ChatColor.YELLOW + " Greeting      : " + ChatColor.AQUA + ChatColor.translateAlternateColorCodes('&', hcw.getGreeting()));
                         sender.sendMessage(ChatColor.YELLOW + " Ban Time      : " + ChatColor.AQUA + hcw.getBantime());
                         sender.sendMessage(ChatColor.YELLOW + " Distance      : " + ChatColor.AQUA + hcw.getSpawnDistance());
@@ -300,15 +320,15 @@ class CommandTH implements CommandExecutor {
                         case "COMBATLOG":
                             switch (args[2].toUpperCase()) {
                                 case "ENABLE":
-                                    plugin.antiCombatLog = true;
+                                    TrueHardcore.getCfg().antiCombatLog = true;
                                     plugin.enableCombatLog(true);
                                     break;
                                 case "DISABLE":
-                                    plugin.antiCombatLog = false;
+                                    TrueHardcore.getCfg().antiCombatLog = false;
                                     plugin.enableCombatLog(false);
                                     break;
                             }
-                            sender.sendMessage("AntiCombatLogging is now: " + plugin.antiCombatLog);
+                            sender.sendMessage("AntiCombatLogging is now: " + TrueHardcore.getCfg().antiCombatLog);
                         default:
                             sender.sendMessage(ChatColor.RED + "Invalid option \"" + args[1] + "\"");
                             break;
@@ -351,7 +371,7 @@ class CommandTH implements CommandExecutor {
                         }
 
                         player = (Player) sender;
-                        hcp = plugin.HCPlayers.Get(player);
+                        hcp = plugin.HCPlayers.get(player);
                         if (hcp == null) {
                             sender.sendMessage(ChatColor.RED + "You must be in the hardcore world to use this command");
                         }
@@ -366,7 +386,7 @@ class CommandTH implements CommandExecutor {
                     }
                     player = plugin.getServer().getPlayer(args[1]);
                     if (player != null) {
-                        hcp = plugin.HCPlayers.Get(player);
+                        hcp = plugin.HCPlayers.get(player);
                         if (!plugin.IsHardcoreWorld(player.getWorld())) {
                             sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
                         }
@@ -379,7 +399,7 @@ class CommandTH implements CommandExecutor {
                             return true;
                         }
                     }
-                    hcp = plugin.HCPlayers.Get(args[2], Bukkit.getOfflinePlayer(args[1]).getUniqueId());
+                    hcp = plugin.HCPlayers.get(args[2], Bukkit.getOfflinePlayer(args[1]).getUniqueId());
                     if (hcp == null) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
                     }
@@ -483,7 +503,7 @@ class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                plugin.GameEnabled = false;
+                TrueHardcore.getCfg().GameEnabled = false;
                 TrueHardcore.DebugLog("TrueHardcore has been disabled.");
                 sender.sendMessage(ChatColor.RED + "TrueHardcore has been disabled.");
                 break;
@@ -494,7 +514,7 @@ class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                plugin.GameEnabled = true;
+                TrueHardcore.getCfg().GameEnabled = true;
                 TrueHardcore.DebugLog("TrueHardcore has been enabled.");
                 sender.sendMessage(ChatColor.GREEN + "TrueHardcore has been enabled.");
                 break;
@@ -519,8 +539,8 @@ class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                TrueHardcore.DebugEnabled = !TrueHardcore.DebugEnabled;
-                sender.sendMessage(ChatColor.RED + "Debug Status:" + TrueHardcore.DebugEnabled);
+                ThConfig.DebugEnabled = !ThConfig.DebugEnabled;
+                sender.sendMessage(ChatColor.RED + "Debug Status:" + ThConfig.DebugEnabled);
                 break;
             case "QUEUE":
                 if (sender instanceof Player) {
@@ -549,20 +569,20 @@ class CommandTH implements CommandExecutor {
                     sender.sendMessage(ChatColor.RED + "Usage: /th forcealive <player> <world>");
                     return true;
                 } else if (args.length == 3) {
-                    Player target =  Bukkit.getPlayer(args[1]);
-                    if(target == null){
+                    Player target = Bukkit.getPlayer(args[1]);
+                    if (target == null) {
                         sender.sendMessage("Player must be online to peform the force alive..." + args[1] + " could not be found.");
                         return true;
                     }
-                    if(TrueHardcore.instance.IsHardcoreWorld(target.getWorld())){
+                    if (TrueHardcore.instance.IsHardcoreWorld(target.getWorld())) {
                         sender.sendMessage(target.getDisplayName() + " is in " + target.getWorld() +
                                 " ask them to return to lobby before updating.");
                         return true;
                     }
-                    if (plugin.LoadPlayer(args[2],target.getUniqueId())) {
+                    if (plugin.LoadPlayer(args[2], target.getUniqueId())) {
                         sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/" + args[1] + " has been reloaded.");
-                        HardcorePlayer hcplayer = TrueHardcore.instance.HCPlayers.Get(args[2], target.getUniqueId());
-                        if(hcplayer.getState() == PlayerState.IN_GAME){
+                        HardcorePlayer hcplayer = TrueHardcore.instance.HCPlayers.get(args[2], target.getUniqueId());
+                        if (hcplayer.getState() == PlayerState.IN_GAME) {
                             hcplayer.setLoadDataOnly(true);
                             hcplayer.setState(PlayerState.ALIVE);
                             hcplayer.setLoadDataOnly(false);
@@ -596,8 +616,8 @@ class CommandTH implements CommandExecutor {
                 }
                 break;
         }
-		return true;
-	}
+        return true;
+    }
 
     private boolean outputPlayingforWorld(CommandSender sender, boolean playing, World world) {
         if ((world != null) && (world.getPlayers().size() > 0)) {

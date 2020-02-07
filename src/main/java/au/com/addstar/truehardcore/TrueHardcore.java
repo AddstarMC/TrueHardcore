@@ -20,9 +20,20 @@
 package au.com.addstar.truehardcore;
 
 import au.com.addstar.bc.BungeeChat;
-import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
-import au.com.addstar.truehardcore.HardcorePlayers.PlayerState;
-import au.com.addstar.truehardcore.HardcoreWorlds.HardcoreWorld;
+import au.com.addstar.truehardcore.commands.CommandTH;
+import au.com.addstar.truehardcore.config.ConfigManager;
+import au.com.addstar.truehardcore.config.ThConfig;
+import au.com.addstar.truehardcore.database.Database;
+import au.com.addstar.truehardcore.functions.CombatTracker;
+import au.com.addstar.truehardcore.functions.Util;
+import au.com.addstar.truehardcore.functions.WorldRollback;
+import au.com.addstar.truehardcore.listeners.ChunkListener;
+import au.com.addstar.truehardcore.listeners.PlayerListener;
+import au.com.addstar.truehardcore.objects.HardcorePlayers;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
+import au.com.addstar.truehardcore.objects.HardcoreWorlds;
+import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
@@ -54,6 +65,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
@@ -61,61 +73,20 @@ import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
 public final class TrueHardcore extends JavaPlugin {
-    public static TrueHardcore instance;
-
-    private final Object lock = new Object();
-    
-    private static Economy econ = null;
-    public static Permission perms = null;
-    public static Chat chat = null;
-    private boolean VaultEnabled = false;
-    public static boolean DebugEnabled = false;
-    public List<String> RollbackCmds = null;
-    public boolean GameEnabled = true;
-    public String BroadcastChannel = null;
-    public boolean AutoSaveEnabled = false;
-    public long combatTime = (30000);//Combat time in millseconds;
-    public long baseChunkTime = 0; //chunkInhabited in ticks
-    public CombatTracker cTracker;
-    public boolean antiCombatLog = false;
-    public WorldRollback RollbackHandler;
-
     private static final Logger logger = Logger.getLogger("Minecraft");
     private static final Logger debuglog = Logger.getLogger("DebugLog");
-    private FileHandler debugfh;
-    
-    private final ConfigManager cfg = new ConfigManager(this);
+    public static TrueHardcore instance;
+    public static Permission perms = null;
+    public static Chat chat = null;
+    private static Economy econ = null;
+    private static ThConfig cfg;
     private static PluginDescriptionFile pdfFile = null;
-    private PluginManager pm = null;
-
-    private Database dbcon = null;
-    String DBHost;
-    String DBPort;
-    String DBName;
-    String DBUser;
-    String DBPass;
-
-    private Boolean LWCHooked = false;
-    Boolean PrismHooked = false;
-    Boolean OIHooked = false;
-    IOpenInv openInv;
-    private Boolean WBHooked = false;
-    private Boolean VNPHooked = false;
-    private Boolean BCHooked = false;
-    
-    private LWC lwc;
-    Prism prism;
-    private WorldBorder wb;
-    private VanishManager vnp;
-
     // Hardcore worlds
-    public final HardcoreWorlds HardcoreWorlds = new HardcoreWorlds();
-    
+    public final au.com.addstar.truehardcore.objects.HardcoreWorlds HardcoreWorlds = new HardcoreWorlds();
     // Data for ALL hardcore players
     public final HardcorePlayers HCPlayers = new HardcorePlayers();
-
     public final String Header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore" + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
-    
+    private final Object lock = new Object();
     private final List<Material> SpawnBlocks = Arrays.asList(
             Material.DIRT,
             Material.COARSE_DIRT,
@@ -143,20 +114,64 @@ public final class TrueHardcore extends JavaPlugin {
             Material.RED_SAND,
             Material.RED_SANDSTONE,
             Material.CUT_SANDSTONE
-        
-            );
-    
-    @Override
-    public void onEnable(){
-        instance = this;
 
+    );
+    public List<String> RollbackCmds = null;
+    public CombatTracker combatTracker;
+    public WorldRollback RollbackHandler;
+    public Boolean prismHooked = false;
+    public Boolean oihooked = false;
+    public IOpenInv openInv;
+    public Prism prism;
+    private boolean vaultEnabled = false;
+    private FileHandler debugFileHandler;
+    private PluginManager pm = null;
+    private Database dbConnection = null;
+    private Boolean lwcHooked = false;
+    private Boolean wbHooked = false;
+    private Boolean vnpHooked = false;
+    private Boolean bcHooked = false;
+    private LWC lwc;
+    private WorldBorder wb;
+    private VanishManager vnp;
+
+    public static ThConfig getCfg() {
+        return cfg;
+    }
+
+    public static void Log(String data) {
+        logger.info("[" + pdfFile.getName() + "] " + data);
+        debuglog.info(data);
+    }
+
+    public static void Warn(String data) {
+        logger.warning("[" + pdfFile.getName() + "] " + data);
+        debuglog.warning(data);
+    }
+
+    public static void Debug(String data) {
+        if (cfg.DebugEnabled) {
+            logger.info("[" + pdfFile.getName() + "] " + data);
+        }
+        debuglog.info(data);
+    }
+
+    // Write data to debug log
+    public static void DebugLog(String data) {
+        debuglog.info(data);
+    }
+
+    @Override
+    public void onEnable() {
+        instance = this;
+        loadConfig();
         // This block configure the logger with handler and formatter
         try {
             debuglog.setUseParentHandlers(false);
-            debugfh = new FileHandler("plugins/TrueHardcore/debug.log", true);
+            debugFileHandler = new FileHandler("plugins/TrueHardcore/debug.log", true);
             Util.LogFormatter formatter = new Util.LogFormatter();
-            debugfh.setFormatter(formatter);
-            debuglog.addHandler(debugfh);
+            debugFileHandler.setFormatter(formatter);
+            debuglog.addHandler(debugFileHandler);
         } catch (SecurityException | IOException e) {
             e.printStackTrace();
         }
@@ -166,71 +181,66 @@ public final class TrueHardcore extends JavaPlugin {
         pm = this.getServer().getPluginManager();
 
         // Check if vault is loaded (required for economy)
-        VaultEnabled = setupEconomy();
-        if (VaultEnabled) {
+        vaultEnabled = setupEconomy();
+        if (vaultEnabled) {
             Log("Found Vault! Hooking for economy!");
         } else {
             Log("Vault was not detected! Economy rewards are not available.");
         }
-        
+
         Plugin p = pm.getPlugin("LWC");
         if (p instanceof LWCPlugin) {
-            LWCHooked = true;
-            lwc = ((LWCPlugin)p).getLWC();
+            lwcHooked = true;
+            lwc = ((LWCPlugin) p).getLWC();
             Log("LWC Found, hooking into LWC.");
         } else {
-            LWCHooked = false;
+            lwcHooked = false;
             Log("LWC not Found");
         }
         p = pm.getPlugin("Prism");
         if (p instanceof Prism) {
-            PrismHooked = true;
-            prism = (Prism)p;
+            prismHooked = true;
+            prism = (Prism) p;
             Log("Prism found, hooking it.");
             RollbackHandler = new WorldRollback(prism);
         } else {
-            PrismHooked = false;
+            prismHooked = false;
             Log("Prism not found! This won't work very well...");
         }
 
         p = pm.getPlugin("WorldBorder");
         if (p instanceof WorldBorder) {
-            WBHooked = true;
+            wbHooked = true;
             wb = WorldBorder.plugin;
             Log("WorldBorder found, hooking it.");
         } else {
-            WBHooked = false;
+            wbHooked = false;
             Log("WorldBorder not found! Spawning will not be limited...");
         }
 
         p = pm.getPlugin("BungeeChatBukkit");
         if (p instanceof BungeeChat) {
-            BCHooked = true;
+            bcHooked = true;
             Log("BungeeChat found, hooking it.");
         } else {
-            BCHooked = false;
+            bcHooked = false;
             Log("BungeeChat not found! No cross server messages");
         }
-        
+
         p = pm.getPlugin("VanishNoPacket");
         if (p instanceof VanishPlugin) {
-            VNPHooked = true;
-            vnp = ((VanishPlugin)p).getManager();
+            vnpHooked = true;
+            vnp = ((VanishPlugin) p).getManager();
             Log("VanishNoPacket found, hooking it.");
         } else {
-            WBHooked = false;
+            wbHooked = false;
             Log("VanishNoPacket not found! Vanished players will not be unvanished...");
         }
-        OIHooked = checkOpenInventory();
-        // Read (or initialise) plugin config file
-        cfg.LoadConfig(getConfig());
-
-        // Save the default config (if one doesn't exist)
-        saveDefaultConfig();
+        oihooked = checkOpenInventory();
 
         // Open/initialise the database
-        dbcon = new Database(this);
-        if (dbcon.IsConnected) {
+        dbConnection = new Database();
+        if (dbConnection.isConnected) {
             Log("Successfully connected to the database.");
             Log("Loading players from database...");
             LoadAllPlayers();
@@ -239,19 +249,20 @@ public final class TrueHardcore extends JavaPlugin {
             this.setEnabled(false);
             return;
         }
-        
+
         Log("Registering commands and events...");
         getCommand("truehardcore").setExecutor(new CommandTH(this));
         getCommand("th").setExecutor(new CommandTH(this));
         pm.registerEvents(new PlayerListener(this), this);
-        if(baseChunkTime>0){
+        long baseChunkTime = cfg.baseChunkTime * 60 * 60 * 20;
+        if (baseChunkTime > 0) {
             pm.registerEvents(new ChunkListener(baseChunkTime), p);
         }
 
         //enable combatlog if true
-        enableCombatLog(antiCombatLog);
+        enableCombatLog(cfg.antiCombatLog);
         // Set auto save timer
-        if (AutoSaveEnabled) {
+        if (cfg.autoSaveEnabled) {
             Log("Launching auto-save timer (every 5 minutes)...");
             getServer().getScheduler().runTaskTimer(this, this::SaveIngamePlayers, 300 * 20L, 300 * 20L);
         }
@@ -259,33 +270,33 @@ public final class TrueHardcore extends JavaPlugin {
         Log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 
-    protected void enableCombatLog(boolean enable) {
+    public void enableCombatLog(boolean enable) {
         if (enable) {
-            if (cTracker == null) {
-                cTracker = new CombatTracker(this);
-                pm.registerEvents(cTracker, this);
+            if (combatTracker == null) {
+                combatTracker = new CombatTracker(this);
+                pm.registerEvents(combatTracker, this);
             }
         } else {
-            if (cTracker != null) {
-                cTracker.onDisable();
+            if (combatTracker != null) {
+                combatTracker.onDisable();
             }
-            cTracker = null;
+            combatTracker = null;
         }
-        Log("Combat Logging is " + antiCombatLog);
+        Log("Combat Logging is " + cfg.antiCombatLog);
 
     }
-    
+
     @Override
-    public void onDisable(){
+    public void onDisable() {
         // cancel all tasks we created
-        if(cTracker!= null)cTracker.onDisable();
+        if (combatTracker != null) combatTracker.onDisable();
         getServer().getScheduler().cancelTasks(this);
         SaveAllPlayers();
         Log(pdfFile.getName() + " has been disabled!");
-        debugfh.close();
-        
+        debugFileHandler.close();
+
     }
-    
+
     /*
      * Detect/configure Vault
      */
@@ -298,16 +309,16 @@ public final class TrueHardcore extends JavaPlugin {
             return false;
         }
         econ = rsp.getProvider();
-        return econ != null;
+        return true;
     }
 
     private boolean checkOpenInventory() {
         Plugin p = getServer().getPluginManager().getPlugin("OpenInv");
-        if(p == null){
+        if (p == null) {
             Log("Open Inventory support disabled");
             return false;
-        }else{
-            if(p instanceof IOpenInv){
+        } else {
+            if (p instanceof IOpenInv) {
                 openInv = (IOpenInv) p;
                 Log("Open Inventory support enabled");
                 return true;
@@ -315,35 +326,13 @@ public final class TrueHardcore extends JavaPlugin {
         }
         return false;
     }
-    
-    public static void Log(String data) {
-        logger.info("[" + pdfFile.getName() + "] " + data);
-        debuglog.info(data);
-    }
 
-    public static void Warn(String data) {
-        logger.warning("[" + pdfFile.getName() + "] " + data);
-        debuglog.warning(data);
-    }
-    
-    public static void Debug(String data) {
-        if (DebugEnabled) {
-            logger.info("[" + pdfFile.getName() + "] " + data);
-        }
-        debuglog.info(data);
-    }
-
-    // Write data to debug log
-    public static void DebugLog(String data) {
-        debuglog.info(data);
-    }
-    
     public FileConfiguration Config() {
         return getConfig();
     }
-    
+
     public boolean GiveMoney(OfflinePlayer player, int money) {
-        if (VaultEnabled) {
+        if (vaultEnabled) {
             EconomyResponse resp = econ.depositPlayer(player, money);
             if (resp.type == ResponseType.SUCCESS) {
                 Log(player + " has been given $" + resp.amount + " (new balance $" + resp.balance + ")");
@@ -354,26 +343,26 @@ public final class TrueHardcore extends JavaPlugin {
         }
         return false;
     }
-    
-    public void handlePlayerCombatLogging(final Player player,Location location){
+
+    public void handlePlayerCombatLogging(final Player player, Location location) {
         PlayerInventory inv = player.getInventory();
-        if(location.getBlock().isEmpty()){
+        if (location.getBlock().isEmpty()) {
             BlockData data = Bukkit.createBlockData(Material.CHEST);
             location.getBlock().setBlockData(data);
             Block block = location.getBlock();
-            if(block instanceof Chest){
+            if (block instanceof Chest) {
                 ((Chest) block).getInventory().addItem(inv.getContents());
-               inv.clear();
+                inv.clear();
                 BroadcastToHardcore(player.getDisplayName() + " has logged out in combat and left behind goodies. Find them if you can!");
             }
         }
     }
-    
-    
+
+
     public void DoPlayerDeath(final Player player, PlayerDeathEvent event) {
         final World realworld = player.getWorld();
-        
-        final HardcorePlayer hcp = HCPlayers.Get(realworld, player);
+
+        final HardcorePlayer hcp = HCPlayers.get(realworld, player);
         final World world = getServer().getWorld(hcp.getWorld());
         final HardcoreWorld hcw = HardcoreWorlds.Get(world.getName());
 
@@ -382,17 +371,17 @@ public final class TrueHardcore extends JavaPlugin {
         hcp.setCombatTime(0);
         hcp.setDeathMsg(event.getDeathMessage());
         hcp.setDeathPos(player.getLocation());
-        hcp.setDeaths(hcp.getDeaths()+1);
+        hcp.setDeaths(hcp.getDeaths() + 1);
         hcp.updatePlayer(player);
         hcp.calcGameTime();
-        
+
         String DeathMsg = event.getDeathMessage();
         DeathMsg = DeathMsg.replaceFirst(player.getName(), ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
         BroadcastToAllServers(Header + DeathMsg + "!");
         BroadcastToAllServers(
                 Header +
-                "Final Score: " + ChatColor.GREEN + player.getTotalExperience() + " " +
-                ChatColor.AQUA + "(" + hcp.getWorld() + ")"
+                        "Final Score: " + ChatColor.GREEN + player.getTotalExperience() + " " +
+                        ChatColor.AQUA + "(" + hcp.getWorld() + ")"
         );
         event.setDeathMessage(null);
         if (hcp.getScore() > 0) {
@@ -405,7 +394,7 @@ public final class TrueHardcore extends JavaPlugin {
 
             // Check if this is a high score
             boolean highscore = true;
-            for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
+            for (Map.Entry<String, HardcorePlayer> entry : HCPlayers.allRecords().entrySet()) {
                 HardcorePlayer h = entry.getValue();
                 if (h != null) {
                     // Only compare other player's scores in the same world
@@ -420,23 +409,22 @@ public final class TrueHardcore extends JavaPlugin {
                     Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
                 }
             }
-            
+
             if (highscore) {
                 BroadcastToAllServers(Header + ChatColor.AQUA + player.getName() + ChatColor.GREEN + " has beaten the all time high score!");
-            }
-            else if (personalbest) {
+            } else if (personalbest) {
                 player.sendMessage(ChatColor.GREEN + "Congratulations! You just beat your personal high score!");
             }
         }
-        
+
         SavePlayer(hcp);
 
         // Dont drop XP or items
-        if (!hcw.  getDeathDrops()) {
+        if (!hcw.getDeathDrops()) {
             event.setDroppedExp(0);
             event.getDrops().clear();
         }
-        
+
         // Reset XP levels
         event.setNewExp(0);
         event.setNewLevel(0);
@@ -444,24 +432,24 @@ public final class TrueHardcore extends JavaPlugin {
         event.setKeepLevel(false);
         player.setLevel(0);
         player.setExp(0);
-        
+
         if (hcw.getRollbackDelay() > 0) {
             String wh = ChatColor.DARK_RED + "[" + ChatColor.RED + hcp.getWorld() + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
             BroadcastToWorld(hcp.getWorld(), wh + " " +
-                            ChatColor.YELLOW + "You now have " + Util.Long2Time(hcw.getRollbackDelay()) +
-                            " to raid " + ChatColor.AQUA + player.getName() + "'s " + ChatColor.YELLOW + "stuff before it all disappears!");
+                    ChatColor.YELLOW + "You now have " + Util.Long2Time(hcw.getRollbackDelay()) +
+                    " to raid " + ChatColor.AQUA + player.getName() + "'s " + ChatColor.YELLOW + "stuff before it all disappears!");
         }
-        
+
         instance.getServer().getScheduler().runTaskLater(instance, () -> {
             try {
-                if (instance.LWCHooked) {
+                if (instance.lwcHooked) {
                     // Always remove the locks straight away!
                     Debug("Removing LWC locks...");
                     int count = 0;
                     if (lwc.getPhysicalDatabase() != null) {
                         List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getUniqueId().toString());
                         String w = world.getName();
-                        for(Protection prot : prots) {
+                        for (Protection prot : prots) {
                             if (prot.getWorld().equals(w) || prot.getWorld().equals(w + "_nether")) {
                                 count++;
 
@@ -476,7 +464,7 @@ public final class TrueHardcore extends JavaPlugin {
                     Debug("Removed " + count + " LWC protections.");
                 }
 
-                if (PrismHooked) {
+                if (prismHooked) {
                     // Queue rollback for the Overworld
                     RollbackHandler.QueueRollback("ROLLBACK", player, world, hcw.getRollbackDelay());
 
@@ -492,7 +480,15 @@ public final class TrueHardcore extends JavaPlugin {
             }
         }, 20L);
     }
-    
+
+    private void loadConfig() {
+        File config = new File(this.getDataFolder(), "config.yml");
+        // Read (or initialise) plugin config file
+        ConfigManager configManager = new ConfigManager(this);
+        configManager.loadConfig();
+        cfg = configManager.getConfig();
+    }
+
     public boolean PlayGame(String world, Player player) {
         // Only check whitelist if world is whitelisted
         HardcoreWorld hcw = HardcoreWorlds.Get(world);
@@ -502,26 +498,26 @@ public final class TrueHardcore extends JavaPlugin {
                 return false;
             }
         }
-        if (!GameEnabled && !Util.HasPermission(player, "truehardcore.admin")) {
+        if (!cfg.GameEnabled && !Util.HasPermission(player, "truehardcore.admin")) {
             player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
             return false;
         }
-        
-        HardcorePlayer hcp = HCPlayers.Get(world, player.getUniqueId());
+
+        HardcorePlayer hcp = HCPlayers.get(world, player.getUniqueId());
         if (hcp != null) {
             if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
                 // Check last death time
                 Date now = new Date();
                 long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
                 long wait = (hcw.getBantime() - diff);
-                
+
                 if (wait > 0) {
                     player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " to play " + hcw.getWorld().getName() + " again.");
                     return false;
                 }
             }
         }
-        
+
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
             player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..");
             Location spawn = null;
@@ -530,10 +526,9 @@ public final class TrueHardcore extends JavaPlugin {
             // Never played before... create them!
             if (hcp == null) {
                 Debug("New hardcore player: " + player.getName() + " (" + world + ")");
-                hcp = HCPlayers.NewPlayer(world, player.getUniqueId(), player.getName());
+                hcp = HCPlayers.newPlayer(world, player.getUniqueId(), player.getName());
                 spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
-            }
-            else if (hcp.getDeathPos() == null) {
+            } else if (hcp.getDeathPos() == null) {
                 Warn("No previous position found for known " + player.getName());
                 spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
             } else {
@@ -562,7 +557,7 @@ public final class TrueHardcore extends JavaPlugin {
                     hcp.setPlayerKills(0);
                     hcp.updatePlayer(player);
                     SavePlayer(hcp);
-                    cleanAndGreet(player,world);
+                    cleanAndGreet(player, world);
                     BroadcastToHardcore(Header + ChatColor.GREEN + player.getDisplayName() + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN + hcp.getWorld(), player.getName());
                     return true;
                 } else {
@@ -573,8 +568,7 @@ public final class TrueHardcore extends JavaPlugin {
                 Warn("Unable to find suitable spawn location for " + player.getName() + " (" + world + ")");
                 return false;
             }
-        }
-        else if (hcp.getState() == PlayerState.IN_GAME) {
+        } else if (hcp.getState() == PlayerState.IN_GAME) {
             player.sendMessage(ChatColor.RED + "You are already playing hardcore!");
             return false;
         } else {
@@ -584,22 +578,22 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setState(PlayerState.IN_GAME);
             JoinGame(world, player);
             SavePlayer(hcp);
-            cleanAndGreet(player,world);
+            cleanAndGreet(player, world);
             return true;
         }
     }
 
-    private void cleanAndGreet(Player player,String world){
+    private void cleanAndGreet(Player player, String world) {
         UnvanishPlayer(player);
         String greeting = HardcoreWorlds.Get(world).getGreeting();
         if ((greeting != null) && (!greeting.isEmpty())) {
             player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
         }
     }
-    
+
     private boolean NewSpawn(Player player, Location spawn) {
-        HardcorePlayer hcp = HCPlayers.Get(spawn.getWorld(), player);
-        
+        HardcorePlayer hcp = HCPlayers.get(spawn.getWorld(), player);
+
         if (Util.Teleport(player, spawn)) {
             hcp.setState(PlayerState.IN_GAME);
             hcp.setSpawnPos(spawn);
@@ -630,7 +624,7 @@ public final class TrueHardcore extends JavaPlugin {
             return false;
         }
     }
-    
+
     private Location GetNewLocation(World world, int oldX, int oldZ, int dist) {
         Location l = new Location(world, oldX, 255, oldZ);
         Debug("Selecting spawn point " + dist + " blocks from: " + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
@@ -647,25 +641,33 @@ public final class TrueHardcore extends JavaPlugin {
             String reason = "";
 
             // Lets do some trig!!
-            dist = dist + (int) (Math.random() * 100);									// Random radius padding
-            deg = (int) (Math.random() * 360);											// Random degrees
+            dist = dist + (int) (Math.random() * 100);                                    // Random radius padding
+            deg = (int) (Math.random() * 360);                                            // Random degrees
             x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();
             z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
             nl = new Location(world, x, 255, z);
 
             // Get the highest block at the selected location
             Block b = nl.getBlock();
-            while((b.getType() == Material.AIR) && (b.getY() > 1)) {
+            while ((b.getType() == Material.AIR) && (b.getY() > 1)) {
                 b = b.getRelative(BlockFace.DOWN);
             }
 
-            spawn = new Location(b.getWorld(), b.getX(), b.getY()+2, b.getZ());
+            spawn = new Location(b.getWorld(), b.getX(), b.getY() + 2, b.getZ());
             if (SpawnBlocks.contains(b.getType())) {
-                if (spawn.getBlockX() >= 0) { spawn.setX(spawn.getBlockX() + 0.5); }
-                if (spawn.getBlockX() < 0)  { spawn.setX(spawn.getBlockX() - 0.5); }
+                if (spawn.getBlockX() >= 0) {
+                    spawn.setX(spawn.getBlockX() + 0.5);
+                }
+                if (spawn.getBlockX() < 0) {
+                    spawn.setX(spawn.getBlockX() - 0.5);
+                }
 
-                if (spawn.getBlockZ() >= 0) { spawn.setZ(spawn.getBlockZ() + 0.5); }
-                if (spawn.getBlockZ() < 0)  { spawn.setZ(spawn.getBlockZ() - 0.5); }
+                if (spawn.getBlockZ() >= 0) {
+                    spawn.setZ(spawn.getBlockZ() + 0.5);
+                }
+                if (spawn.getBlockZ() < 0) {
+                    spawn.setZ(spawn.getBlockZ() - 0.5);
+                }
 
                 // Make sure it's inside the world border (if one exists)
                 if (InsideWorldBorder(spawn)) {
@@ -677,7 +679,7 @@ public final class TrueHardcore extends JavaPlugin {
             } else {
                 reason = "Wrong block type (" + b.getType() + ")";
             }
-            
+
             if (GoodSpawn) {
                 Debug("GOOD: "
                         + Util.padLeft(String.valueOf(spawn.getX()), 9)
@@ -699,12 +701,12 @@ public final class TrueHardcore extends JavaPlugin {
                         + "  => " + reason);
             }
         }
-        
+
         return null;
     }
-    
+
     public void LeaveGame(Player player) {
-        HardcorePlayer hcp = HCPlayers.Get(player);
+        HardcorePlayer hcp = HCPlayers.get(player);
         if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
             if (!player.isInsideVehicle()) {
                 // We have to change the game state to allow the teleport out of the world
@@ -726,15 +728,15 @@ public final class TrueHardcore extends JavaPlugin {
             player.sendMessage(ChatColor.RED + "You are not currently in a hardcore game.");
         }
     }
-    
+
     public BukkitTask SavePlayer(HardcorePlayer hcp) {
         return SavePlayer(hcp, true, false);
     }
-    
+
     private BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async) {
         return SavePlayer(hcp, Async, false);
     }
-    
+
     private BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async, final boolean AutoSave) {
         if (hcp == null) {
             Warn("SavePlayer called with null record!");
@@ -750,20 +752,20 @@ public final class TrueHardcore extends JavaPlugin {
         // CowKills, PigKills, SheepKills, ChickenKills;
         // CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
         // OtherKills, PlayerKills;
-        
+
         final String query = "INSERT INTO `players` \n" +
                 "(`id`, `player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
                 "`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
                 "`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
                 "`spiderkills`, `enderkills`, `slimekills`, `mooshkills`, `otherkills`, `playerkills`)\n\n" +
-                
+
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
-                
+
                 "`spawnpos`=?, `lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
                 "`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?,\n" +
                 "`cowkills`=?, `pigkills`=?, `sheepkills`=?, `chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?,\n" +
                 "`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
-                
+
         final String[] values = {
                 hcp.getUniqueId().toString(),
                 hcp.getPlayerName(),
@@ -814,7 +816,7 @@ public final class TrueHardcore extends JavaPlugin {
                 hcp.getDeathMsg(),
                 Util.Loc2Str(hcp.getDeathPos()),
                 String.valueOf(hcp.getDeaths()),
-                
+
                 String.valueOf(hcp.getCowKills()),
                 String.valueOf(hcp.getPigKills()),
                 String.valueOf(hcp.getSheepKills()),
@@ -833,21 +835,20 @@ public final class TrueHardcore extends JavaPlugin {
 
         Runnable savetask = () -> {
             try {
-                int result = dbcon.PreparedUpdate(query, values, AutoSave);
+                int result = dbConnection.PreparedUpdate(query, values, AutoSave);
                 if (result < 0) {
                     Debug("Player record save failed!");
                     Debug("Query: " + query);
                     Debug("Values: " + Arrays.toString(values));
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 Debug("Unable to save player record to database!");
                 Debug("Query: " + query);
                 Debug("Values: " + Arrays.toString(values));
                 e.printStackTrace();
             }
         };
-        
+
         BukkitTask task = null;
         if (Async) {
             if (!AutoSave) Debug("Launching async save task...");
@@ -856,13 +857,13 @@ public final class TrueHardcore extends JavaPlugin {
             if (!AutoSave) Debug("Saving synchronously...");
             savetask.run();
         }
-        
+
         return task;
     }
 
     private void JoinGame(String world, Player player) {
         Debug("Joining game for " + player.getName());
-        HardcorePlayer hcp = HCPlayers.Get(world, player.getUniqueId());
+        HardcorePlayer hcp = HCPlayers.get(world, player.getUniqueId());
         if (hcp != null) {
             if (hcp.getLastPos() != null) {
                 DebugLog("Returning player to: " + hcp.getLastPos());
@@ -884,45 +885,43 @@ public final class TrueHardcore extends JavaPlugin {
             Warn("Player record NOT found!");
         }
     }
-    
+
     private Boolean LoadAllPlayers() {
         String query = "SELECT * FROM `players` ORDER BY world,id";
         try {
-            HCPlayers.Clear();
-            ResultSet res = dbcon.PreparedQuery(query, null);
+            HCPlayers.clear();
+            ResultSet res = dbConnection.PreparedQuery(query, null);
             if (res != null) {
                 while (res.next()) {
                     UUID id = UUID.fromString(res.getString("id"));
                     String name = res.getString("player");
                     String world = res.getString("world");
                     DebugLog("Loading: " + world + "/" + name);
-                    HardcorePlayer hcp = HCPlayers.NewPlayer(world, id, name);
+                    HardcorePlayer hcp = HCPlayers.newPlayer(world, id, name);
                     LoadPlayerFromData(hcp, res);
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Debug("Unable to load player record to database!");
             e.printStackTrace();
             return false;
         }
         return true;
     }
-    
+
     public Boolean LoadPlayer(String world, UUID player) {
         String query = "SELECT * FROM `players` WHERE `id`=? and `world`=?";
         try {
             DebugLog("Reload player record from DB: " + world + "/" + player);
-            ResultSet res = dbcon.PreparedQuery(query, new String[]{player.toString(), world});
-            HardcorePlayer hcp = HCPlayers.Get(world, player);
+            ResultSet res = dbConnection.PreparedQuery(query, new String[]{player.toString(), world});
+            HardcorePlayer hcp = HCPlayers.get(world, player);
             if ((res != null) && (hcp != null) && (res.next())) {
                 DebugLog("Loading: " + world + "/" + player);
                 LoadPlayerFromData(hcp, res);
             } else {
                 return false;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Debug("Unable to load player record to database!");
             e.printStackTrace();
             return false;
@@ -962,24 +961,23 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setPlayerKills(res.getInt("playerkills"));
             hcp.setModified(false);
             hcp.setLoadDataOnly(false);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Debug("Unable to load player record to database!");
             e.printStackTrace();
         }
     }
-    
+
     public void SaveAllPlayers() {
-        for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
+        for (Map.Entry<String, HardcorePlayer> entry : HCPlayers.allRecords().entrySet()) {
             HardcorePlayer hcp = entry.getValue();
             if ((hcp != null) && (hcp.isModified())) {
                 SavePlayer(hcp, false);
             }
         }
     }
-    
+
     private void SaveIngamePlayers() {
-        for (Map.Entry<String, HardcorePlayer> entry: HCPlayers.AllRecords().entrySet()) {
+        for (Map.Entry<String, HardcorePlayer> entry : HCPlayers.allRecords().entrySet()) {
             HardcorePlayer hcp = entry.getValue();
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                 Player p = Bukkit.getPlayer(hcp.getPlayerName());
@@ -990,33 +988,33 @@ public final class TrueHardcore extends JavaPlugin {
             }
         }
     }
-    
+
     public boolean IsHardcoreWorld(World world) {
         if (world != null) {
             return HardcoreWorlds.Contains(world.getName());
         }
         return false;
     }
-    
+
     public Location GetLobbyLocation(Player player, String world) {
         Location loc = null;
         if (world != null) {
             HardcoreWorld hcw = HardcoreWorlds.Get(world);
             loc = hcw.getExitPos();
         }
-        
+
         if (loc == null) {
             Warn("Sending " + player.getName() + " to world spawn!");
             loc = getServer().getWorld(getConfig().getString("lobbyWorld", "games")).getSpawnLocation();
         }
-        
+
         return loc;
     }
-    
+
     private boolean IsOnWhiteList(String world, UUID player) {
         String query = "SELECT worlds FROM `whitelist` WHERE id=?";
         try {
-            ResultSet res = dbcon.PreparedQuery(query, new String[] {player.toString()});
+            ResultSet res = dbConnection.PreparedQuery(query, new String[]{player.toString()});
             if (res != null) {
                 if (res.next()) {
                     String[] worlds = StringUtils.split(res.getString("worlds"), ",");
@@ -1027,8 +1025,7 @@ public final class TrueHardcore extends JavaPlugin {
                     }
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
@@ -1039,13 +1036,12 @@ public final class TrueHardcore extends JavaPlugin {
         String worlds = HardcoreWorlds.GetNames();
         try {
             DebugLog("Add player to whitelist: " + player);
-            int result = dbcon.PreparedUpdate(query, new String[]{player.toString(), worlds});
+            int result = dbConnection.PreparedUpdate(query, new String[]{player.toString(), worlds});
             if (result < 0) {
                 Debug("Whitelist update failed!");
                 return false;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Debug("Unable to load player record to database!");
             e.printStackTrace();
             return false;
@@ -1059,11 +1055,11 @@ public final class TrueHardcore extends JavaPlugin {
             vnp.toggleVanish(player);
         }
     }
-    
+
     public boolean IsPlayerVanished(Player player) {
-        return (VNPHooked) && (vnp.isVanished(player));
+        return (vnpHooked) && (vnp.isVanished(player));
     }
-    
+
     private boolean SetProtected(HardcorePlayer hcp, long seconds) {
         if (hcp != null) {
             if (hcp.isGodMode()) {
@@ -1077,9 +1073,9 @@ public final class TrueHardcore extends JavaPlugin {
 
             hcp.setGodMode(true);
             player.sendMessage(ChatColor.YELLOW + "You are now invincible for " + seconds + " seconds...");
-            
+
             getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
-                HardcorePlayer hcp1 = HCPlayers.Get(world, id);
+                HardcorePlayer hcp1 = HCPlayers.get(world, id);
                 if (hcp1 != null) {
                     hcp1.setGodMode(false);
                     if (hcp1.getState() == PlayerState.IN_GAME) {
@@ -1095,8 +1091,8 @@ public final class TrueHardcore extends JavaPlugin {
         }
         return false;
     }
-    
-    boolean IsPlayerSafe(Player player, double x, double y, double z) {
+
+    public boolean IsPlayerSafe(Player player, double x, double y, double z) {
         List<Entity> ents = player.getNearbyEntities(x, y, z);
         if (ents != null) {
             for (Entity e : ents) {
@@ -1107,12 +1103,12 @@ public final class TrueHardcore extends JavaPlugin {
         }
         return true;
     }
-    
+
     private void BroadcastToWorld(String world, String rawmsg) {
         String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
         Debug(msg);
         for (final Player p : getServer().getOnlinePlayers()) {
-            HardcorePlayer hcp = HCPlayers.Get(world, p.getUniqueId());
+            HardcorePlayer hcp = HCPlayers.get(world, p.getUniqueId());
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                 p.sendMessage(msg);
             }
@@ -1122,7 +1118,7 @@ public final class TrueHardcore extends JavaPlugin {
     public void BroadcastToHardcore(String rawmsg) {
         BroadcastToHardcore(rawmsg, null);
     }
-    
+
     public void BroadcastToHardcore(String rawmsg, String excludePlayer) {
         String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
         Debug("HardcoreBroadcast: " + msg);
@@ -1132,25 +1128,25 @@ public final class TrueHardcore extends JavaPlugin {
                 continue;
 
             if (IsHardcoreWorld(p.getWorld())) {
-                HardcorePlayer hcp = HCPlayers.Get(p);
+                HardcorePlayer hcp = HCPlayers.get(p);
                 if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                     p.sendMessage(msg);
                 }
             }
         }
     }
-    
+
     public boolean InsideWorldBorder(Location loc) {
         BorderData bd = null;
-        if (!WBHooked) return true;
+        if (!wbHooked) return true;
         bd = wb.getWorldBorder(loc.getWorld().getName());
         return (bd != null) && (bd.insideBorder(loc));
     }
-    
+
     public void BroadcastToAllServers(String msg) {
         Bukkit.getServer().broadcastMessage(msg);
-        if (BCHooked) {
-            BungeeChat.mirrorChat(msg, BroadcastChannel);
+        if (bcHooked) {
+            BungeeChat.mirrorChat(msg, cfg.BroadcastChannel);
         }
     }
 }

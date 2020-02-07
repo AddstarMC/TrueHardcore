@@ -17,8 +17,11 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.listeners;
 
+import au.com.addstar.truehardcore.TrueHardcore;
+import au.com.addstar.truehardcore.functions.Util;
+import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import com.lishid.openinv.IOpenInv;
 import com.lishid.openinv.internal.ISpecialEnderChest;
 import com.lishid.openinv.internal.ISpecialPlayerInventory;
@@ -39,8 +42,8 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.*;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
-import au.com.addstar.truehardcore.HardcoreWorlds.*;
-import au.com.addstar.truehardcore.HardcorePlayers.*;
+import au.com.addstar.truehardcore.objects.HardcoreWorlds.*;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -51,11 +54,11 @@ import org.bukkit.potion.PotionEffectType;
 import java.text.DateFormat;
 import java.util.*;
 
-class PlayerListener implements Listener {
+public class PlayerListener implements Listener {
 
     private final TrueHardcore plugin;
     private final HardcorePlayers HCPlayers;
-    PlayerListener(TrueHardcore instance) {
+    public PlayerListener(TrueHardcore instance) {
         plugin = instance;
         HCPlayers = plugin.HCPlayers;
     }
@@ -69,7 +72,7 @@ class PlayerListener implements Listener {
         final Player player = event.getEntity();
 
         if (plugin.IsHardcoreWorld(player.getWorld())) {
-            HardcorePlayer hcp = HCPlayers.Get(player);
+            HardcorePlayer hcp = HCPlayers.get(player);
             if (hcp == null) { return; }
             if (hcp.getState() != PlayerState.IN_GAME) { return; }
 
@@ -93,7 +96,7 @@ class PlayerListener implements Listener {
         TrueHardcore.DebugLog("EVENT: " + event.getEventName());
         TrueHardcore.DebugLog("LOCATION: " + player.getLocation().toString());
         // We only care about existing hardcore players
-        HardcorePlayer hcp = HCPlayers.Get(player);
+        HardcorePlayer hcp = HCPlayers.get(player);
         if (hcp == null) { return; }
         if (hcp.getState() == PlayerState.IN_GAME) {
             // Mark the player at no longer in game
@@ -132,7 +135,7 @@ class PlayerListener implements Listener {
         }
         // Check if player is resuming a game or somehow stuck in the world but not playing
         Location loc;
-        HardcorePlayer hcp = HCPlayers.Get(player);
+        HardcorePlayer hcp = HCPlayers.get(player);
         if (hcp == null) {
             TrueHardcore.Warn(player.getName() + " joined in hardcore world with no player record!");
             loc = plugin.GetLobbyLocation(player, player.getWorld().getName());
@@ -188,7 +191,7 @@ class PlayerListener implements Listener {
         if (!plugin.IsHardcoreWorld(player.getWorld())) { return; }
 
         // We only care about players who have played and are dead
-        HardcorePlayer hcp = HCPlayers.Get(player.getWorld(), event.getPlayer());
+        HardcorePlayer hcp = HCPlayers.get(player.getWorld(), event.getPlayer());
         if ((hcp == null) || (hcp.getState() != PlayerState.DEAD)) { return; }
         
         HardcoreWorld hcw = plugin.HardcoreWorlds.Get(player.getWorld().getName());
@@ -247,7 +250,7 @@ class PlayerListener implements Listener {
 
             if (plugin.IsHardcoreWorld(worldFrom)) {
                 // Prevent unauthorised teleports while in hardcore worlds
-                HardcorePlayer hcp = HCPlayers.Get(worldFrom, player);
+                HardcorePlayer hcp = HCPlayers.get(worldFrom, player);
                 if (hcp == null) {
                     return;
                 }
@@ -278,7 +281,7 @@ class PlayerListener implements Listener {
                 }
             } else if (plugin.IsHardcoreWorld(worldTo)) {
                 // Prevent unauthorised entry into hardcore worlds
-                HardcorePlayer hcp = HCPlayers.Get(worldTo, player);
+                HardcorePlayer hcp = HCPlayers.get(worldTo, player);
                 if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
                     if (player.isOp() || player.hasPermission("truehardcore.bypass.teleportin")) {
                         TrueHardcore.Debug("Teleport override (into world) allowed for " + player.getName());
@@ -306,7 +309,7 @@ class PlayerListener implements Listener {
         if (!plugin.IsHardcoreWorld(event.getEntity().getWorld())) { return; }
         
         Player player = (Player) event.getEntity();
-        HardcorePlayer hcp = HCPlayers.Get(player);
+        HardcorePlayer hcp = HCPlayers.get(player);
         
         if ((hcp != null) && (hcp.isGodMode())) {
             event.setCancelled(true);
@@ -349,7 +352,7 @@ class PlayerListener implements Listener {
         Entity damager = cause.getDamager();
         if (damager instanceof Player) {
             Player killer = (Player) damager;
-            HardcorePlayer hcp = HCPlayers.Get(killer);
+            HardcorePlayer hcp = HCPlayers.get(killer);
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                 if (ent instanceof Player) {
                     Player killed = (Player) ent;
@@ -435,7 +438,7 @@ class PlayerListener implements Listener {
     }
 
     private void findPlacer(Location location,String worldName, OfflinePlayer killed,String displayName){
-        if(!plugin.PrismHooked)return;//if Prism isnt loaded ...this wont work.
+        if(!plugin.prismHooked)return;//if Prism isnt loaded ...this wont work.
         QueryParameters parameters = new QueryParameters();
         parameters.setSpecificBlockLocation(location);
         parameters.setProcessType(PrismProcessType.LOOKUP);
@@ -453,7 +456,7 @@ class PlayerListener implements Listener {
     }
 
     private void updateGame(String worldName, OfflinePlayer killed, OfflinePlayer killer, String killedDN){
-        HardcorePlayer hcp = HCPlayers.Get(worldName,killer.getUniqueId());
+        HardcorePlayer hcp = HCPlayers.get(worldName,killer.getUniqueId());
         if(hcp != null) {
             TrueHardcore.DebugLog("EntityDeath: " + killer.getName() + " killed " + killedDN);
             hcp.setPlayerKills(hcp.getPlayerKills()+1);

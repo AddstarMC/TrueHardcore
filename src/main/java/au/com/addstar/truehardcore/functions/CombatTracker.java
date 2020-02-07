@@ -17,11 +17,12 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.functions;
 
+import au.com.addstar.truehardcore.TrueHardcore;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import au.com.addstar.truehardcore.HardcorePlayers.HardcorePlayer;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -48,7 +49,7 @@ public class CombatTracker implements Listener {
     
     public void onDisable(){
         for (Player player : Bukkit.getOnlinePlayers()) {
-            HardcorePlayer hcPlayer = plugin.HCPlayers.Get(player);
+            HardcorePlayer hcPlayer = plugin.HCPlayers.get(player);
             hcPlayer.setCombat(false);
             hcPlayer.setCombatTime(0);
         }
@@ -68,7 +69,7 @@ public class CombatTracker implements Listener {
                     if (!plugin.IsHardcoreWorld(player.getWorld())) {
                         return;
                     }
-                    HardcorePlayer hcPlayer = plugin.HCPlayers.Get(player);
+                    HardcorePlayer hcPlayer = plugin.HCPlayers.get(player);
                     if (hcPlayer == null) continue;
                     if (hcPlayer.isCombat()) {
                         if (hcPlayer.getCombatTime() <= currTime) {
@@ -101,10 +102,10 @@ public class CombatTracker implements Listener {
     }
 
     private void combatLog(Player player) {
-        HardcorePlayer hcp = plugin.HCPlayers.Get(player);
+        HardcorePlayer hcp = plugin.HCPlayers.get(player);
         if (hcp.isCombat()) return;
         hcp.setCombat(true);
-        hcp.setCombatTime(System.currentTimeMillis() + plugin.combatTime);
+        hcp.setCombatTime(System.currentTimeMillis() + TrueHardcore.getCfg().combatTime);
         player.sendMessage(" You have entered combat logging out will incur a penalty. Until:" + Util.Long2Time(hcp.getCombatTime() - System.currentTimeMillis()));
     }
 }

@@ -17,8 +17,9 @@
  *
  */
 
-package au.com.addstar.truehardcore;
+package au.com.addstar.truehardcore.functions;
 
+import au.com.addstar.truehardcore.TrueHardcore;
 import me.botsko.prism.Prism;
 import me.botsko.prism.actionlibs.ActionsQuery;
 import me.botsko.prism.actionlibs.MatchRule;
@@ -37,7 +38,7 @@ import java.util.ArrayList;
 import static au.com.addstar.truehardcore.TrueHardcore.Debug;
 import static au.com.addstar.truehardcore.TrueHardcore.Warn;
 
-class WorldRollback {
+public class WorldRollback {
     private Prism prism;
     private TrueHardcore plugin;
     private final ArrayList<RollbackRequest> RollbackQueue;
@@ -52,7 +53,7 @@ class WorldRollback {
         QueueTask = plugin.getServer().getScheduler().runTaskTimer(plugin, new ProcessNextRequest(), 600L, 100L);
     }
 
-    class RollbackRequest {
+    public class RollbackRequest {
         public Player player;
         public World world;
         public Instant taskTime;
