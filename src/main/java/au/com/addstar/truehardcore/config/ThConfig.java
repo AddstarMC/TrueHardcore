@@ -42,14 +42,14 @@ public class ThConfig extends AutoConfig {
 
 
     @ConfigField(comment = "Set true to enable debug mode ")
-    public static boolean DebugEnabled = false;
+    public static boolean debugEnabled = false;
     @ConfigField(comment = "A list of worlds")
     public Set<String> worlds = new HashSet<>();
     @ConfigField(comment = "Set true to enable ")
-    public boolean GameEnabled = true;
+    public boolean gameEnabled = true;
 
     @ConfigField(comment = "The Bungeechat channel name to broadcast messages")
-    public String BroadcastChannel = "GamesBCast";
+    public String broadcastChannel = "GamesBCast";
 
     @ConfigField(name = "AutoSaveEnabled", comment = "Boolean - set true to enable autosaving")
     public boolean autoSaveEnabled = false;
@@ -82,12 +82,14 @@ public class ThConfig extends AutoConfig {
     @ConfigField(category = "Difficulty",
           comment = "Set from 0 - 50 will make a chunk harder on initial load")
     public long baseChunkTime = 0;
+    @ConfigField(comment = "The lobby game world name")
+    public String lobbyWorld = "games";
 
     private Map<String, HardcoreWorldConfig> configs;
     private File pluginDirectory;
 
     /**
-     * Create a config
+     * Create a config.
      * @param file plugin config.yml file
      * @param pluginName name of the plugin.
      */
@@ -97,9 +99,11 @@ public class ThConfig extends AutoConfig {
         configs = new HashMap<>();
     }
 
+
     @Override
     protected void onPostLoad(YamlConfiguration yaml) throws InvalidConfigurationException {
-        TrueHardcore.Debug("Loading worlds...");
+        super.onPostLoad(yaml);
+        TrueHardcore.debug("Loading worlds...");
         for (String world : worlds) {
             File file = new File(pluginDirectory, world + ".yml");
             HardcoreWorldConfig hcwConfig

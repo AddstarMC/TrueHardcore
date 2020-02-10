@@ -41,19 +41,28 @@ import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 import me.botsko.prism.Prism;
-import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
-import net.milkbowl.vault.permission.Permission;
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Ghast;
+import org.bukkit.entity.Monster;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.Slime;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
@@ -65,10 +74,14 @@ import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
@@ -76,51 +89,49 @@ public final class TrueHardcore extends JavaPlugin {
     private static final Logger logger = Logger.getLogger("Minecraft");
     private static final Logger debuglog = Logger.getLogger("DebugLog");
     public static TrueHardcore instance;
-    public static Permission perms = null;
-    public static Chat chat = null;
     private static Economy econ = null;
     private static ThConfig cfg;
     private static PluginDescriptionFile pdfFile = null;
     // Hardcore worlds
-    public final au.com.addstar.truehardcore.objects.HardcoreWorlds HardcoreWorlds = new HardcoreWorlds();
+    public final au.com.addstar.truehardcore.objects.HardcoreWorlds hardcoreWorlds
+          = new HardcoreWorlds();
     // Data for ALL hardcore players
-    public final HardcorePlayers HCPlayers = new HardcorePlayers();
-    public final String Header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore" + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
-    private final Object lock = new Object();
-    private final List<Material> SpawnBlocks = Arrays.asList(
-            Material.DIRT,
-            Material.COARSE_DIRT,
-            Material.PODZOL,
-            Material.GRASS,
-            Material.GRASS_BLOCK,
-            Material.GRASS_PATH,
-            Material.SAND,
-            Material.SANDSTONE,
-            Material.SMOOTH_SANDSTONE,
-            Material.SMOOTH_RED_SANDSTONE,
-            Material.SMOOTH_STONE,
-            Material.STONE,
-            Material.DIORITE,
-            Material.COBBLESTONE,
-            Material.SMOOTH_STONE,
-            Material.BEDROCK,
-            Material.SNOW,
-            Material.SNOW_BLOCK,
-            Material.CLAY,
-            Material.TERRACOTTA,
-            Material.ICE,
-            Material.PACKED_ICE,
-            Material.BLUE_ICE,
-            Material.RED_SAND,
-            Material.RED_SANDSTONE,
-            Material.CUT_SANDSTONE
+    public final HardcorePlayers hcPlayers = new HardcorePlayers();
+    public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
+          + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
+    private final List<Material> spawnBlocks = Arrays.asList(
+          Material.DIRT,
+          Material.COARSE_DIRT,
+          Material.PODZOL,
+          Material.GRASS,
+          Material.GRASS_BLOCK,
+          Material.GRASS_PATH,
+          Material.SAND,
+          Material.SANDSTONE,
+          Material.SMOOTH_SANDSTONE,
+          Material.SMOOTH_RED_SANDSTONE,
+          Material.SMOOTH_STONE,
+          Material.STONE,
+          Material.DIORITE,
+          Material.COBBLESTONE,
+          Material.SMOOTH_STONE,
+          Material.BEDROCK,
+          Material.SNOW,
+          Material.SNOW_BLOCK,
+          Material.CLAY,
+          Material.TERRACOTTA,
+          Material.ICE,
+          Material.PACKED_ICE,
+          Material.BLUE_ICE,
+          Material.RED_SAND,
+          Material.RED_SANDSTONE,
+          Material.CUT_SANDSTONE
 
     );
-    public List<String> RollbackCmds = null;
     public CombatTracker combatTracker;
-    public WorldRollback RollbackHandler;
+    public WorldRollback rollbackHandler;
     public Boolean prismHooked = false;
-    public Boolean oihooked = false;
+    public Boolean oiHooked = false;
     public IOpenInv openInv;
     public Prism prism;
     private boolean vaultEnabled = false;
@@ -139,25 +150,30 @@ public final class TrueHardcore extends JavaPlugin {
         return cfg;
     }
 
-    public static void Log(String data) {
+    public static void log(String data) {
         logger.info("[" + pdfFile.getName() + "] " + data);
         debuglog.info(data);
     }
 
-    public static void Warn(String data) {
+    public static void warn(String data) {
         logger.warning("[" + pdfFile.getName() + "] " + data);
         debuglog.warning(data);
     }
 
-    public static void Debug(String data) {
-        if (cfg.DebugEnabled) {
+    /**
+     * record debug messag.
+     *
+     * @param data message
+     */
+    public static void debug(String data) {
+        if (ThConfig.debugEnabled) {
             logger.info("[" + pdfFile.getName() + "] " + data);
         }
         debuglog.info(data);
     }
 
     // Write data to debug log
-    public static void DebugLog(String data) {
+    public static void debugLog(String data) {
         debuglog.info(data);
     }
 
@@ -183,93 +199,101 @@ public final class TrueHardcore extends JavaPlugin {
         // Check if vault is loaded (required for economy)
         vaultEnabled = setupEconomy();
         if (vaultEnabled) {
-            Log("Found Vault! Hooking for economy!");
+            log("Found Vault! Hooking for economy!");
         } else {
-            Log("Vault was not detected! Economy rewards are not available.");
+            log("Vault was not detected! Economy rewards are not available.");
         }
 
         Plugin p = pm.getPlugin("LWC");
         if (p instanceof LWCPlugin) {
             lwcHooked = true;
             lwc = ((LWCPlugin) p).getLWC();
-            Log("LWC Found, hooking into LWC.");
+            log("LWC Found, hooking into LWC.");
         } else {
             lwcHooked = false;
-            Log("LWC not Found");
+            log("LWC not Found");
         }
         p = pm.getPlugin("Prism");
         if (p instanceof Prism) {
             prismHooked = true;
             prism = (Prism) p;
-            Log("Prism found, hooking it.");
-            RollbackHandler = new WorldRollback(prism);
+            log("Prism found, hooking it.");
+            rollbackHandler = new WorldRollback(prism);
         } else {
             prismHooked = false;
-            Log("Prism not found! This won't work very well...");
+            log("Prism not found! This won't work very well...");
         }
 
         p = pm.getPlugin("WorldBorder");
         if (p instanceof WorldBorder) {
             wbHooked = true;
             wb = WorldBorder.plugin;
-            Log("WorldBorder found, hooking it.");
+            log("WorldBorder found, hooking it.");
         } else {
             wbHooked = false;
-            Log("WorldBorder not found! Spawning will not be limited...");
+            log("WorldBorder not found! Spawning will not be limited...");
         }
 
         p = pm.getPlugin("BungeeChatBukkit");
         if (p instanceof BungeeChat) {
             bcHooked = true;
-            Log("BungeeChat found, hooking it.");
+            log("BungeeChat found, hooking it.");
         } else {
             bcHooked = false;
-            Log("BungeeChat not found! No cross server messages");
+            log("BungeeChat not found! No cross server messages");
         }
 
         p = pm.getPlugin("VanishNoPacket");
         if (p instanceof VanishPlugin) {
             vnpHooked = true;
             vnp = ((VanishPlugin) p).getManager();
-            Log("VanishNoPacket found, hooking it.");
+            log("VanishNoPacket found, hooking it.");
         } else {
             wbHooked = false;
-            Log("VanishNoPacket not found! Vanished players will not be unvanished...");
+            log("VanishNoPacket not found! Vanished players will not be unvanished...");
         }
-        oihooked = checkOpenInventory();
+        oiHooked = checkOpenInventory();
 
         // Open/initialise the database
         dbConnection = new Database();
-        if (dbConnection.isConnected) {
-            Log("Successfully connected to the database.");
-            Log("Loading players from database...");
-            LoadAllPlayers();
+        if (dbConnection.isConnected()) {
+            log("Successfully connected to the database.");
+            log("Loading players from database...");
+            loadAllPlayers();
         } else {
-            Log(pdfFile.getName() + " " + pdfFile.getVersion() + " could not be enabled!");
+            log(pdfFile.getName() + " " + pdfFile.getVersion() + " could not be enabled!");
             this.setEnabled(false);
             return;
         }
 
-        Log("Registering commands and events...");
-        getCommand("truehardcore").setExecutor(new CommandTH(this));
-        getCommand("th").setExecutor(new CommandTH(this));
+        log("Registering commands and events...");
+        try {
+            CommandExecutor exec = new CommandTH(this);
+            Objects.requireNonNull(getCommand("truehardcore")).setExecutor(exec);
+            Objects.requireNonNull(getCommand("th")).setExecutor(exec);
+        } catch (NullPointerException e) {
+            log("Please check plugin yml commands are missing");
+        }
         pm.registerEvents(new PlayerListener(this), this);
         long baseChunkTime = cfg.baseChunkTime * 60 * 60 * 20;
         if (baseChunkTime > 0) {
-            pm.registerEvents(new ChunkListener(baseChunkTime), p);
+            pm.registerEvents(new ChunkListener(baseChunkTime), this);
         }
-
-        //enable combatlog if true
         enableCombatLog(cfg.antiCombatLog);
-        // Set auto save timer
         if (cfg.autoSaveEnabled) {
-            Log("Launching auto-save timer (every 5 minutes)...");
-            getServer().getScheduler().runTaskTimer(this, this::SaveIngamePlayers, 300 * 20L, 300 * 20L);
+            log("Launching auto-save timer (every 5 minutes)...");
+            getServer().getScheduler().runTaskTimer(this, this::saveInGamePlayers,
+                  300 * 20L, 300 * 20L);
         }
 
-        Log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
+        log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 
+    /**
+     * Enable combat log.
+     *
+     * @param enable boolean
+     */
     public void enableCombatLog(boolean enable) {
         if (enable) {
             if (combatTracker == null) {
@@ -282,29 +306,35 @@ public final class TrueHardcore extends JavaPlugin {
             }
             combatTracker = null;
         }
-        Log("Combat Logging is " + cfg.antiCombatLog);
+        log("Combat Logging is " + cfg.antiCombatLog);
 
     }
 
     @Override
     public void onDisable() {
         // cancel all tasks we created
-        if (combatTracker != null) combatTracker.onDisable();
+        if (combatTracker != null) {
+            combatTracker.onDisable();
+        }
+        rollbackHandler.onDisable();
         getServer().getScheduler().cancelTasks(this);
-        SaveAllPlayers();
-        Log(pdfFile.getName() + " has been disabled!");
+        saveAllPlayers();
+        log(pdfFile.getName() + " has been disabled!");
         debugFileHandler.close();
 
     }
 
-    /*
-     * Detect/configure Vault
+    /**
+     * Detect and configure  economy.
+     *
+     * @return boolean true on success
      */
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             return false;
         }
-        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager()
+              .getRegistration(Economy.class);
         if (rsp == null) {
             return false;
         }
@@ -315,35 +345,51 @@ public final class TrueHardcore extends JavaPlugin {
     private boolean checkOpenInventory() {
         Plugin p = getServer().getPluginManager().getPlugin("OpenInv");
         if (p == null) {
-            Log("Open Inventory support disabled");
+            log("Open Inventory support disabled");
             return false;
         } else {
             if (p instanceof IOpenInv) {
                 openInv = (IOpenInv) p;
-                Log("Open Inventory support enabled");
+                log("Open Inventory support enabled");
                 return true;
             }
         }
         return false;
     }
 
-    public FileConfiguration Config() {
+    public FileConfiguration config() {
         return getConfig();
     }
 
-    public boolean GiveMoney(OfflinePlayer player, int money) {
+    /**
+     * Give money to a player.
+     *
+     * @param player player
+     * @param money  amount
+     * @return true on success
+     */
+    @SuppressWarnings("unused")
+    public boolean giveMoney(OfflinePlayer player, int money) {
         if (vaultEnabled) {
             EconomyResponse resp = econ.depositPlayer(player, money);
             if (resp.type == ResponseType.SUCCESS) {
-                Log(player + " has been given $" + resp.amount + " (new balance $" + resp.balance + ")");
+                log(player + " has been given $" + resp.amount
+                      + " (new balance $" + resp.balance + ")");
                 return true;
             } else {
-                Warn("Vault payment failed! Error: " + resp.errorMessage);
+                warn("Vault payment failed! Error: " + resp.errorMessage);
             }
         }
         return false;
     }
 
+    /**
+     * Function that runs a combat log situation.
+     *
+     * @param player   the logging player
+     * @param location the players location.
+     */
+    @SuppressWarnings("unused")
     public void handlePlayerCombatLogging(final Player player, Location location) {
         PlayerInventory inv = player.getInventory();
         if (location.getBlock().isEmpty()) {
@@ -353,18 +399,33 @@ public final class TrueHardcore extends JavaPlugin {
             if (block instanceof Chest) {
                 ((Chest) block).getInventory().addItem(inv.getContents());
                 inv.clear();
-                BroadcastToHardcore(player.getDisplayName() + " has logged out in combat and left behind goodies. Find them if you can!");
+                broadCastToHardcore(player.getDisplayName()
+                      + " has logged out in combat and left behind goodies."
+                      + " Find them if you can!");
             }
         }
     }
 
+    /**
+     * Handle player death.
+     *
+     * @param player player.
+     * @param event  death event.
+     */
+    public void doPlayerDeath(final Player player, PlayerDeathEvent event) {
+        final World realWorld = player.getWorld();
 
-    public void DoPlayerDeath(final Player player, PlayerDeathEvent event) {
-        final World realworld = player.getWorld();
-
-        final HardcorePlayer hcp = HCPlayers.get(realworld, player);
+        final HardcorePlayer hcp = hcPlayers.get(realWorld, player);
+        if (hcp == null) {
+            TrueHardcore.log("Player was null - this should not happen");
+            throw new NullPointerException("Player was null");
+        }
         final World world = getServer().getWorld(hcp.getWorld());
-        final HardcoreWorld hcw = HardcoreWorlds.Get(world.getName());
+        if (world == null) {
+            TrueHardcore.log("World was null - this should not happen");
+            throw new NullPointerException("World was null");
+        }
+        final HardcoreWorld hcw = hardcoreWorlds.get(world.getName());
 
         hcp.setState(PlayerState.DEAD);
         hcp.setCombat(false);
@@ -375,14 +436,15 @@ public final class TrueHardcore extends JavaPlugin {
         hcp.updatePlayer(player);
         hcp.calcGameTime();
 
-        String DeathMsg = event.getDeathMessage();
-        DeathMsg = DeathMsg.replaceFirst(player.getName(), ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
-        BroadcastToAllServers(Header + DeathMsg + "!");
-        BroadcastToAllServers(
-                Header +
-                        "Final Score: " + ChatColor.GREEN + player.getTotalExperience() + " " +
-                        ChatColor.AQUA + "(" + hcp.getWorld() + ")"
-        );
+        String deathMessage = event.getDeathMessage();
+        if (deathMessage != null) {
+            deathMessage = deathMessage.replaceFirst(player.getName(),
+                  ChatColor.AQUA + player.getName() + ChatColor.YELLOW);
+            broadcastToAllServers(header + deathMessage + "!");
+        }
+        broadcastToAllServers(header + "Final Score: " + ChatColor.GREEN
+              + player.getTotalExperience() + " " + ChatColor.AQUA
+              + "(" + hcp.getWorld() + ")");
         event.setDeathMessage(null);
         if (hcp.getScore() > 0) {
             // Check if this is the player's personal best
@@ -394,30 +456,36 @@ public final class TrueHardcore extends JavaPlugin {
 
             // Check if this is a high score
             boolean highscore = true;
-            for (Map.Entry<String, HardcorePlayer> entry : HCPlayers.allRecords().entrySet()) {
+            for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
                 HardcorePlayer h = entry.getValue();
                 if (h != null) {
                     // Only compare other player's scores in the same world
-                    if ((h.getWorld().equals(hcp.getWorld())) && (!Objects.equals(h.getPlayerName(), hcp.getPlayerName()))) {
+                    if ((h.getWorld().equals(hcp.getWorld())) && (!Objects.equals(h.getPlayerName(),
+                          hcp.getPlayerName()))) {
                         if (h.getTopScore() >= hcp.getScore()) {
                             highscore = false;
-                            Debug(hcp.getPlayerName() + "'s score (" + hcp.getScore() + ") did not beat " + h.getPlayerName() + " (" + h.getTopScore() + ")");
+                            debug(hcp.getPlayerName() + "'s score (" + hcp.getScore()
+                                  + ") did not beat " + h.getPlayerName() + " (" + h.getTopScore()
+                                  + ")");
                             break;
                         }
                     }
                 } else {
-                    Warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
+                    warn("Record for key \"" + entry.getKey()
+                          + "\" not found! This should not happen!");
                 }
             }
 
             if (highscore) {
-                BroadcastToAllServers(Header + ChatColor.AQUA + player.getName() + ChatColor.GREEN + " has beaten the all time high score!");
+                broadcastToAllServers(header + ChatColor.AQUA + player.getName()
+                      + ChatColor.GREEN + " has beaten the all time high score!");
             } else if (personalbest) {
-                player.sendMessage(ChatColor.GREEN + "Congratulations! You just beat your personal high score!");
+                player.sendMessage(ChatColor.GREEN
+                      + "Congratulations! You just beat your personal high score!");
             }
         }
 
-        SavePlayer(hcp);
+        savePlayer(hcp);
 
         // Dont drop XP or items
         if (!hcw.getDeathDrops()) {
@@ -434,44 +502,50 @@ public final class TrueHardcore extends JavaPlugin {
         player.setExp(0);
 
         if (hcw.getRollbackDelay() > 0) {
-            String wh = ChatColor.DARK_RED + "[" + ChatColor.RED + hcp.getWorld() + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
-            BroadcastToWorld(hcp.getWorld(), wh + " " +
-                    ChatColor.YELLOW + "You now have " + Util.Long2Time(hcw.getRollbackDelay()) +
-                    " to raid " + ChatColor.AQUA + player.getName() + "'s " + ChatColor.YELLOW + "stuff before it all disappears!");
+            String wh = ChatColor.DARK_RED + "[" + ChatColor.RED + hcp.getWorld()
+                  + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
+            broadcastToWorld(hcp.getWorld(), wh + " "
+                  + ChatColor.YELLOW + "You now have " + Util.long2Time(hcw.getRollbackDelay())
+                  + " to raid " + ChatColor.AQUA + player.getName() + "'s " + ChatColor.YELLOW
+                  + "stuff before it all disappears!");
         }
 
         instance.getServer().getScheduler().runTaskLater(instance, () -> {
             try {
                 if (instance.lwcHooked) {
                     // Always remove the locks straight away!
-                    Debug("Removing LWC locks...");
+                    debug("Removing LWC locks...");
                     int count = 0;
                     if (lwc.getPhysicalDatabase() != null) {
-                        List<Protection> prots = lwc.getPhysicalDatabase().loadProtectionsByPlayer(player.getUniqueId().toString());
+                        List<Protection> prots = lwc.getPhysicalDatabase()
+                              .loadProtectionsByPlayer(player.getUniqueId().toString());
                         String w = world.getName();
                         for (Protection prot : prots) {
-                            if (prot.getWorld().equals(w) || prot.getWorld().equals(w + "_nether")) {
+                            if (prot.getWorld().equals(w) || prot.getWorld()
+                                  .equals(w + "_nether")) {
                                 count++;
-
                                 // Remove LWC protection
                                 prot.remove();
                                 prot.removeCache();
                             }
                         }
                     } else {
-                        Log("WARNING: LWC.getPhysicalDatabase() failed!");
+                        log("WARNING: LWC.getPhysicalDatabase() failed!");
                     }
-                    Debug("Removed " + count + " LWC protections.");
+                    debug("Removed " + count + " LWC protections.");
                 }
 
                 if (prismHooked) {
                     // Queue rollback for the Overworld
-                    RollbackHandler.QueueRollback("ROLLBACK", player, world, hcw.getRollbackDelay());
+                    rollbackHandler.queueRollback("ROLLBACK", player, world,
+                          hcw.getRollbackDelay());
 
                     // Queue rollback for The Nether
-                    World netherworld = instance.getServer().getWorld(world.getName() + "_nether");
+                    World netherworld = instance.getServer().getWorld(world.getName()
+                          + "_nether");
                     if (netherworld != null) {
-                        RollbackHandler.QueueRollback("ROLLBACK", player, netherworld, hcw.getRollbackDelay());
+                        rollbackHandler.queueRollback("ROLLBACK", player, netherworld,
+                              hcw.getRollbackDelay());
                     }
                 }
             } catch (Exception e) {
@@ -482,28 +556,36 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     private void loadConfig() {
-        File config = new File(this.getDataFolder(), "config.yml");
         // Read (or initialise) plugin config file
         ConfigManager configManager = new ConfigManager(this);
         configManager.loadConfig();
         cfg = configManager.getConfig();
     }
 
-    public boolean PlayGame(String world, Player player) {
+    /**
+     * Play the game in a world.
+     *
+     * @param world  the world name
+     * @param player bukkit player
+     * @return true on success
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean playGame(String world, Player player) {
         // Only check whitelist if world is whitelisted
-        HardcoreWorld hcw = HardcoreWorlds.Get(world);
+        HardcoreWorld hcw = hardcoreWorlds.get(world);
         if (hcw.isWhitelisted()) {
-            if (!IsOnWhiteList(world, player.getUniqueId())) {
-                player.sendMessage(ChatColor.RED + "Sorry, you are not allowed to play this world.");
+            if (!isOnWhiteList(world, player.getUniqueId())) {
+                player.sendMessage(ChatColor.RED
+                      + "Sorry, you are not allowed to play this world.");
                 return false;
             }
         }
-        if (!cfg.GameEnabled && !Util.HasPermission(player, "truehardcore.admin")) {
+        if (!cfg.gameEnabled && Util.noPermission(player, "truehardcore.admin")) {
             player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
             return false;
         }
 
-        HardcorePlayer hcp = HCPlayers.get(world, player.getUniqueId());
+        HardcorePlayer hcp = hcPlayers.get(world, player.getUniqueId());
         if (hcp != null) {
             if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
                 // Check last death time
@@ -512,7 +594,9 @@ public final class TrueHardcore extends JavaPlugin {
                 long wait = (hcw.getBantime() - diff);
 
                 if (wait > 0) {
-                    player.sendMessage(ChatColor.RED + "Sorry, you must wait " + Util.Long2Time(wait) + " to play " + hcw.getWorld().getName() + " again.");
+                    player.sendMessage(ChatColor.RED + "Sorry, you must wait "
+                          + Util.long2Time(wait) + " to play " + hcw.getWorld().getName()
+                          + " again.");
                     return false;
                 }
             }
@@ -520,26 +604,26 @@ public final class TrueHardcore extends JavaPlugin {
 
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
             player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..");
-            Location spawn = null;
+            Location spawn;
             World w = getServer().getWorld(world);
-
             // Never played before... create them!
             if (hcp == null) {
-                Debug("New hardcore player: " + player.getName() + " (" + world + ")");
-                hcp = HCPlayers.newPlayer(world, player.getUniqueId(), player.getName());
-                spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
+                debug("New hardcore player: " + player.getName() + " (" + world + ")");
+                hcp = hcPlayers.newPlayer(world, player.getUniqueId(), player.getName());
+                spawn = getNewLocation(w, 0, 0, hcw.getSpawnDistance());
             } else if (hcp.getDeathPos() == null) {
-                Warn("No previous position found for known " + player.getName());
-                spawn = GetNewLocation(w, 0, 0, hcw.getSpawnDistance());
+                warn("No previous position found for known " + player.getName());
+                spawn = getNewLocation(w, 0, 0, hcw.getSpawnDistance());
             } else {
-                Debug(player.getName() + " is restarting game (" + world + ")");
-                spawn = GetNewLocation(w, hcp.getDeathPos().getBlockX(), hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
+                debug(player.getName() + " is restarting game (" + world + ")");
+                spawn = getNewLocation(w, hcp.getDeathPos().getBlockX(),
+                      hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
             }
 
             if (spawn != null) {
                 hcp.setState(PlayerState.IN_GAME);
-                if (NewSpawn(player, spawn)) {
-                    SetProtected(hcp, hcw.getSpawnProtection());
+                if (newSpawn(player, spawn)) {
+                    setProtected(hcp, hcw.getSpawnProtection());
                     hcp.setGameTime(0);
                     hcp.setChickenKills(0);
                     hcp.setCowKills(0);
@@ -556,16 +640,20 @@ public final class TrueHardcore extends JavaPlugin {
                     hcp.setOtherKills(0);
                     hcp.setPlayerKills(0);
                     hcp.updatePlayer(player);
-                    SavePlayer(hcp);
+                    savePlayer(hcp);
                     cleanAndGreet(player, world);
-                    BroadcastToHardcore(Header + ChatColor.GREEN + player.getDisplayName() + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN + hcp.getWorld(), player.getName());
+                    broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
+                          + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
+                          + hcp.getWorld(), player.getName());
                     return true;
                 } else {
                     return false;
                 }
             } else {
-                player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location. Please try again.");
-                Warn("Unable to find suitable spawn location for " + player.getName() + " (" + world + ")");
+                player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location."
+                      + " Please try again.");
+                warn("Unable to find suitable spawn location for " + player.getName()
+                      + " (" + world + ")");
                 return false;
             }
         } else if (hcp.getState() == PlayerState.IN_GAME) {
@@ -573,28 +661,38 @@ public final class TrueHardcore extends JavaPlugin {
             return false;
         } else {
             // Resume existing game
-            player.sendMessage(ChatColor.GREEN + "Returning to your last hardcore location... good luck!");
-            Debug(player.getName() + " is returning to " + hcw.getWorld().getName());
+            player.sendMessage(ChatColor.GREEN
+                  + "Returning to your last hardcore location... good luck!");
+            debug(player.getName() + " is returning to " + hcw.getWorld().getName());
             hcp.setState(PlayerState.IN_GAME);
-            JoinGame(world, player);
-            SavePlayer(hcp);
+            joinGame(world, player);
+            savePlayer(hcp);
             cleanAndGreet(player, world);
             return true;
         }
     }
 
     private void cleanAndGreet(Player player, String world) {
-        UnvanishPlayer(player);
-        String greeting = HardcoreWorlds.Get(world).getGreeting();
+        unVanishPlayer(player);
+        String greeting = hardcoreWorlds.get(world).getGreeting();
         if ((greeting != null) && (!greeting.isEmpty())) {
             player.sendMessage(ChatColor.translateAlternateColorCodes('&', greeting));
         }
     }
 
-    private boolean NewSpawn(Player player, Location spawn) {
-        HardcorePlayer hcp = HCPlayers.get(spawn.getWorld(), player);
-
-        if (Util.Teleport(player, spawn)) {
+    /**
+     * Allocate a new spawn point for a player.
+     *
+     * @param player the player
+     * @param spawn  the location
+     * @return true on success
+     */
+    private boolean newSpawn(Player player, Location spawn) {
+        HardcorePlayer hcp = hcPlayers.get(spawn.getWorld(), player);
+        if (hcp == null) {
+            throw new NullPointerException("Player was null");
+        }
+        if (Util.teleport(player, spawn)) {
             hcp.setState(PlayerState.IN_GAME);
             hcp.setSpawnPos(spawn);
             player.setFallDistance(0);
@@ -610,39 +708,39 @@ public final class TrueHardcore extends JavaPlugin {
             player.setGameMode(GameMode.SURVIVAL);
             player.setOp(false);
             player.getEnderChest().clear();
-            player.getEquipment().clear();
+            Objects.requireNonNull(player.getEquipment()).clear();
             player.getInventory().clear();
             player.eject();
             player.sendMessage(ChatColor.RED + "!!!! WARNING !!!! WARNING !!!!");
-            player.sendMessage(ChatColor.RED + "This plugin is highly experimental! Use at own risk!");
+            player.sendMessage(ChatColor.RED
+                  + "This plugin is highly experimental! Use at own risk!");
             player.sendMessage(ChatColor.RED + "Please report ALL problems in detail.");
-            player.sendMessage(ChatColor.GREEN + "Welcome to TrueHardcore. Good luck on your adventure!");
-            player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+            player.sendMessage(ChatColor.GREEN
+                  + "Welcome to TrueHardcore. Good luck on your adventure!");
+            player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
+                  + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
             return true;
         } else {
-            Warn("Teleport failed!");
+            warn("Teleport failed!");
             return false;
         }
     }
 
-    private Location GetNewLocation(World world, int oldX, int oldZ, int dist) {
+    private Location getNewLocation(World world, int oldX, int oldZ, int dist) {
         Location l = new Location(world, oldX, 255, oldZ);
-        Debug("Selecting spawn point " + dist + " blocks from: " + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
-
+        debug("Selecting spawn point " + dist + " blocks from: "
+              + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
         double x;
         double z;
         int deg;
-        Location nl = null;
-
+        Location nl;
         // Only try to find a good place 30 times
         for (int count = 0; count < 30; count++) {
-            boolean GoodSpawn = false;
-            Location spawn = null;
-            String reason = "";
+            boolean goodSpawn = false;
 
             // Lets do some trig!!
-            dist = dist + (int) (Math.random() * 100);                                    // Random radius padding
-            deg = (int) (Math.random() * 360);                                            // Random degrees
+            dist = dist + (int) (Math.random() * 100);// Random radius padding
+            deg = (int) (Math.random() * 360); // Random degrees
             x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();
             z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
             nl = new Location(world, x, 255, z);
@@ -652,9 +750,9 @@ public final class TrueHardcore extends JavaPlugin {
             while ((b.getType() == Material.AIR) && (b.getY() > 1)) {
                 b = b.getRelative(BlockFace.DOWN);
             }
-
-            spawn = new Location(b.getWorld(), b.getX(), b.getY() + 2, b.getZ());
-            if (SpawnBlocks.contains(b.getType())) {
+            String reason;
+            Location spawn = new Location(b.getWorld(), b.getX(), b.getY() + 2, b.getZ());
+            if (spawnBlocks.contains(b.getType())) {
                 if (spawn.getBlockX() >= 0) {
                     spawn.setX(spawn.getBlockX() + 0.5);
                 }
@@ -670,8 +768,8 @@ public final class TrueHardcore extends JavaPlugin {
                 }
 
                 // Make sure it's inside the world border (if one exists)
-                if (InsideWorldBorder(spawn)) {
-                    GoodSpawn = true;
+                if (insideWorldBorder(spawn)) {
+                    goodSpawn = true;
                     reason = "Allowed block type (" + b.getType() + ")!";
                 } else {
                     reason = "Outside world border";
@@ -680,42 +778,49 @@ public final class TrueHardcore extends JavaPlugin {
                 reason = "Wrong block type (" + b.getType() + ")";
             }
 
-            if (GoodSpawn) {
-                Debug("GOOD: "
-                        + Util.padLeft(String.valueOf(spawn.getX()), 9)
-                        + Util.padLeft(String.valueOf(spawn.getY()), 7)
-                        + Util.padLeft(String.valueOf(spawn.getZ()), 9)
-                        + "   (" + dist + " blocks away)"
-                        + "  => " + reason);
+            if (goodSpawn) {
+                debug("GOOD: "
+                      + Util.padLeft(String.valueOf(spawn.getX()), 9)
+                      + Util.padLeft(String.valueOf(spawn.getY()), 7)
+                      + Util.padLeft(String.valueOf(spawn.getZ()), 9)
+                      + "   (" + dist + " blocks away)"
+                      + "  => " + reason);
 
                 // Return the good location
                 spawn.setPitch(0F);
                 spawn.setYaw(0F);
                 return spawn;
             } else {
-                Debug("BAD : "
-                        + Util.padLeft(String.valueOf(spawn.getX()), 9)
-                        + Util.padLeft(String.valueOf(spawn.getY()), 7)
-                        + Util.padLeft(String.valueOf(spawn.getZ()), 9)
-                        + "   (" + dist + " blocks away)"
-                        + "  => " + reason);
+                debug("BAD : "
+                      + Util.padLeft(String.valueOf(spawn.getX()), 9)
+                      + Util.padLeft(String.valueOf(spawn.getY()), 7)
+                      + Util.padLeft(String.valueOf(spawn.getZ()), 9)
+                      + "   (" + dist + " blocks away)"
+                      + "  => " + reason);
             }
         }
 
         return null;
     }
 
-    public void LeaveGame(Player player) {
-        HardcorePlayer hcp = HCPlayers.get(player);
+    /**
+     * Leave a game.
+     *
+     * @param player the player
+     */
+    public void leaveGame(Player player) {
+        HardcorePlayer hcp = hcPlayers.get(player);
         if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
             if (!player.isInsideVehicle()) {
                 // We have to change the game state to allow the teleport out of the world
                 hcp.setState(PlayerState.ALIVE);
                 hcp.updatePlayer(player);
-                if (Util.Teleport(player, GetLobbyLocation(player, hcp.getWorld()))) {
-                    BroadcastToHardcore(Header + ChatColor.YELLOW + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
+                if (Util.teleport(player, getLobbyLocation(player, hcp.getWorld()))) {
+                    broadCastToHardcore(header + ChatColor.YELLOW
+                          + player.getDisplayName() + " has left "
+                          + hcp.getWorld(), player.getName());
                     hcp.calcGameTime();
-                    SavePlayer(hcp);
+                    savePlayer(hcp);
                 } else {
                     // Teleport failed so set the game state back
                     hcp.setState(PlayerState.IN_GAME);
@@ -729,145 +834,160 @@ public final class TrueHardcore extends JavaPlugin {
         }
     }
 
-    public BukkitTask SavePlayer(HardcorePlayer hcp) {
-        return SavePlayer(hcp, true, false);
+    /**
+     * Save a player.
+     *
+     * @param hcp the player
+     * @return Save Task
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public BukkitTask savePlayer(HardcorePlayer hcp) {
+        return savePlayer(hcp, true,
+              false);
     }
 
-    private BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async) {
-        return SavePlayer(hcp, Async, false);
+    @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
+    private BukkitTask savePlayer(HardcorePlayer hcp, boolean async) {
+        return savePlayer(hcp, async, false);
     }
 
-    private BukkitTask SavePlayer(HardcorePlayer hcp, boolean Async, final boolean AutoSave) {
+    private BukkitTask savePlayer(HardcorePlayer hcp, boolean async, final boolean autoSave) {
         if (hcp == null) {
-            Warn("SavePlayer called with null record!");
+            warn("SavePlayer called with null record!");
             return null;
         }
 
-        if (AutoSave) {
-            DebugLog("Auto-saving data for " + hcp.getWorld() + "/" + hcp.getPlayerName());
+        if (autoSave) {
+            debugLog("Auto-saving data for " + hcp.getWorld() + "/" + hcp.getPlayerName());
         } else {
-            Debug("Saving data for " + hcp.getWorld() + "/" + hcp.getPlayerName());
+            debug("Saving data for " + hcp.getWorld() + "/" + hcp.getPlayerName());
         }
 
         // CowKills, PigKills, SheepKills, ChickenKills;
         // CreeperKills, ZombieKills, SkeletonKills, SpiderKills, EnderKills, SlimeKills;
         // OtherKills, PlayerKills;
 
-        final String query = "INSERT INTO `players` \n" +
-                "(`id`, `player`, `world`, `spawnpos`, `lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,\n" +
-                "`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, `deaths`,\n" +
-                "`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, `creeperkills`, `zombiekills`, `skeletonkills`,\n" +
-                "`spiderkills`, `enderkills`, `slimekills`, `mooshkills`, `otherkills`, `playerkills`)\n\n" +
-
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE \n\n" +
-
-                "`spawnpos`=?, `lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,\n" +
-                "`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, `deathpos`=?, `deaths`=?,\n" +
-                "`cowkills`=?, `pigkills`=?, `sheepkills`=?, `chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?,\n" +
-                "`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?, `playerkills`=?\n";
+        //noinspection SpellCheckingInspection
+        final String query = "INSERT INTO `players` (`id`, `player`, `world`, `spawnpos`,"
+              + "`lastpos`, `lastjoin`, `lastquit`, `gamestart`, `gameend`, `gametime`,"
+              + "`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, "
+              + "`deaths`,`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, "
+              + "`creeperkills`, `zombiekills`, `skeletonkills`,`spiderkills`, `enderkills`,"
+              + " `slimekills`, `mooshkills`, `otherkills`, `playerkills`)"
+              + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+              + "ON DUPLICATE KEY UPDATE "
+              + "`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, "
+              + "`deathpos`=?, `deaths`=?, `cowkills`=?, `pigkills`=?, `sheepkills`=?, "
+              + "`chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?, "
+              + "`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?,"
+              + "`playerkills`=?\n";
 
         final String[] values = {
-                hcp.getUniqueId().toString(),
-                hcp.getPlayerName(),
-                hcp.getWorld(),
-                Util.Loc2Str(hcp.getSpawnPos()),
-                Util.Loc2Str(hcp.getLastPos()),
-                Util.Date2Mysql(hcp.getLastJoin()),
-                Util.Date2Mysql(hcp.getLastQuit()),
-                Util.Date2Mysql(hcp.getGameStart()),
-                Util.Date2Mysql(hcp.getGameEnd()),
-                String.valueOf(hcp.getGameTime()),
-                String.valueOf(hcp.getLevel()),
-                String.valueOf(hcp.getExp()),
-                String.valueOf(hcp.getScore()),
-                String.valueOf(hcp.getTopScore()),
-                hcp.getState().toString(),
-                hcp.getDeathMsg(),
-                Util.Loc2Str(hcp.getDeathPos()),
-                String.valueOf(hcp.getDeaths()),
+              hcp.getUniqueId().toString(),
+              hcp.getPlayerName(),
+              hcp.getWorld(),
+              Util.loc2Str(hcp.getSpawnPos()),
+              Util.loc2Str(hcp.getLastPos()),
+              Util.date2Mysql(hcp.getLastJoin()),
+              Util.date2Mysql(hcp.getLastQuit()),
+              Util.date2Mysql(hcp.getGameStart()),
+              Util.date2Mysql(hcp.getGameEnd()),
+              String.valueOf(hcp.getGameTime()),
+              String.valueOf(hcp.getLevel()),
+              String.valueOf(hcp.getExp()),
+              String.valueOf(hcp.getScore()),
+              String.valueOf(hcp.getTopScore()),
+              hcp.getState().toString(),
+              hcp.getDeathMsg(),
+              Util.loc2Str(hcp.getDeathPos()),
+              String.valueOf(hcp.getDeaths()),
 
-                String.valueOf(hcp.getCowKills()),
-                String.valueOf(hcp.getPigKills()),
-                String.valueOf(hcp.getSheepKills()),
-                String.valueOf(hcp.getChickenKills()),
-                String.valueOf(hcp.getCreeperKills()),
-                String.valueOf(hcp.getZombieKills()),
-                String.valueOf(hcp.getSkeletonKills()),
-                String.valueOf(hcp.getSpiderKills()),
-                String.valueOf(hcp.getEnderKills()),
-                String.valueOf(hcp.getSlimeKills()),
-                String.valueOf(hcp.getMooshKills()),
-                String.valueOf(hcp.getOtherKills()),
-                String.valueOf(hcp.getPlayerKills()),
+              String.valueOf(hcp.getCowKills()),
+              String.valueOf(hcp.getPigKills()),
+              String.valueOf(hcp.getSheepKills()),
+              String.valueOf(hcp.getChickenKills()),
+              String.valueOf(hcp.getCreeperKills()),
+              String.valueOf(hcp.getZombieKills()),
+              String.valueOf(hcp.getSkeletonKills()),
+              String.valueOf(hcp.getSpiderKills()),
+              String.valueOf(hcp.getEnderKills()),
+              String.valueOf(hcp.getSlimeKills()),
+              String.valueOf(hcp.getMooshKills()),
+              String.valueOf(hcp.getOtherKills()),
+              String.valueOf(hcp.getPlayerKills()),
 
-                // REPEATED FOR UPDATE!
-                Util.Loc2Str(hcp.getSpawnPos()),
-                Util.Loc2Str(hcp.getLastPos()),
-                Util.Date2Mysql(hcp.getLastJoin()),
-                Util.Date2Mysql(hcp.getLastQuit()),
-                Util.Date2Mysql(hcp.getGameStart()),
-                Util.Date2Mysql(hcp.getGameEnd()),
-                String.valueOf(hcp.getGameTime()),
-                String.valueOf(hcp.getLevel()),
-                String.valueOf(hcp.getExp()),
-                String.valueOf(hcp.getScore()),
-                String.valueOf(hcp.getTopScore()),
-                hcp.getState().toString(),
-                hcp.getDeathMsg(),
-                Util.Loc2Str(hcp.getDeathPos()),
-                String.valueOf(hcp.getDeaths()),
+              // REPEATED FOR UPDATE!
+              Util.loc2Str(hcp.getSpawnPos()),
+              Util.loc2Str(hcp.getLastPos()),
+              Util.date2Mysql(hcp.getLastJoin()),
+              Util.date2Mysql(hcp.getLastQuit()),
+              Util.date2Mysql(hcp.getGameStart()),
+              Util.date2Mysql(hcp.getGameEnd()),
+              String.valueOf(hcp.getGameTime()),
+              String.valueOf(hcp.getLevel()),
+              String.valueOf(hcp.getExp()),
+              String.valueOf(hcp.getScore()),
+              String.valueOf(hcp.getTopScore()),
+              hcp.getState().toString(),
+              hcp.getDeathMsg(),
+              Util.loc2Str(hcp.getDeathPos()),
+              String.valueOf(hcp.getDeaths()),
 
-                String.valueOf(hcp.getCowKills()),
-                String.valueOf(hcp.getPigKills()),
-                String.valueOf(hcp.getSheepKills()),
-                String.valueOf(hcp.getChickenKills()),
-                String.valueOf(hcp.getCreeperKills()),
-                String.valueOf(hcp.getZombieKills()),
-                String.valueOf(hcp.getSkeletonKills()),
-                String.valueOf(hcp.getSpiderKills()),
-                String.valueOf(hcp.getEnderKills()),
-                String.valueOf(hcp.getSlimeKills()),
-                String.valueOf(hcp.getMooshKills()),
-                String.valueOf(hcp.getOtherKills()),
-                String.valueOf(hcp.getPlayerKills())
+              String.valueOf(hcp.getCowKills()),
+              String.valueOf(hcp.getPigKills()),
+              String.valueOf(hcp.getSheepKills()),
+              String.valueOf(hcp.getChickenKills()),
+              String.valueOf(hcp.getCreeperKills()),
+              String.valueOf(hcp.getZombieKills()),
+              String.valueOf(hcp.getSkeletonKills()),
+              String.valueOf(hcp.getSpiderKills()),
+              String.valueOf(hcp.getEnderKills()),
+              String.valueOf(hcp.getSlimeKills()),
+              String.valueOf(hcp.getMooshKills()),
+              String.valueOf(hcp.getOtherKills()),
+              String.valueOf(hcp.getPlayerKills())
         };
         hcp.setModified(false);
 
-        Runnable savetask = () -> {
+        Runnable saveTask = () -> {
             try {
-                int result = dbConnection.PreparedUpdate(query, values, AutoSave);
+                int result = dbConnection.preparedUpdate(query, values, autoSave);
                 if (result < 0) {
-                    Debug("Player record save failed!");
-                    Debug("Query: " + query);
-                    Debug("Values: " + Arrays.toString(values));
+                    debug("Player record save failed!");
+                    debug("Query: " + query);
+                    debug("Values: " + Arrays.toString(values));
                 }
             } catch (Exception e) {
-                Debug("Unable to save player record to database!");
-                Debug("Query: " + query);
-                Debug("Values: " + Arrays.toString(values));
+                debug("Unable to save player record to database!");
+                debug("Query: " + query);
+                debug("Values: " + Arrays.toString(values));
                 e.printStackTrace();
             }
         };
 
         BukkitTask task = null;
-        if (Async) {
-            if (!AutoSave) Debug("Launching async save task...");
-            task = getServer().getScheduler().runTaskAsynchronously(this, savetask);
+        if (async) {
+            if (!autoSave) {
+                debug("Launching async save task...");
+            }
+            task = getServer().getScheduler().runTaskAsynchronously(this, saveTask);
         } else {
-            if (!AutoSave) Debug("Saving synchronously...");
-            savetask.run();
+            if (!autoSave) {
+                debug("Saving synchronously...");
+            }
+            saveTask.run();
         }
 
         return task;
     }
 
-    private void JoinGame(String world, Player player) {
-        Debug("Joining game for " + player.getName());
-        HardcorePlayer hcp = HCPlayers.get(world, player.getUniqueId());
+    private void joinGame(String world, Player player) {
+        debug("Joining game for " + player.getName());
+        HardcorePlayer hcp = hcPlayers.get(world, player.getUniqueId());
         if (hcp != null) {
             if (hcp.getLastPos() != null) {
-                DebugLog("Returning player to: " + hcp.getLastPos());
-                if (Util.Teleport(player, hcp.getLastPos())) {
+                debugLog("Returning player to: " + hcp.getLastPos());
+                if (Util.teleport(player, hcp.getLastPos())) {
                     player.setWalkSpeed(0.2F);
                     player.setFlySpeed(0.2F);
                     player.setGameMode(GameMode.SURVIVAL);
@@ -876,67 +996,83 @@ public final class TrueHardcore extends JavaPlugin {
                     player.setFlying(false);
                     player.setFallDistance(0);
                     player.setNoDamageTicks(60);
-                    BroadcastToHardcore(Header + ChatColor.GREEN + player.getDisplayName() + " has entered " + hcp.getWorld(), player.getName());
+                    broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
+                          + " has entered " + hcp.getWorld(), player.getName());
                 } else {
-                    Warn("Teleport failed!");
+                    warn("Teleport failed!");
                 }
             }
         } else {
-            Warn("Player record NOT found!");
+            warn("Player record NOT found!");
         }
     }
 
-    private Boolean LoadAllPlayers() {
+    /**
+     * load players.
+     *
+     * @return true on success
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    private boolean loadAllPlayers() {
         String query = "SELECT * FROM `players` ORDER BY world,id";
         try {
-            HCPlayers.clear();
-            ResultSet res = dbConnection.PreparedQuery(query, null);
+            hcPlayers.clear();
+            ResultSet res = dbConnection.preparedQuery(query, null);
             if (res != null) {
                 while (res.next()) {
                     UUID id = UUID.fromString(res.getString("id"));
                     String name = res.getString("player");
                     String world = res.getString("world");
-                    DebugLog("Loading: " + world + "/" + name);
-                    HardcorePlayer hcp = HCPlayers.newPlayer(world, id, name);
-                    LoadPlayerFromData(hcp, res);
+                    debugLog("Loading: " + world + "/" + name);
+                    HardcorePlayer hcp = hcPlayers.newPlayer(world, id, name);
+                    loadPlayerFromData(hcp, res);
                 }
             }
         } catch (Exception e) {
-            Debug("Unable to load player record to database!");
+            debug("Unable to load player record to database!");
             e.printStackTrace();
             return false;
         }
         return true;
     }
 
-    public Boolean LoadPlayer(String world, UUID player) {
+    /**
+     * Load a player.
+     *
+     * @param world  world
+     * @param player player
+     * @return true on success
+     */
+    public boolean loadPlayer(String world, UUID player) {
         String query = "SELECT * FROM `players` WHERE `id`=? and `world`=?";
         try {
-            DebugLog("Reload player record from DB: " + world + "/" + player);
-            ResultSet res = dbConnection.PreparedQuery(query, new String[]{player.toString(), world});
-            HardcorePlayer hcp = HCPlayers.get(world, player);
+            debugLog("Reload player record from DB: " + world + "/" + player);
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString(),
+                  world});
+            HardcorePlayer hcp = hcPlayers.get(world, player);
             if ((res != null) && (hcp != null) && (res.next())) {
-                DebugLog("Loading: " + world + "/" + player);
-                LoadPlayerFromData(hcp, res);
+                debugLog("Loading: " + world + "/" + player);
+                loadPlayerFromData(hcp, res);
             } else {
                 return false;
             }
         } catch (Exception e) {
-            Debug("Unable to load player record to database!");
+            debug("Unable to load player record to database!");
             e.printStackTrace();
             return false;
         }
         return true;
     }
 
-    private void LoadPlayerFromData(HardcorePlayer hcp, ResultSet res) {
+    @SuppressWarnings("SpellCheckingInspection")
+    private void loadPlayerFromData(HardcorePlayer hcp, ResultSet res) {
         try {
             hcp.setLoadDataOnly(true);
-            hcp.setLastPos(Util.Str2Loc(res.getString("lastpos")));
-            hcp.setLastJoin(Util.Mysql2Date(res.getString("lastjoin")));
-            hcp.setLastQuit(Util.Mysql2Date(res.getString("lastquit")));
-            hcp.setGameStart(Util.Mysql2Date(res.getString("gamestart")));
-            hcp.setGameEnd(Util.Mysql2Date(res.getString("gameend")));
+            hcp.setLastPos(Util.str2Loc(res.getString("lastpos")));
+            hcp.setLastJoin(Util.mysql2Date(res.getString("lastjoin")));
+            hcp.setLastQuit(Util.mysql2Date(res.getString("lastquit")));
+            hcp.setGameStart(Util.mysql2Date(res.getString("gamestart")));
+            hcp.setGameEnd(Util.mysql2Date(res.getString("gameend")));
             hcp.setGameTime(res.getInt("gametime"));
             hcp.setLevel(res.getInt("level"));
             hcp.setExp(res.getInt("exp"));
@@ -944,7 +1080,7 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setTopScore(res.getInt("topscore"));
             hcp.setState(PlayerState.valueOf(res.getString("state")));
             hcp.setDeathMsg(res.getString("deathmsg"));
-            hcp.setDeathPos(Util.Str2Loc(res.getString("deathpos")));
+            hcp.setDeathPos(Util.str2Loc(res.getString("deathpos")));
             hcp.setDeaths(res.getInt("deaths"));
             hcp.setCowKills(res.getInt("cowkills"));
             hcp.setPigKills(res.getInt("pigkills"));
@@ -962,62 +1098,79 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setModified(false);
             hcp.setLoadDataOnly(false);
         } catch (Exception e) {
-            Debug("Unable to load player record to database!");
+            debug("Unable to load player record to database!");
             e.printStackTrace();
         }
     }
 
-    public void SaveAllPlayers() {
-        for (Map.Entry<String, HardcorePlayer> entry : HCPlayers.allRecords().entrySet()) {
+    /**
+     * Save all players.
+     */
+    public void saveAllPlayers() {
+        for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
             HardcorePlayer hcp = entry.getValue();
             if ((hcp != null) && (hcp.isModified())) {
-                SavePlayer(hcp, false);
+                savePlayer(hcp, false);
             }
         }
     }
 
-    private void SaveIngamePlayers() {
-        for (Map.Entry<String, HardcorePlayer> entry : HCPlayers.allRecords().entrySet()) {
+    private void saveInGamePlayers() {
+        for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
             HardcorePlayer hcp = entry.getValue();
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                 Player p = Bukkit.getPlayer(hcp.getPlayerName());
                 if (p != null) {
                     hcp.updatePlayer(p);
-                    SavePlayer(hcp, true, true);
+                    savePlayer(hcp, true, true);
                 }
             }
         }
     }
 
-    public boolean IsHardcoreWorld(World world) {
+    /**
+     * true if a hardcore world.
+     * @param world the world.
+     * @return boolean.
+     */
+    public boolean isHardcoreWorld(World world) {
         if (world != null) {
-            return HardcoreWorlds.Contains(world.getName());
+            return hardcoreWorlds.contains(world.getName());
         }
         return false;
     }
 
-    public Location GetLobbyLocation(Player player, String world) {
+    /**
+     * Get the lobby location.
+     *
+     * @param player player
+     * @param world  world
+     * @return the location.
+     */
+    public Location getLobbyLocation(Player player, String world) {
         Location loc = null;
         if (world != null) {
-            HardcoreWorld hcw = HardcoreWorlds.Get(world);
+            HardcoreWorld hcw = hardcoreWorlds.get(world);
             loc = hcw.getExitPos();
         }
 
         if (loc == null) {
-            Warn("Sending " + player.getName() + " to world spawn!");
-            loc = getServer().getWorld(getConfig().getString("lobbyWorld", "games")).getSpawnLocation();
+            warn("Sending " + player.getName() + " to world spawn!");
+            String worldName = cfg.lobbyWorld;
+            loc = Objects.requireNonNull(getServer().getWorld(worldName)).getSpawnLocation();
         }
 
         return loc;
     }
 
-    private boolean IsOnWhiteList(String world, UUID player) {
+    private boolean isOnWhiteList(String world, UUID player) {
         String query = "SELECT worlds FROM `whitelist` WHERE id=?";
         try {
-            ResultSet res = dbConnection.PreparedQuery(query, new String[]{player.toString()});
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()});
             if (res != null) {
                 if (res.next()) {
-                    String[] worlds = StringUtils.split(res.getString("worlds"), ",");
+                    String[] worlds = StringUtils.split(res.getString("worlds"),
+                          ",");
                     for (String w : worlds) {
                         if ((w.equals(world)) || (w.equals("*"))) {
                             return true;
@@ -1031,39 +1184,51 @@ public final class TrueHardcore extends JavaPlugin {
         return false;
     }
 
-    public Boolean AddToWhitelist(UUID player) {
+    /**
+     * Add to the white list.
+     *
+     * @param player the player
+     * @return true on success
+     */
+    public boolean addToWhitelist(UUID player) {
         String query = "INSERT INTO `whitelist` (id, worlds) VALUES (?, ?)";
-        String worlds = HardcoreWorlds.GetNames();
+        String worlds = hardcoreWorlds.getNames();
         try {
-            DebugLog("Add player to whitelist: " + player);
-            int result = dbConnection.PreparedUpdate(query, new String[]{player.toString(), worlds});
+            debugLog("Add player to whitelist: " + player);
+            int result = dbConnection.preparedUpdate(query, new String[]{player.toString(),
+                  worlds});
             if (result < 0) {
-                Debug("Whitelist update failed!");
+                debug("Whitelist update failed!");
                 return false;
             }
         } catch (Exception e) {
-            Debug("Unable to load player record to database!");
+            debug("Unable to load player record to database!");
             e.printStackTrace();
             return false;
         }
         return true;
     }
 
-    public void UnvanishPlayer(Player player) {
-        if (IsPlayerVanished(player)) {
-            Debug("Unvanishing " + player.getName());
+    /**
+     * Un vanish a player.
+     * @param player the player
+     */
+    public void unVanishPlayer(Player player) {
+        if (isPlayerVanished(player)) {
+            debug("UnVanishing: " + player.getName());
             vnp.toggleVanish(player);
         }
     }
 
-    public boolean IsPlayerVanished(Player player) {
+    public boolean isPlayerVanished(Player player) {
         return (vnpHooked) && (vnp.isVanished(player));
     }
 
-    private boolean SetProtected(HardcorePlayer hcp, long seconds) {
+    @SuppressWarnings("UnusedReturnValue")
+    private boolean setProtected(HardcorePlayer hcp, long seconds) {
         if (hcp != null) {
             if (hcp.isGodMode()) {
-                Debug(hcp.getPlayerName() + " already in god mode!");
+                debug(hcp.getPlayerName() + " already in god mode!");
                 return false;
             }
 
@@ -1072,19 +1237,20 @@ public final class TrueHardcore extends JavaPlugin {
             final Player player = getServer().getPlayer(id);
 
             hcp.setGodMode(true);
-            player.sendMessage(ChatColor.YELLOW + "You are now invincible for " + seconds + " seconds...");
-
+            Objects.requireNonNull(player).sendMessage(ChatColor.YELLOW
+                  + "You are now invincible for " + seconds + " seconds...");
             getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
-                HardcorePlayer hcp1 = HCPlayers.get(world, id);
+                HardcorePlayer hcp1 = hcPlayers.get(world, id);
                 if (hcp1 != null) {
                     hcp1.setGodMode(false);
                     if (hcp1.getState() == PlayerState.IN_GAME) {
-                        player.sendMessage(ChatColor.RED + "Your invincibility has now worn off... Good luck!");
+                        player.sendMessage(ChatColor.RED
+                              + "Your invincibility has now worn off... Good luck!");
                     } else {
-                        //Debug("Disable protection: Player " + pname + " is no longer in game");
+                        debug("Disable protection: Player " + id + " is no longer in game");
                     }
                 } else {
-                    //Debug("Disable protection: Player " + pname + " does not exist!");
+                    debug("Disable protection: Player " + id + " does not exist!");
                 }
             }, (seconds * 20));
 
@@ -1092,43 +1258,60 @@ public final class TrueHardcore extends JavaPlugin {
         return false;
     }
 
-    public boolean IsPlayerSafe(Player player, double x, double y, double z) {
-        List<Entity> ents = player.getNearbyEntities(x, y, z);
-        if (ents != null) {
-            for (Entity e : ents) {
-                if (e instanceof Monster) return false;
-                if (e instanceof Slime) return false;
-                if (e instanceof Ghast) return false;
+    /**
+     * True if the player is save from monsters.
+     * @param player player
+     * @param x location x
+     * @param y location y
+     * @param z location z
+     * @return boolean
+     */
+    public boolean isPlayerSafe(Player player, double x, double y, double z) {
+        List<Entity> entities = player.getNearbyEntities(x, y, z);
+        for (Entity e : entities) {
+            if (e instanceof Monster) {
+                return false;
+            }
+            if (e instanceof Slime) {
+                return false;
+            }
+            if (e instanceof Ghast) {
+                return false;
             }
         }
         return true;
     }
 
-    private void BroadcastToWorld(String world, String rawmsg) {
-        String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
-        Debug(msg);
+    private void broadcastToWorld(String world, String rawMsg) {
+        String msg = ChatColor.translateAlternateColorCodes('&', rawMsg);
+        debug(msg);
         for (final Player p : getServer().getOnlinePlayers()) {
-            HardcorePlayer hcp = HCPlayers.get(world, p.getUniqueId());
+            HardcorePlayer hcp = hcPlayers.get(world, p.getUniqueId());
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                 p.sendMessage(msg);
             }
         }
     }
 
-    public void BroadcastToHardcore(String rawmsg) {
-        BroadcastToHardcore(rawmsg, null);
+    public void broadCastToHardcore(String rawmsg) {
+        broadCastToHardcore(rawmsg, null);
     }
 
-    public void BroadcastToHardcore(String rawmsg, String excludePlayer) {
-        String msg = ChatColor.translateAlternateColorCodes('&', rawmsg);
-        Debug("HardcoreBroadcast: " + msg);
+    /**
+     * Broadcast to the Hardcore server excluding certain players.
+     * @param rawMsg the message
+     * @param excludePlayer the excluded players
+     */
+    public void broadCastToHardcore(String rawMsg, String excludePlayer) {
+        String msg = ChatColor.translateAlternateColorCodes('&', rawMsg);
+        debug("HardcoreBroadcast: " + msg);
         for (final Player p : getServer().getOnlinePlayers()) {
             // Skip the excluded player (if specified)
-            if ((excludePlayer != null) && (excludePlayer.equals(p.getName())))
+            if ((excludePlayer != null) && (excludePlayer.equals(p.getName()))) {
                 continue;
-
-            if (IsHardcoreWorld(p.getWorld())) {
-                HardcorePlayer hcp = HCPlayers.get(p);
+            }
+            if (isHardcoreWorld(p.getWorld())) {
+                HardcorePlayer hcp = hcPlayers.get(p);
                 if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                     p.sendMessage(msg);
                 }
@@ -1136,17 +1319,29 @@ public final class TrueHardcore extends JavaPlugin {
         }
     }
 
-    public boolean InsideWorldBorder(Location loc) {
-        BorderData bd = null;
-        if (!wbHooked) return true;
+    /**
+     * True if a location is inside the world border.
+     * @param loc the location to test
+     * @return boolean.
+     */
+    public boolean insideWorldBorder(Location loc) {
+        BorderData bd;
+        if (!wbHooked) {
+            return true;
+        }
+        //noinspection ConstantConditions
         bd = wb.getWorldBorder(loc.getWorld().getName());
         return (bd != null) && (bd.insideBorder(loc));
     }
 
-    public void BroadcastToAllServers(String msg) {
+    /**
+     * Broadcast to all servers.
+     * @param msg the message
+     */
+    public void broadcastToAllServers(String msg) {
         Bukkit.getServer().broadcastMessage(msg);
         if (bcHooked) {
-            BungeeChat.mirrorChat(msg, cfg.BroadcastChannel);
+            BungeeChat.mirrorChat(msg, cfg.broadcastChannel);
         }
     }
 }

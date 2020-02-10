@@ -20,15 +20,15 @@
 package au.com.addstar.truehardcore.objects;
 
 import au.com.addstar.truehardcore.config.HardcoreWorldConfig;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.World;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HardcoreWorlds {
     private final Map<String, HardcoreWorld> worlds;
@@ -36,19 +36,63 @@ public class HardcoreWorlds {
     public HardcoreWorlds() {
         worlds = new HashMap<>();
     }
-    
+
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean addWorld(String world, HardcoreWorld hcw) {
+        worlds.put(world, hcw);
+        return true;
+    }
+
+    /**
+     * Get a world.
+     * @param world string
+     * @return hardcore world
+     */
+    public HardcoreWorld get(String world) {
+        String key = StringUtils.replace(world, "_nether", "");
+        if (worlds.containsKey(key)) {
+            return worlds.get(key);
+        }
+        return null;
+    }
+
+    /**
+     * Check if world present.
+     * @param world string
+     * @return bool
+     */
+    public boolean contains(String world) {
+        String key = StringUtils.replace(world, "_nether", "");
+        return worlds.containsKey(key);
+    }
+
+    /**
+     * get all records.
+     * @return map
+     */
+    public Map<String, HardcoreWorld> allRecords() {
+        return worlds;
+    }
+
+    public String getNames() {
+        List<String> names = new ArrayList<>(worlds.keySet());
+        return StringUtils.join(names, ",");
+    }
+
+    @SuppressWarnings("unused")
     public static class HardcoreWorld {
+        private World world;
+        private HardcoreWorldConfig config;
+
         public HardcoreWorld(World world, HardcoreWorldConfig config) {
             this.world = world;
             this.config = config;
         }
-        
-        private World world;
-        private HardcoreWorldConfig config;
 
         public World getWorld() {
             return world;
         }
+
         public void setWorld(World world) {
             this.world = world;
         }
@@ -56,6 +100,7 @@ public class HardcoreWorlds {
         public String getGreeting() {
             return config.greeting;
         }
+
         public void setGreeting(String greeting) {
             this.config.greeting = greeting;
         }
@@ -63,6 +108,7 @@ public class HardcoreWorlds {
         public Integer getBantime() {
             return config.banTime;
         }
+
         public void setBantime(Integer bantime) {
             this.config.banTime = bantime;
         }
@@ -70,6 +116,7 @@ public class HardcoreWorlds {
         public Integer getSpawnDistance() {
             return config.spawnDistance;
         }
+
         public void setSpawnDistance(Integer spawndistance) {
             this.config.spawnDistance = spawndistance;
         }
@@ -77,6 +124,7 @@ public class HardcoreWorlds {
         public Integer getSpawnProtection() {
             return config.spawnProtection;
         }
+
         public void setSpawnProtection(Integer spawnprotection) {
             this.config.spawnProtection = spawnprotection;
         }
@@ -84,6 +132,7 @@ public class HardcoreWorlds {
         public Location getExitPos() {
             return config.exitLocation;
         }
+
         public void setExitPos(Location exitpos) {
             this.config.exitLocation = exitpos;
         }
@@ -91,6 +140,7 @@ public class HardcoreWorlds {
         public Integer getRollbackDelay() {
             return config.rollbackdelay;
         }
+
         public void setRollbackDelay(Integer rollbackdelay) {
             this.config.rollbackdelay = rollbackdelay;
         }
@@ -98,6 +148,7 @@ public class HardcoreWorlds {
         public Boolean getDeathDrops() {
             return config.deathdrops;
         }
+
         public void setDeathDrops(Boolean deathdrops) {
             this.config.deathdrops = deathdrops;
         }
@@ -105,6 +156,7 @@ public class HardcoreWorlds {
         public Boolean isWhitelisted() {
             return config.whitelisted;
         }
+
         public void setWhitelisted(Boolean whitelisted) {
             this.config.whitelisted = whitelisted;
         }
@@ -117,40 +169,12 @@ public class HardcoreWorlds {
             this.config.bukkitDifficulty = difficulty;
         }
 
-        protected boolean checkandSetDifficulty(){
+        protected boolean checkandSetDifficulty() {
             if (world.getDifficulty() != getDifficulty()) {
                 world.setDifficulty(getDifficulty());
             }
             return world.getDifficulty() == getDifficulty();
         }
-    }
-
-
-    public boolean addWorld(String world, HardcoreWorld hcw) {
-        worlds.put(world, hcw);
-        return true;
-    }
-
-    public HardcoreWorld Get(String world) {
-        String key = StringUtils.replace(world, "_nether", "");
-        if (worlds.containsKey(key)) {
-            return worlds.get(key);
-        }
-        return null;
-    }
-
-    public boolean Contains(String world) {
-        String key = StringUtils.replace(world, "_nether", "");
-        return worlds.containsKey(key);
-    }
-    
-    public Map<String, HardcoreWorld> AllRecords() {
-        return worlds;
-    }
-    
-    public String GetNames() {
-        List<String> names = new ArrayList<>(worlds.keySet());
-        return StringUtils.join(names, ",");
     }
 
 }

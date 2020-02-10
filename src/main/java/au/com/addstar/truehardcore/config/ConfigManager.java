@@ -19,23 +19,25 @@
 
 package au.com.addstar.truehardcore.config;
 
-import java.io.File;
-import java.util.Set;
-
 import au.com.addstar.truehardcore.TrueHardcore;
+import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 
-import au.com.addstar.truehardcore.objects.HardcoreWorlds.*;
+import java.io.File;
+import java.util.Set;
 
 public class ConfigManager {
     private final TrueHardcore plugin;
-    private File configFile;
     private ThConfig config;
 
+    /**
+     * Constructor.
+     * @param instance plugin
+     */
     public ConfigManager(TrueHardcore instance) {
         plugin = instance;
-        configFile = new File(plugin.getDataFolder(), "config.yml");
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
         config = new ThConfig(configFile, plugin.getName());
     }
 
@@ -43,6 +45,9 @@ public class ConfigManager {
         return config;
     }
 
+    /**
+     * Load the config.
+     */
     public void loadConfig() {
         config.load();
         //write to a file
@@ -52,19 +57,19 @@ public class ConfigManager {
 
         // Load each world's settings
         if (worlds != null) {
-            TrueHardcore.Debug("Setting up worlds...");
+            TrueHardcore.debug("Setting up worlds...");
 
             for (String w : worlds) {
                 World world = Bukkit.getWorld(w);
                 if (world == null) {
-                    TrueHardcore.Log("No world found named:" + w);
+                    TrueHardcore.log("No world found named:" + w);
                     continue;
                 }
-                HardcoreWorld hcw = new HardcoreWorld(world,config.getWorldConfig(w));
-                plugin.HardcoreWorlds.addWorld(world.getName(), hcw);
+                HardcoreWorld hcw = new HardcoreWorld(world, config.getWorldConfig(w));
+                plugin.hardcoreWorlds.addWorld(world.getName(), hcw);
             }
         } else {
-            TrueHardcore.Warn("No worlds configured! Things will not work!");
+            TrueHardcore.warn("No worlds configured! Things will not work!");
         }
     }
 }

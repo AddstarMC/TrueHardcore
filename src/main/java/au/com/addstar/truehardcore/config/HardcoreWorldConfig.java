@@ -22,13 +22,14 @@ package au.com.addstar.truehardcore.config;
 import au.com.addstar.monolith.util.configuration.AutoConfig;
 import au.com.addstar.monolith.util.configuration.ConfigField;
 import au.com.addstar.truehardcore.functions.Util;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created for the Charlton IT Project.
@@ -59,7 +60,7 @@ public class HardcoreWorldConfig extends AutoConfig {
     public Integer rollbackdelay = 0;
 
     @ConfigField(comment = "Does the player drop items on death")
-    public Boolean deathdrops =true;
+    public Boolean deathdrops = true;
 
     @ConfigField(comment = "Does this world use the whitelist")
     public Boolean whitelisted = true;
@@ -93,17 +94,21 @@ public class HardcoreWorldConfig extends AutoConfig {
 
     @Override
     protected void onPreSave() {
-        exitPos = Util.Loc2Str(exitLocation);
+        exitPos = Util.loc2Str(exitLocation);
         difficulty = bukkitDifficulty.name();
     }
 
     @Override
     protected void onPostLoad(YamlConfiguration yaml) throws InvalidConfigurationException {
-        exitLocation = Util.Str2Loc(exitPos);
+
+        exitLocation = Util.str2Loc(exitPos);
         try {
             bukkitDifficulty = Difficulty.valueOf(difficulty);
         } catch (IllegalArgumentException e) {
             bukkitDifficulty = Difficulty.HARD;
+            InvalidConfigurationException er = new InvalidConfigurationException("Invalid config");
+            er.addSuppressed(e);
+            throw er;
         }
     }
 

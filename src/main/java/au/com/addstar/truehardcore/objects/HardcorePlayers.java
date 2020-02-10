@@ -18,10 +18,6 @@
  */
 
 package au.com.addstar.truehardcore.objects;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 import au.com.addstar.truehardcore.TrueHardcore;
 import org.apache.commons.lang.StringUtils;
@@ -29,10 +25,123 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class HardcorePlayers {
 
     private final Map<String, HardcorePlayer> players;
-    public HardcorePlayers() { players = new HashMap<>();
+
+    public HardcorePlayers() {
+        players = new HashMap<>();
+    }
+
+    /**
+     * Create a HCP.
+     * @param world world
+     * @param id uuid
+     * @param name name
+     * @return the HardcorePlayer
+     */
+    public HardcorePlayer newPlayer(String world, UUID id, String name) {
+        HardcorePlayer hcp = new HardcorePlayer();
+        TrueHardcore.debug("Creating new player record: " + world + "/" + name);
+        hcp.loadDataOnly = true;
+        hcp.setPlayerName(name);
+        hcp.setUniqueId(id);
+        hcp.setWorld(world);
+        hcp.loadDataOnly = false;
+        addPlayer(world, id, hcp);
+        return hcp;
+    }
+
+    /**
+     * Get an hardcore player.
+     * @param world world
+     * @param id uuid
+     * @return player
+     */
+    @Nullable
+    public HardcorePlayer get(String world,@Nonnull UUID id) {
+        String key = StringUtils.replace(world, "_nether", "") + "/" + id;
+        if (players.containsKey(key)) {
+            return players.get(key);
+        }
+        return null;
+    }
+
+    /**
+     * Get a Hardcore player.
+     * @param world world
+     * @param player player
+     * @return HCP
+     */
+    @Nullable
+    public HardcorePlayer get(@Nullable World world,@Nullable Player player) {
+        if ((world == null) || (player == null)) {
+            return null;
+        }
+        return get(world.getName(), player.getUniqueId());
+    }
+
+    /**
+     * Get a player.
+     * @param player player
+     * @return hcp
+     */
+    public HardcorePlayer get(Player player) {
+        if (player == null) {
+            return null;
+        }
+        return get(player.getWorld().getName(), player.getUniqueId());
+    }
+
+    /**
+     * Get a player.
+     * @param key name
+     * @return HCP
+     */
+    @Nullable
+    public HardcorePlayer get(String key) {
+        if (players.containsKey(key)) {
+            return null;
+        }
+        return players.get(StringUtils.replace(key, "_nether", ""));
+    }
+
+    /**
+     * Add a player.
+     * @param world world
+     * @param id uuid
+     * @param hcp hcp
+     * @return boolean
+     */
+    private boolean addPlayer(String world, UUID id, HardcorePlayer hcp) {
+        String key = world + "/" + id.toString();
+        players.put(key, hcp);
+        return true;
+    }
+
+    /**
+     * Checks a player is in the plugin.
+     * @param player the player to check
+     * @return boolean
+     */
+    @SuppressWarnings("unused")
+    public boolean isHardcorePlayer(Player player) {
+        return (get(player) != null);
+    }
+
+    public void clear() {
+        players.clear();
+    }
+
+    public Map<String, HardcorePlayer> allRecords() {
+        return players;
     }
 
     public enum PlayerState {
@@ -43,310 +152,675 @@ public class HardcorePlayers {
     }
 
     public static class HardcorePlayer {
-        private String PlayerName;
-        private UUID PlayerId;
-        private String World;
-        private Location SpawnPos;
-        private Location LastPos;
-        private Date LastJoin;
-        private Date LastQuit;
-        private Date GameStart;
-        private Date GameEnd;
-        private Integer GameTime = 0;
-        private Integer Level = 0;
-        private float Exp = 0;
-        private Integer Score = 0;
-        private Integer TopScore = 0;
-        private PlayerState State = PlayerState.NOT_IN_GAME;
-        private String DeathMsg;
-        private Location DeathPos;
-        private Integer Deaths = 0;
-        private Integer CowKills=0, PigKills=0, SheepKills=0, ChickenKills=0, CreeperKills=0;
-        private Integer ZombieKills=0, SkeletonKills=0, SpiderKills=0, EnderKills=0, SlimeKills=0, MooshKills=0;
-        private Integer OtherKills=0, PlayerKills=0;
-        private boolean Modified = false;
-        private boolean LoadDataOnly = false;
-        private boolean GodMode = false;
-        
+        private String playerName;
+        private UUID playerId;
+        private String world;
+        private Location spawnPos;
+        private Location lastPos;
+        private Date lastJoin;
+        private Date lastQuit;
+        private Date gameStart;
+        private Date gameEnd;
+        private Integer gameTime = 0;
+        private Integer level = 0;
+        private float exp = 0;
+        private Integer score = 0;
+        private Integer topScore = 0;
+        private PlayerState state = PlayerState.NOT_IN_GAME;
+        private String deathMsg;
+        private Location deathPos;
+        private Integer deaths = 0;
+        private Integer cowKills = 0;
+        private Integer pigKills = 0;
+        private Integer sheepKills = 0;
+        private Integer chickenKills = 0;
+        private Integer creeperKills = 0;
+        private Integer zombieKills = 0;
+        private Integer skeletonKills = 0;
+        private Integer spiderKills = 0;
+        private Integer enderKills = 0;
+        private Integer slimeKills = 0;
+        private Integer mooshKills = 0;
+        private Integer otherKills = 0;
+        private Integer playerKills = 0;
+        private boolean modified = false;
+        private boolean loadDataOnly = false;
+        private boolean godMode = false;
+
         private boolean combat = false;
         private long combatTime = 0;
-        
+
+        /**
+         * Check if its only load data.
+         * @return bool
+         */
+        @SuppressWarnings("unused")
         public boolean isLoadDataOnly() {
-            return LoadDataOnly;
+            return loadDataOnly;
         }
+
         public void setLoadDataOnly(boolean loadDataOnly) {
-            LoadDataOnly = loadDataOnly;
+            this.loadDataOnly = loadDataOnly;
         }
-        
+
         public String getPlayerName() {
-            return PlayerName;
+            return playerName;
         }
+
+        /**
+         * set the name.
+         * @param playerName string
+         */
         public void setPlayerName(String playerName) {
-            PlayerName = playerName;
-            if (LoadDataOnly) { return; }
+            this.playerName = playerName;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get the UUID.
+         * @return uuid
+         */
         public UUID getUniqueId() {
-            return PlayerId;
+            return playerId;
         }
+
+        /**
+         * Set the UUID.
+         * @param id the uuid
+         */
         public void setUniqueId(UUID id) {
-            PlayerId = id;
-            if (LoadDataOnly) { return; }
+            playerId = id;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
         public String getWorld() {
-            return World;
+            return world;
         }
+
+        /**
+         * Set the World.
+         * @param world world.
+         */
         public void setWorld(String world) {
-            World = world;
-            if (LoadDataOnly) { return; }
+            this.world = world;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
         public Location getSpawnPos() {
-            return SpawnPos;
+            return spawnPos;
         }
+
+        /**
+         * Set the spawn.
+         * @param spawnPos location
+         */
         public void setSpawnPos(Location spawnPos) {
-            SpawnPos = spawnPos;
-            if (LoadDataOnly) { return; }
+            this.spawnPos = spawnPos;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
         public Location getLastPos() {
-            return LastPos;
+            return lastPos;
         }
+
+        /**
+         * Set last location.
+         * @param lastPos location
+         */
         public void setLastPos(Location lastPos) {
-            LastPos = lastPos;
-            if (LoadDataOnly) { return; }
+            this.lastPos = lastPos;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * get last join date.
+         * @return date
+         */
         public Date getLastJoin() {
-            return LastJoin;
+            return lastJoin;
         }
+
+        /**
+         * Set last join date.
+         * @param lastJoin date
+         */
         public void setLastJoin(Date lastJoin) {
-            LastJoin = lastJoin;
-            if (LoadDataOnly) { return; }
+            this.lastJoin = lastJoin;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * get last quit date.
+         * @return date
+         */
         public Date getLastQuit() {
-            return LastQuit;
+            return lastQuit;
         }
+
+        /**
+         * Set the date.
+         * @param lastQuit date.
+         */
         public void setLastQuit(Date lastQuit) {
-            LastQuit = lastQuit;
-            if (LoadDataOnly) { return; }
+            this.lastQuit = lastQuit;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Set game start.
+         * @return Date.
+         */
         public Date getGameStart() {
-            return GameStart;
+            return gameStart;
         }
+
+        /**
+         * Set .
+         * @param gameStart date.
+         */
         public void setGameStart(Date gameStart) {
-            GameStart = gameStart;
-            if (LoadDataOnly) { return; }
+            this.gameStart = gameStart;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get date end.
+         * @return date.
+         */
         public Date getGameEnd() {
-            return GameEnd;
+            return gameEnd;
         }
+
+        /**
+         * Set end date.
+         * @param gameEnd date
+         */
         public void setGameEnd(Date gameEnd) {
-            GameEnd = gameEnd;
-            if (LoadDataOnly) { return; }
+            this.gameEnd = gameEnd;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * get time in game.
+         * @return integer
+         */
         public Integer getGameTime() {
-            return GameTime;
+            return gameTime;
         }
+
+        /**
+         * Set game time.
+         * @param gameTime time as a int
+         */
         public void setGameTime(Integer gameTime) {
-            GameTime = gameTime;
-            if (LoadDataOnly) { return; }
+            this.gameTime = gameTime;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get level.
+         * @return integer level
+         */
         public Integer getLevel() {
-            return Level;
+            return level;
         }
+
+        /**
+         * Set the level.
+         * @param level int
+         */
         public void setLevel(Integer level) {
-            Level = level;
-            if (LoadDataOnly) { return; }
+            this.level = level;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
         public float getExp() {
-            return Exp;
+            return exp;
         }
+
+        /**
+         * Set xp.
+         * @param exp xp
+         */
         public void setExp(float exp) {
-            Exp = exp;
-            if (LoadDataOnly) { return; }
+            this.exp = exp;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get Score.
+         * @return score
+         */
         public Integer getScore() {
-            return Score;
+            return score;
         }
+
+        /**
+         * Set Score.
+         * @param score the score
+         */
         public void setScore(Integer score) {
-            Score = score;
-            if (LoadDataOnly) { return; }
+            this.score = score;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * get Top Score.
+         * @return score
+         */
         public Integer getTopScore() {
-            return TopScore;
+            return topScore;
         }
+
+        /**
+         * Set top score.
+         * @param topScore score
+         */
         public void setTopScore(Integer topScore) {
-            TopScore = topScore;
-            if (LoadDataOnly) { return; }
+            this.topScore = topScore;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get State.
+         * @return PlayerState
+         */
         public PlayerState getState() {
-            return State;
+            return state;
         }
+
+        /**
+         * Set State.
+         * @param state PlayerState
+         */
         public void setState(PlayerState state) {
-            if (!LoadDataOnly) {
-                if ((state == PlayerState.DEAD) && (State != PlayerState.DEAD)) {
+            if (!loadDataOnly) {
+                if ((state == PlayerState.DEAD) && (this.state != PlayerState.DEAD)) {
                     // Player has died
                     setGameEnd(new Date());
                     setLastQuit(new Date());
-                }
-                else if ((state == PlayerState.IN_GAME) && (State != PlayerState.IN_GAME)) {
+                } else if ((state == PlayerState.IN_GAME) && (this.state != PlayerState.IN_GAME)) {
                     // Joining a game
-                    if (State != PlayerState.ALIVE) {
+                    if (this.state != PlayerState.ALIVE) {
                         // Starting a new game
                         setGameStart(new Date());
                     }
                     // Always set the join date when transitioning -> IN_GAME
                     setLastJoin(new Date());
-                }
-                else if ((State == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
+                } else if ((this.state == PlayerState.IN_GAME) && (state != PlayerState.IN_GAME)) {
                     // Leaving a game (for any reason)
                     setLastQuit(new Date());
                 }
             }
-            State = state;
+            this.state = state;
         }
+
+        /**
+         * Get Death msg.
+         * @return string
+         */
         public String getDeathMsg() {
-            return DeathMsg;
+            return deathMsg;
         }
+
+        /**
+         * Set Death msg.
+         * @param deathMsg string
+         */
         public void setDeathMsg(String deathMsg) {
-            DeathMsg = deathMsg;
-            if (LoadDataOnly) { return; }
+            this.deathMsg = deathMsg;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get Death position.
+         * @return location
+         */
         public Location getDeathPos() {
-            return DeathPos;
+            return deathPos;
         }
+
+        /**
+         * Set Death position.
+         * @param deathPos location
+         */
         public void setDeathPos(Location deathPos) {
-            DeathPos = deathPos;
-            if (LoadDataOnly) { return; }
+            this.deathPos = deathPos;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
+
+        /**
+         * Get deaths.
+         * @return int
+         */
         public Integer getDeaths() {
-            return Deaths;
+            return deaths;
         }
+
+        /**
+         * Set Deaths.
+         * @param deaths int
+         */
         public void setDeaths(Integer deaths) {
-            Deaths = deaths;
-            if (LoadDataOnly) { return; }
+            this.deaths = deaths;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
 
+        /**
+         * Get cow kills.
+         * @return int.
+         */
         public Integer getCowKills() {
-            return CowKills;
+            return cowKills;
         }
+
+        /**
+         * set cow kills.
+         * @param cowKills int
+         */
         public void setCowKills(Integer cowKills) {
-            CowKills = cowKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getPigKills() {
-            return PigKills;
-        }
-        public void setPigKills(Integer pigKills) {
-            PigKills = pigKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getSheepKills() {
-            return SheepKills;
-        }
-        public void setSheepKills(Integer sheepKills) {
-            SheepKills = sheepKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getChickenKills() {
-            return ChickenKills;
-        }
-        public void setChickenKills(Integer chickenKills) {
-            ChickenKills = chickenKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getCreeperKills() {
-            return CreeperKills;
-        }
-        public void setCreeperKills(Integer creeperKills) {
-            CreeperKills = creeperKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getZombieKills() {
-            return ZombieKills;
-        }
-        public void setZombieKills(Integer zombieKills) {
-            ZombieKills = zombieKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getSkeletonKills() {
-            return SkeletonKills;
-        }
-        public void setSkeletonKills(Integer skeletonKills) {
-            SkeletonKills = skeletonKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getSpiderKills() {
-            return SpiderKills;
-        }
-        public void setSpiderKills(Integer spiderKills) {
-            SpiderKills = spiderKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getEnderKills() {
-            return EnderKills;
-        }
-        public void setEnderKills(Integer enderKills) {
-            EnderKills = enderKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getSlimeKills() {
-            return SlimeKills;
-        }
-        public void setSlimeKills(Integer slimeKills) {
-            SlimeKills = slimeKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getMooshKills() {
-            return MooshKills;
-        }
-        public void setMooshKills(Integer mooshKills) {
-            MooshKills = mooshKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getPlayerKills() {
-            return PlayerKills;
-        }
-        public void setPlayerKills(Integer playerKills) {
-            PlayerKills = playerKills;
-            if (LoadDataOnly) { return; }
-            setModified(true);
-        }
-        public Integer getOtherKills() {
-            return OtherKills;
-        }
-        public void setOtherKills(Integer otherKills) {
-            OtherKills = otherKills;
-            if (LoadDataOnly) { return; }
+            this.cowKills = cowKills;
+            if (loadDataOnly) {
+                return;
+            }
             setModified(true);
         }
 
-        
+        /**
+         * Get pig kills.
+         * @return kills
+         */
+        public Integer getPigKills() {
+            return pigKills;
+        }
+
+        /**
+         * Set kils for pigs.
+         * @param pigKills pig kills
+         */
+        public void setPigKills(Integer pigKills) {
+            this.pigKills = pigKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Get sheep kills.
+         * @return int
+         */
+        public Integer getSheepKills() {
+            return sheepKills;
+        }
+
+        /**
+         * Set Sheep kills.
+         * @param sheepKills kills
+         */
+        public void setSheepKills(Integer sheepKills) {
+            this.sheepKills = sheepKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * get Chicken kills.
+         * @return int
+         */
+        public Integer getChickenKills() {
+            return chickenKills;
+        }
+
+        /**
+         * Set chicken kills.
+         * @param chickenKills kills.
+         */
+        public void setChickenKills(Integer chickenKills) {
+            this.chickenKills = chickenKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Set Creeper kills.
+         * @return int
+         */
+        public Integer getCreeperKills() {
+            return creeperKills;
+        }
+
+        /**
+         * Set creeper kills.
+         * @param creeperKills int
+         */
+        public void setCreeperKills(Integer creeperKills) {
+            this.creeperKills = creeperKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * get zombie kills.
+         * @return int
+         */
+        public Integer getZombieKills() {
+            return zombieKills;
+        }
+
+        /**
+         * set zombie kills.
+         * @param zombieKills int
+         */
+        public void setZombieKills(Integer zombieKills) {
+            this.zombieKills = zombieKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Get Skeleton kills.
+         * @return int
+         */
+        public Integer getSkeletonKills() {
+            return skeletonKills;
+        }
+
+        /**
+         * set skeleton kills.
+         * @param skeletonKills int
+         */
+        public void setSkeletonKills(Integer skeletonKills) {
+            this.skeletonKills = skeletonKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * get spider kills.
+         * @return int
+         */
+        public Integer getSpiderKills() {
+            return spiderKills;
+        }
+
+        /**
+         * set spider kills.
+         * @param spiderKills int
+         */
+        public void setSpiderKills(Integer spiderKills) {
+            this.spiderKills = spiderKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         *  Get enderman kills.
+         * @return int
+         */
+        public Integer getEnderKills() {
+            return enderKills;
+        }
+
+        /**
+         * Set enderman kills.
+         * @param enderKills int
+         */
+        public void setEnderKills(Integer enderKills) {
+            this.enderKills = enderKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Slimes.
+         * @return int
+         */
+        public Integer getSlimeKills() {
+            return slimeKills;
+        }
+
+        /**
+         * Slimes.
+         * @param slimeKills int
+         */
+        public void setSlimeKills(Integer slimeKills) {
+            this.slimeKills = slimeKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * get Mooshroom kills.
+         * @return int
+         */
+        public Integer getMooshKills() {
+            return mooshKills;
+        }
+
+        /**
+         * Set Moosh kills.
+         * @param mooshKills int
+         */
+        public void setMooshKills(Integer mooshKills) {
+            this.mooshKills = mooshKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Set player kills.
+         * @return int
+         */
+        public Integer getPlayerKills() {
+            return playerKills;
+        }
+
+        /**
+         * Get Player kills.
+         * @param playerKills int
+         */
+        public void setPlayerKills(Integer playerKills) {
+            this.playerKills = playerKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Other kills.
+         * @return int
+         */
+        public Integer getOtherKills() {
+            return otherKills;
+        }
+
+        /**
+         * Set other.
+         * @param otherKills int
+         */
+        public void setOtherKills(Integer otherKills) {
+            this.otherKills = otherKills;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Update a player.
+         * @param player  player
+         */
         public void updatePlayer(Player player) {
             setModified(true);
             setExp(player.getExp());
@@ -354,112 +828,86 @@ public class HardcorePlayers {
             setScore(player.getTotalExperience());
             setLevel(player.getLevel());
         }
-        
-        public Integer TimeDiff(Date d1, Date d2) {
-            //Date d1 = getLastJoin();
-            //Date d2 = getLastQuit();
 
-            //TrueHardcore.instance.DebugLog("DATES: " + d1 + " / " + d2);
-            
-            // Only calculate game time if quit is after join
+        /**
+         * diff between 2 times.
+         *
+         * @param d1 date
+         * @param d2 date
+         * @return int
+         */
+        public Integer timeDiff(Date d1, Date d2) {
+
             if (d2.after(d1)) {
-                int diff = (int) ((d2.getTime() - d1.getTime()) / 1000);
-                //TrueHardcore.instance.DebugLog("DIFF: " + diff);
-                //TrueHardcore.instance.DebugLog("NEW : " + (getGameTime() + diff));
-                return diff;
+                return (int) ((d2.getTime() - d1.getTime()) / 1000);
             }
             return null;
         }
+
+        /**
+         * Calculate game time.
+         */
         public void calcGameTime() {
             calcGameTime(getLastQuit());
         }
+
+        /**
+         * Calc game time.
+         * @param when from
+         */
         public void calcGameTime(Date when) {
-            Integer diff = TimeDiff(getLastJoin(), when);
+            Integer diff = timeDiff(getLastJoin(), when);
             if (diff != null) {
                 setGameTime(getGameTime() + diff);
             }
         }
-        
+
+        /**
+         * True if changed.
+         * @return bool
+         */
         public boolean isModified() {
-            return Modified;
+            return modified;
         }
+
+        /**
+         * Set changed.
+         * @param modified bool
+         */
         public void setModified(boolean modified) {
-            Modified = modified;
+            this.modified = modified;
         }
+
+        /**
+         * True if in god mode.
+         * @return bool
+         */
         public boolean isGodMode() {
-            return GodMode;
+            return godMode;
         }
+
+        /**
+         * Set god.
+         * @param godMode bool
+         */
         public void setGodMode(boolean godMode) {
-            GodMode = godMode;
+            this.godMode = godMode;
         }
-        
+
         public boolean isCombat() {
             return combat;
         }
-        
+
         public void setCombat(boolean combat) {
             this.combat = combat;
         }
-        
+
         public long getCombatTime() {
             return combatTime;
         }
-        
+
         public void setCombatTime(long combatTime) {
             this.combatTime = combatTime;
         }
-    }
-    
-    public HardcorePlayer newPlayer(String world, UUID id, String name) {
-        HardcorePlayer hcp = new HardcorePlayer();
-		TrueHardcore.Debug("Creating new player record: " + world + "/" + name);
-		hcp.LoadDataOnly = true;
-		hcp.setPlayerName(name);
-		hcp.setUniqueId(id);
-		hcp.setWorld(world);
-		hcp.LoadDataOnly = false;
-		addPlayer(world, id, hcp);
-		return hcp;
-    }
-
-    public HardcorePlayer get(String world, UUID id) {
-        String key = StringUtils.replace(world, "_nether", "") + "/" + id;
-        if (players.containsKey(key)) {
-			return players.get(key);
-        }
-        return null;
-    }
-    
-    public HardcorePlayer get(World world, Player player) {
-        if ((world == null) || (player == null)) { return null; }
-        return get(world.getName(), player.getUniqueId());
-    }
-
-    public HardcorePlayer get(Player player) {
-        if (player == null) { return null; }
-        return get(player.getWorld().getName(), player.getUniqueId());
-    }
-    
-    public HardcorePlayer get(String key) {
-        if (players.containsKey(key)) { return null; }
-        return players.get(StringUtils.replace(key, "_nether", ""));
-    }
-    
-    private boolean addPlayer(String world, UUID id, HardcorePlayer hcp) {
-        String key = world + "/" + id.toString();
-        players.put(key, hcp);
-        return true;
-    }
-    
-    public boolean isHardcorePlayer(Player player) {
-        return (get(player) != null);
-    }
-    
-    public void clear() {
-        players.clear();
-    }
-    
-    public Map<String, HardcorePlayer> allRecords() {
-        return players;
     }
 }

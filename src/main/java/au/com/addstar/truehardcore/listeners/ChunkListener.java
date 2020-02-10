@@ -26,7 +26,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 
 /**
- * Created for the Addstar MC Project.
+ * Created for the AddstarMC Project.
  * Created by Narimm on 4/02/2020.
  */
 public class ChunkListener implements Listener {
@@ -35,11 +35,16 @@ public class ChunkListener implements Listener {
     public ChunkListener(long baseTime) {
         this.baseTime = baseTime;
     }
+
+    /**
+     * Handle a chunk load.
+     * @param event the event
+     */
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onChunkLoad(ChunkLoadEvent event){
+    public void onChunkLoad(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
-        Long time = chunk.getInhabitedTime();
-        if(time<baseTime){
+        long time = chunk.getInhabitedTime();
+        if (time < baseTime) {
             chunk.setInhabitedTime(baseTime);
         }
     }
