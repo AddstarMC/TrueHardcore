@@ -7,7 +7,7 @@
   <url>http://dev.bukkit.org/bukkit-plugins/truehardcore</url>
   <properties>
     <build.number/>
-      <spigot.api.version>1.13</spigot.api.version>
+      <spigot.api.version>1.15</spigot.api.version>
       <spigot.version>1.15.2-R0.1-SNAPSHOT</spigot.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -43,7 +43,7 @@
     </snapshotRepository>
   </distributionManagement>
   <repositories>
-    <!-- For spigot -->
+      <!-- For spigot -->
       <repository>
           <id>md5-repo</id>
           <url>http://repo.md-5.net/content/groups/public/</url>
@@ -58,7 +58,8 @@
           <id>papermc</id>
           <url>https://papermc.io/repo/repository/maven-public/</url>
       </repository>
-    <!-- Addstar repos -->
+
+      <!-- Addstar repos -->
       <repository>
           <id>addstar-release-repo</id>
           <url>https://maven.addstar.com.au/artifactory/all-release</url>
@@ -80,29 +81,36 @@
           </releases>
       </repository>
 
-    <!-- Repository for other dependencies of SK's -->
-    <repository>
-            <id>sk89q-repo</id>
-            <url>https://maven.enginehub.org/repo/</url>
-    </repository>
+      <!-- Repository for other dependencies of SK's -->
+      <repository>
+          <id>sk89q-repo</id>
+          <url>https://maven.enginehub.org/repo/</url>
+      </repository>
 
-    <!-- For Vault -->
+      <!-- For Vault -->
       <repository>
           <id>vault-repo</id>
           <url>http://nexus.hc.to/content/repositories/pub_releases</url>
       </repository>
 
-        <!-- Other repositories -->
-        <repository>
-            <id>maven-central</id>
-            <url>http://repo1.maven.org/maven2/</url>
-        </repository>
+      <!-- BStats -->
       <repository>
-          <!-- BStats-->
           <id>CodeMC</id>
           <url>https://repo.codemc.org/repository/maven-public</url>
       </repository>
-    </repositories>
+
+      <!-- Dynmap -->
+      <repository>
+          <id>mikeprimm</id>
+          <url>http://repo.mikeprimm.com/</url>
+      </repository>
+
+      <!-- Other repositories -->
+      <repository>
+          <id>maven-central</id>
+          <url>http://repo1.maven.org/maven2/</url>
+      </repository>
+  </repositories>
 
   <dependencies>
     <!-- Spigot -->
@@ -146,7 +154,7 @@
         <dependency>
             <groupId>me.botsko</groupId>
             <artifactId>prism</artifactId>
-            <version>2.1.2</version>
+            <version>2.1.4-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.bukkit</groupId>

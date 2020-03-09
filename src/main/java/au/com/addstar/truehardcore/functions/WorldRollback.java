@@ -43,6 +43,7 @@ public class WorldRollback {
     private TrueHardcore plugin;
     private final ArrayList<RollbackRequest> rollbackQueue;
     private BukkitTask queueTask;
+    private Boolean queueLocked = false;
 
     /**
      * Rollback handler using Prism.
@@ -135,6 +136,11 @@ public class WorldRollback {
     public class ProcessNextRequest implements Runnable {
         @Override
         public void run() {
+            // Attempt to lock the queue. If already locked, it will fail so we skip this cycle.
+            if (!lockQueue()) {
+                return;
+            }
+
             try {
                 final RollbackRequest req = getNextRequest();
                 if (req == null) {
@@ -143,8 +149,7 @@ public class WorldRollback {
                 debug("Handling " + req.type.toLowerCase() + " task for: "
                       + req.world.getName() + "/" + req.player.getName());
                 if (req.player == null) {
-                    warn("WARNING: Rollback task contains an invalid player! "
-                          + "Ignoring..");
+                    warn("WARNING: Rollback task contains an invalid player! Ignoring..");
                     return;
                 }
                 if (req.world == null) {
@@ -167,36 +172,38 @@ public class WorldRollback {
                 params.addActionType("water-bucket");
                 params.addActionType("lighter");
 
-
                 switch (req.type) {
                     case "ROLLBACK":
                         // Rollback found changes
-                        try {
-                            // Lookup changes for specified world+player
-                            ActionsQuery aq = new ActionsQuery(prism);
-                            debug("Querying changes for " + req.player.getName() + " ("
-                                  + req.world.getName() + ")...");
-                            QueryResult result = aq.lookup(params);
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                            try {
+                                // Lookup changes for specified world+player
+                                ActionsQuery aq = new ActionsQuery(prism);
+                                debug("Querying changes for " + req.player.getName() + " ("
+                                        + req.world.getName() + ")...");
+                                QueryResult result = aq.lookup(params);
 
-                            if (result.getActionResults().size() > 0) {
-                                // Always add a purge query for this death to the end of the queue
-                                queueRollback("PURGE", req.player, req.world, 20);
+                                if (result.getActionResults().size() > 0) {
+                                    // Always add a purge query for this death to the end of the queue
+                                    queueRollback("PURGE", req.player, req.world, 20);
 
-                                debug("Rolling back " + result.getActionResults().size()
-                                      + " changes for " + req.player.getName() + " ("
-                                      + req.world.getName() + ")...");
-                                Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(),
-                                      result.getActionResults(), params, null);
-                                rollback.apply();
-                            } else {
-                                debug("Nothing to rollback for " + req.player.getName()
-                                      + " (" + req.world.getName() + ")");
+                                    debug("Rolling back " + result.getActionResults().size()
+                                            + " changes for " + req.player.getName() + " ("
+                                            + req.world.getName() + ")...");
+                                    Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(),
+                                            result.getActionResults(), params, null);
+                                    rollback.apply();
+                                } else {
+                                    debug("Nothing to rollback for " + req.player.getName()
+                                            + " (" + req.world.getName() + ")");
+                                }
+                            } catch (Exception e) {
+                                warn("Rollback failed for " + req.player.getName() + "/"
+                                        + req.world.getName() + "!");
+                                e.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            warn("Rollback failed for " + req.player.getName() + "/"
-                                  + req.world.getName() + "!");
-                            e.printStackTrace();
-                        }
+                            unlockQueue();
+                        });
                         break;
                     case "PURGE":
                         // We can't do this on the main thread or the server will lock up too long
@@ -219,16 +226,45 @@ public class WorldRollback {
                                       + "/" + req.world.getName() + "!");
                                 e.printStackTrace();
                             }
+                            unlockQueue();
                         });
                         break;
                     default:
                         warn("WARNING: Unknown rollback task \"" + req.type + "\"!");
+                        unlockQueue();
                         break;
                 }
             } catch (Exception e) {
                 // Do nothing or throw an error if you want
                 e.printStackTrace();
+                unlockQueue();
             }
+        }
+    }
+
+    // Lock rollback queue so no further entries can be processed
+    private boolean lockQueue() {
+        synchronized (queueLocked) {
+            if (queueLocked) {
+                // queue already locked
+                return false;
+            }
+            queueLocked = true;
+            return true;
+        }
+    }
+
+    // Unlock queue to allow further processing.
+    private void unlockQueue() {
+        synchronized (queueLocked) {
+            queueLocked = false;
+        }
+    }
+
+    // Check if the queue is locked or not
+    public boolean isQueueLocked() {
+        synchronized (queueLocked) {
+            return queueLocked;
         }
     }
 }
