@@ -42,17 +42,17 @@ public class ThConfig extends AutoConfig {
 
 
     @ConfigField(comment = "Set true to enable debug mode ")
-    public static boolean debugEnabled = false;
+    public static Boolean debugEnabled = false;
     @ConfigField(comment = "A list of worlds")
     public HashSet<String> worlds = new HashSet<>();
     @ConfigField(comment = "Set true to enable ")
-    public boolean gameEnabled = true;
+    public Boolean gameEnabled = true;
 
     @ConfigField(comment = "The Bungeechat channel name to broadcast messages")
     public String broadcastChannel = "GamesBCast";
 
     @ConfigField(name = "AutoSaveEnabled", comment = "Boolean - set true to enable autosaving")
-    public boolean autoSaveEnabled = false;
+    public Boolean autoSaveEnabled = false;
 
     @ConfigField(category = "Database", name = "Host",
           comment = "The ip or hostname of the database")
@@ -75,13 +75,13 @@ public class ThConfig extends AutoConfig {
     public String password;
     @ConfigField(category = "CombatLogPrevention", name = "enabled",
           comment = "This prevents a player quiting hardcore properly while in combat ")
-    public boolean antiCombatLog = false;
+    public Boolean antiCombatLog = false;
     @ConfigField(category = "CombatLogPrevention",
           comment = "How long to hold them in combat in s")
-    public long combatTime = 30;
+    public Integer combatTime = 30;
     @ConfigField(category = "Difficulty",
           comment = "Set from 0 - 50 will make a chunk harder on initial load")
-    public long baseChunkTime = 0;
+    public Integer baseChunkTime = 0;
     @ConfigField(comment = "The lobby game world name")
     public String lobbyWorld = "games";
 
