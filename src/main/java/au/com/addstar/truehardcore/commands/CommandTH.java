@@ -630,8 +630,8 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                sender.sendMessage(ChatColor.GREEN + "Queue busy: "
-                        + ChatColor.YELLOW + plugin.rollbackHandler.isQueueBusy());
+                sender.sendMessage(ChatColor.GREEN + "Queue locked: "
+                        + ChatColor.YELLOW + plugin.rollbackHandler.isQueueLocked());
                 sender.sendMessage(ChatColor.GREEN + "Hardcore rollback queue:");
                 for (int x = 0; x < plugin.rollbackHandler.getQueue().size(); x++) {
                     WorldRollback.RollbackRequest req = plugin.rollbackHandler.getQueue().get(x);

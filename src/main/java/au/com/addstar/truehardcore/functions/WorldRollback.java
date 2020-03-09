@@ -43,7 +43,7 @@ public class WorldRollback {
     private TrueHardcore plugin;
     private final ArrayList<RollbackRequest> rollbackQueue;
     private BukkitTask queueTask;
-    private Boolean QueueBusy = false;
+    private Boolean queueLocked = false;
 
     /**
      * Rollback handler using Prism.
@@ -136,8 +136,8 @@ public class WorldRollback {
     public class ProcessNextRequest implements Runnable {
         @Override
         public void run() {
-            // If we're already busy, wait until next cycle
-            if (isQueueBusy()) {
+            // Attempt to lock the queue. If already locked, it will fail so we skip this cycle.
+            if (!lockQueue()) {
                 return;
             }
 
@@ -175,7 +175,6 @@ public class WorldRollback {
                 switch (req.type) {
                     case "ROLLBACK":
                         // Rollback found changes
-                        setQueueBusy(true);
                         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                             try {
                                 // Lookup changes for specified world+player
@@ -203,7 +202,7 @@ public class WorldRollback {
                                         + req.world.getName() + "!");
                                 e.printStackTrace();
                             }
-                            setQueueBusy(false);
+                            unlockQueue();
                         });
                         break;
                     case "PURGE":
@@ -211,7 +210,6 @@ public class WorldRollback {
                         // This will cause Prism connection locking issues sometimes - eventually
                         // we'll figure out a better way to do this without causing server lag or
                         // DB connection issues
-                        setQueueBusy(true);
                         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                             try {
                                 debug("Purging changes for " + req.player.getName() + " ("
@@ -228,29 +226,45 @@ public class WorldRollback {
                                       + "/" + req.world.getName() + "!");
                                 e.printStackTrace();
                             }
-                            setQueueBusy(false);
+                            unlockQueue();
                         });
                         break;
                     default:
                         warn("WARNING: Unknown rollback task \"" + req.type + "\"!");
+                        unlockQueue();
                         break;
                 }
             } catch (Exception e) {
                 // Do nothing or throw an error if you want
                 e.printStackTrace();
+                unlockQueue();
             }
         }
     }
 
-    private void setQueueBusy(boolean isBusy) {
-        synchronized (QueueBusy) {
-            QueueBusy = isBusy;
+    // Lock rollback queue so no further entries can be processed
+    private boolean lockQueue() {
+        synchronized (queueLocked) {
+            if (queueLocked) {
+                // queue already locked
+                return false;
+            }
+            queueLocked = true;
+            return true;
         }
     }
 
-    public boolean isQueueBusy() {
-        synchronized (QueueBusy) {
-            return QueueBusy;
+    // Unlock queue to allow further processing.
+    private void unlockQueue() {
+        synchronized (queueLocked) {
+            queueLocked = false;
+        }
+    }
+
+    // Check if the queue is locked or not
+    public boolean isQueueLocked() {
+        synchronized (queueLocked) {
+            return queueLocked;
         }
     }
 }
