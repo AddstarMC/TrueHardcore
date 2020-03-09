@@ -43,6 +43,7 @@ public class WorldRollback {
     private TrueHardcore plugin;
     private final ArrayList<RollbackRequest> rollbackQueue;
     private BukkitTask queueTask;
+    private Boolean QueueBusy = false;
 
     /**
      * Rollback handler using Prism.
@@ -135,6 +136,11 @@ public class WorldRollback {
     public class ProcessNextRequest implements Runnable {
         @Override
         public void run() {
+            // If we're already busy, wait until next cycle
+            if (isQueueBusy()) {
+                return;
+            }
+
             try {
                 final RollbackRequest req = getNextRequest();
                 if (req == null) {
@@ -143,8 +149,7 @@ public class WorldRollback {
                 debug("Handling " + req.type.toLowerCase() + " task for: "
                       + req.world.getName() + "/" + req.player.getName());
                 if (req.player == null) {
-                    warn("WARNING: Rollback task contains an invalid player! "
-                          + "Ignoring..");
+                    warn("WARNING: Rollback task contains an invalid player! Ignoring..");
                     return;
                 }
                 if (req.world == null) {
@@ -167,42 +172,46 @@ public class WorldRollback {
                 params.addActionType("water-bucket");
                 params.addActionType("lighter");
 
-
                 switch (req.type) {
                     case "ROLLBACK":
                         // Rollback found changes
-                        try {
-                            // Lookup changes for specified world+player
-                            ActionsQuery aq = new ActionsQuery(prism);
-                            debug("Querying changes for " + req.player.getName() + " ("
-                                  + req.world.getName() + ")...");
-                            QueryResult result = aq.lookup(params);
+                        setQueueBusy(true);
+                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                            try {
+                                // Lookup changes for specified world+player
+                                ActionsQuery aq = new ActionsQuery(prism);
+                                debug("Querying changes for " + req.player.getName() + " ("
+                                        + req.world.getName() + ")...");
+                                QueryResult result = aq.lookup(params);
 
-                            if (result.getActionResults().size() > 0) {
-                                // Always add a purge query for this death to the end of the queue
-                                queueRollback("PURGE", req.player, req.world, 20);
+                                if (result.getActionResults().size() > 0) {
+                                    // Always add a purge query for this death to the end of the queue
+                                    queueRollback("PURGE", req.player, req.world, 20);
 
-                                debug("Rolling back " + result.getActionResults().size()
-                                      + " changes for " + req.player.getName() + " ("
-                                      + req.world.getName() + ")...");
-                                Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(),
-                                      result.getActionResults(), params, null);
-                                rollback.apply();
-                            } else {
-                                debug("Nothing to rollback for " + req.player.getName()
-                                      + " (" + req.world.getName() + ")");
+                                    debug("Rolling back " + result.getActionResults().size()
+                                            + " changes for " + req.player.getName() + " ("
+                                            + req.world.getName() + ")...");
+                                    Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(),
+                                            result.getActionResults(), params, null);
+                                    rollback.apply();
+                                } else {
+                                    debug("Nothing to rollback for " + req.player.getName()
+                                            + " (" + req.world.getName() + ")");
+                                }
+                            } catch (Exception e) {
+                                warn("Rollback failed for " + req.player.getName() + "/"
+                                        + req.world.getName() + "!");
+                                e.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            warn("Rollback failed for " + req.player.getName() + "/"
-                                  + req.world.getName() + "!");
-                            e.printStackTrace();
-                        }
+                            setQueueBusy(false);
+                        });
                         break;
                     case "PURGE":
                         // We can't do this on the main thread or the server will lock up too long
                         // This will cause Prism connection locking issues sometimes - eventually
                         // we'll figure out a better way to do this without causing server lag or
                         // DB connection issues
+                        setQueueBusy(true);
                         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                             try {
                                 debug("Purging changes for " + req.player.getName() + " ("
@@ -219,6 +228,7 @@ public class WorldRollback {
                                       + "/" + req.world.getName() + "!");
                                 e.printStackTrace();
                             }
+                            setQueueBusy(false);
                         });
                         break;
                     default:
@@ -229,6 +239,18 @@ public class WorldRollback {
                 // Do nothing or throw an error if you want
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void setQueueBusy(boolean isBusy) {
+        synchronized (QueueBusy) {
+            QueueBusy = isBusy;
+        }
+    }
+
+    public boolean isQueueBusy() {
+        synchronized (QueueBusy) {
+            return QueueBusy;
         }
     }
 }
