@@ -621,8 +621,8 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                ThConfig.debugEnabled = !ThConfig.debugEnabled;
-                sender.sendMessage(ChatColor.RED + "Debug Status:" + ThConfig.debugEnabled);
+                TrueHardcore.getCfg().debugEnabled = !TrueHardcore.getCfg().debugEnabled;
+                sender.sendMessage(ChatColor.RED + "Debug Status:" + TrueHardcore.getCfg().debugEnabled);
                 break;
             case "QUEUE":
                 if (sender instanceof Player) {
