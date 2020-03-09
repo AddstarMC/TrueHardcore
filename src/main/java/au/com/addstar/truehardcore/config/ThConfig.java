@@ -44,7 +44,7 @@ public class ThConfig extends AutoConfig {
     @ConfigField(comment = "Set true to enable debug mode ")
     public static boolean debugEnabled = false;
     @ConfigField(comment = "A list of worlds")
-    public Set<String> worlds = new HashSet<>();
+    public HashSet<String> worlds = new HashSet<>();
     @ConfigField(comment = "Set true to enable ")
     public boolean gameEnabled = true;
 
