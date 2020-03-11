@@ -210,7 +210,12 @@
           <version>4.12</version>
           <scope>test</scope>
       </dependency>
-
+      <dependency>
+          <groupId>com.github.seeseemelk</groupId>
+          <artifactId>MockBukkit-v1.14</artifactId>
+          <version>0.2.2-SNAPSHOT</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 
     <build>

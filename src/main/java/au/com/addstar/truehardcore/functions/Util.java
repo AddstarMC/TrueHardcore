@@ -20,6 +20,7 @@
 package au.com.addstar.truehardcore.functions;
 
 import au.com.addstar.truehardcore.TrueHardcore;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -76,7 +77,7 @@ public class Util {
         Location loc;
         String[] parts = input.split(",");
 
-        World world = TrueHardcore.instance.getServer().getWorld(parts[0]);
+        World world = Bukkit.getServer().getWorld(parts[0]);
         if (world == null) {
             throw new IllegalArgumentException("World name not found. " + input);
         }

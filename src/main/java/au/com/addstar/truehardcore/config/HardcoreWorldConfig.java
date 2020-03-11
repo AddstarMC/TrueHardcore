@@ -22,6 +22,7 @@ package au.com.addstar.truehardcore.config;
 import au.com.addstar.monolith.util.configuration.AutoConfig;
 import au.com.addstar.monolith.util.configuration.ConfigField;
 import au.com.addstar.truehardcore.functions.Util;
+import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -89,6 +90,7 @@ public class HardcoreWorldConfig extends AutoConfig {
         this.worldName = worldName;
         final List<String> desc = new ArrayList<>();
         desc.add("World Configuration for:" + worldName);
+        desc.add("\n");
         setDescription(desc);
     }
 

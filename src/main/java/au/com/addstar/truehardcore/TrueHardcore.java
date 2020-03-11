@@ -146,6 +146,10 @@ public final class TrueHardcore extends JavaPlugin {
     private WorldBorder wb;
     private VanishManager vnp;
 
+    public TrueHardcore() {
+        super();
+    }
+
     public static ThConfig getCfg() {
         return cfg;
     }

@@ -19,6 +19,9 @@
 
 package au.com.addstar.truehardcore.config;
 
+import be.seeseemelk.mockbukkit.MockBukkit;
+import be.seeseemelk.mockbukkit.ServerMock;
+import be.seeseemelk.mockbukkit.WorldMock;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,13 +29,14 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
  * Created for the Charlton IT Project.
- * Created by benjicharlton on 10/03/2020.
+ * Created by narimm  on 10/03/2020.
  */
 
 public class ThConfigTest {
@@ -41,35 +45,44 @@ public class ThConfigTest {
     public TemporaryFolder folder = new TemporaryFolder();
 
     File file;
-    File worldTestFile;
+    File lobbyWorldFile;
+    File hardcoreWorldFile;
+    static ServerMock server = MockBukkit.mock();
+    WorldMock lobby;
+    WorldMock hardcore;
+
 
     @Before
-    public void setup(){
+    public void setup() {
+        lobby = new WorldMock();
+        hardcore = new WorldMock();
+        lobby.setName("lobby");
+        hardcore.setName("hardcore");
+        server.addWorld(lobby);
+        server.addWorld(hardcore);
+
         try {
             file = folder.newFile("test.yml");
-            worldTestFile = folder.newFile("testWorld.yml");
-
-        }catch (IOException e){
-            e.printStackTrace();
+            lobbyWorldFile = folder.newFile(lobby.getName() + ".yml");
+            hardcoreWorldFile = folder.newFile(hardcore.getName() + ".yml");
+        } catch (IOException e) {
+            Logger.getAnonymousLogger().info(e.getMessage());
         }
-
     }
 
     @Test
     public void configTest() {
-        ThConfig config = new ThConfig(file,"Test");
+        ThConfig config = new ThConfig(file, "Test");
+        HardcoreWorldConfig worldConfig
+              = new HardcoreWorldConfig(hardcoreWorldFile, "TrueHardCore", hardcore.getName());
+        worldConfig.save();
+        config.worlds.add(hardcore.getName());
         config.debugEnabled = true;
-        HardcoreWorldConfig worldConfig = new TestHardCoreWorldConfig(
-              worldTestFile,"TrueHardCore","testWorld");
         config.save();
-        worldConfig.save();
-        config.worlds.add("testWorld");
-        worldConfig.save();
-        ThConfig newConfig = new ThConfig(file,"Test");
+        ThConfig newConfig = new ThConfig(file, "Test");
         newConfig.load();
         assertEquals(config.debugEnabled, newConfig.debugEnabled);
-
-
+        assertTrue(newConfig.worlds.contains("hardcore"));
     }
 
 }
