@@ -41,22 +41,30 @@ public class ThConfigTest {
     public TemporaryFolder folder = new TemporaryFolder();
 
     File file;
+    File worldTestFile;
 
     @Before
     public void setup(){
         try {
             file = folder.newFile("test.yml");
+            worldTestFile = folder.newFile("testWorld.yml");
+
         }catch (IOException e){
             e.printStackTrace();
         }
+
     }
 
     @Test
     public void configTest() {
         ThConfig config = new ThConfig(file,"Test");
         config.debugEnabled = true;
+        HardcoreWorldConfig worldConfig = new TestHardCoreWorldConfig(
+              worldTestFile,"TrueHardCore","testWorld");
         config.save();
-
+        worldConfig.save();
+        config.worlds.add("testWorld");
+        worldConfig.save();
         ThConfig newConfig = new ThConfig(file,"Test");
         newConfig.load();
         assertEquals(config.debugEnabled, newConfig.debugEnabled);

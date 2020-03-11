@@ -39,31 +39,31 @@ public class HardcoreWorldConfig extends AutoConfig {
 
     private String worldName;
     public Location exitLocation;
-    public Difficulty bukkitDifficulty;
+    public Difficulty bukkitDifficulty = Difficulty.HARD;
 
     @ConfigField(comment = "Greeting on World Entry")
-    public String greeting;
+    public String greeting = "Welcome to Hardcore";
 
     @ConfigField(comment = "Time you are banned on death. Default 12hrs(43200s)")
-    public Integer banTime = 43200;
+    public int banTime = 43200;
 
     @ConfigField(comment = "Potential distance to look for random spawn")
-    public Integer spawnDistance = 5000;
+    public int spawnDistance = 5000;
 
     @ConfigField(comment = "Time you are safe after respawing, Default 60sec")
-    public Integer spawnProtection = 60;
+    public int spawnProtection = 60;
 
     @ConfigField(comment = "A location: worldname,x,y,z,pitch,yaw")
     public String exitPos = "lobby,0,0,0,0,-2";
 
     @ConfigField(comment = "The time before the world rolls back after death, Default 0 ticks")
-    public Integer rollbackdelay = 0;
+    public int rollbackdelay = 0;
 
     @ConfigField(comment = "Does the player drop items on death")
-    public Boolean deathdrops = true;
+    public boolean deathdrops = true;
 
     @ConfigField(comment = "Does this world use the whitelist")
-    public Boolean whitelisted = true;
+    public boolean whitelisted = true;
 
     @ConfigField(comment = "World difficulty: PEACEFUL, NORMAL, HARD")
     public String difficulty = "HARD";
