@@ -196,9 +196,6 @@ public final class TrueHardcore extends JavaPlugin {
         } catch (SecurityException | IOException e) {
             e.printStackTrace();
         }
-
-        // Grab that plugin manager!
-        pdfFile = this.getDescription();
         pm = this.getServer().getPluginManager();
 
         // Check if vault is loaded (required for economy)
