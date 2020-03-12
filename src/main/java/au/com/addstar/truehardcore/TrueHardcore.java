@@ -184,6 +184,7 @@ public final class TrueHardcore extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        pdfFile = this.getDescription();
         loadConfig();
         // This block configure the logger with handler and formatter
         try {

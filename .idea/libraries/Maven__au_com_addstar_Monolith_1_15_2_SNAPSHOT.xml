@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: au.com.addstar:Monolith:1.15.2-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/au/com/addstar/Monolith/1.15.2-SNAPSHOT/Monolith-1.15.2-20200312.104117-1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/au/com/addstar/Monolith/1.15.2-SNAPSHOT/Monolith-1.15.2-20200312.104117-1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/au/com/addstar/Monolith/1.15.2-SNAPSHOT/Monolith-1.15.2-20200312.104117-1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
