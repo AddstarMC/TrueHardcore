@@ -92,13 +92,13 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.sk89q:worldedit:5.5.6" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: rhino:js:1.7R2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.sk89q:jchronic:0.2.4a" level="project" />
-    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.12" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: junit:junit:4.13" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.zachsthings.libcomponents:libcomponents-bukkit:1.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.zachsthings.libcomponents:libcomponents-core:1.2" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.sf.opencsv:opencsv:2.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.milkbowl.vault:VaultAPI:1.7" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.griefcraft:lwc:4.7.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: me.botsko:prism:2.1.4-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: me.botsko:prism:2.1.6-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.lishid:openinvapi:3.3.7-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.wimbli.WorldBorder:WorldBorder:1.9.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: us.dynmap:dynmap-api:2.5" level="project" />
@@ -106,7 +106,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.kitteh:VanishNoPacket:3.21-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: au.com.addstar:BungeeChat-Bukkit:1.3.0-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains:annotations:16.0.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: au.com.addstar:Monolith:1.15.1-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: au.com.addstar:Monolith:1.15.2-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: de.tr7zw:item-nbt-api:2.2.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.hamcrest:hamcrest-core:1.3" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: com.github.seeseemelk:MockBukkit-v1.14:0.2.2-SNAPSHOT" level="project" />

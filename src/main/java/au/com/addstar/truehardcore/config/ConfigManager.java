@@ -54,11 +54,9 @@ public class ConfigManager {
         config.save();
         // Get the list of worlds
         Set<String> worlds = config.worlds;
-
         // Load each world's settings
         if (worlds != null) {
-            TrueHardcore.debug("Setting up worlds...");
-
+            TrueHardcore.log("Setting up worlds...");
             for (String w : worlds) {
                 World world = Bukkit.getWorld(w);
                 if (world == null) {

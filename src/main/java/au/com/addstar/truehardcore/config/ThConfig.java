@@ -99,7 +99,6 @@ public class ThConfig extends AutoConfig {
         configs = new HashMap<>();
         final List<String> desc = new ArrayList<>();
         desc.add("HardCore Configuration");
-        desc.add("\n");
         setDescription(desc);
     }
 

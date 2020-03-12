@@ -90,7 +90,6 @@ public class HardcoreWorldConfig extends AutoConfig {
         this.worldName = worldName;
         final List<String> desc = new ArrayList<>();
         desc.add("World Configuration for:" + worldName);
-        desc.add("\n");
         setDescription(desc);
     }
 

@@ -170,7 +170,7 @@ public final class TrueHardcore extends JavaPlugin {
      * @param data message
      */
     public static void debug(String data) {
-        if (cfg.debugEnabled) {
+        if (cfg != null && cfg.debugEnabled) {
             logger.info("[" + pdfFile.getName() + "] " + data);
         }
         debuglog.info(data);
