@@ -144,16 +144,19 @@ public class WorldRollback {
             try {
                 final RollbackRequest req = getNextRequest();
                 if (req == null) {
+                    unlockQueue();
                     return;
                 }
                 debug("Handling " + req.type.toLowerCase() + " task for: "
                       + req.world.getName() + "/" + req.player.getName());
                 if (req.player == null) {
                     warn("WARNING: Rollback task contains an invalid player! Ignoring..");
+                    unlockQueue();
                     return;
                 }
                 if (req.world == null) {
                     warn("WARNING: Rollback task contains an invalid world! Ignoring..");
+                    unlockQueue();
                     return;
                 }
 
