@@ -27,6 +27,9 @@ import me.botsko.prism.actionlibs.QueryParameters;
 import me.botsko.prism.actionlibs.QueryResult;
 import me.botsko.prism.appliers.PrismProcessType;
 import me.botsko.prism.appliers.Rollback;
+import me.botsko.prism.commands.DeleteCommand;
+import me.botsko.prism.purge.PurgeTask;
+import me.botsko.prism.purge.SenderPurgeCallback;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -34,6 +37,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static au.com.addstar.truehardcore.TrueHardcore.debug;
 import static au.com.addstar.truehardcore.TrueHardcore.warn;
@@ -217,12 +221,26 @@ public class WorldRollback {
                             try {
                                 debug("Purging changes for " + req.player.getName() + " ("
                                       + req.world.getName() + ")...");
-                                ActionsQuery aq = new ActionsQuery(prism);
-                                params.setProcessType(PrismProcessType.DELETE);
-                                // Temporarily removed until new Prism is working
-                                //aq.setShouldPauseDB(true);
-                                aq.delete(params);
-                                debug("Purge completed for " + req.player.getName() + " ("
+
+                                // build callback
+                                final SenderPurgeCallback callback = new SenderPurgeCallback();
+                                callback.setSender(Bukkit.getConsoleSender());
+
+                                // add to an arraylist so we're consistent
+                                QueryParameters parameters = new QueryParameters();
+                                parameters.addPlayerName(req.player.getName());
+                                parameters.setWorld(req.world.getName());
+                                final CopyOnWriteArrayList<QueryParameters> paramList = new CopyOnWriteArrayList<>();
+                                paramList.add(parameters);
+
+                                final ActionsQuery aq = new ActionsQuery(prism);
+                                final long minId = aq.getMinIDForQuery(parameters);
+                                final long maxId = aq.getMaxIDForQuery(parameters);
+
+                                plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
+                                        new PurgeTask(prism, paramList, 20, minId, maxId, callback));
+
+                                debug("Purge queued for " + req.player.getName() + " ("
                                       + req.world.getName() + ")...");
                             } catch (Exception e) {
                                 warn("Activity purge failed for " + req.player.getName()

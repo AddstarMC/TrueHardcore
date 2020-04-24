@@ -121,7 +121,7 @@ public class Util {
         if (dayHours > 0) {
             hours = dayHours + "h";
         }
-        long dayDay = time / 24 * 60 * 60;
+        long dayDay = (long) Math.floor(time / (24 * 60 * 60));
         if (dayDay > 0) {
             day = dayDay + "d";
         }
