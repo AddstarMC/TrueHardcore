@@ -66,8 +66,8 @@ public class HardcorePlayers {
      * @return player
      */
     @Nullable
-    public HardcorePlayer get(String world,@Nonnull UUID id) {
-        String key = StringUtils.replace(world, "_nether", "") + "/" + id;
+    public HardcorePlayer get(String world, @Nonnull UUID id) {
+        String key = world.replaceAll("_nether|_the_end", "") + "/" + id;
         if (players.containsKey(key)) {
             return players.get(key);
         }
@@ -110,7 +110,7 @@ public class HardcorePlayers {
         if (players.containsKey(key)) {
             return null;
         }
-        return players.get(StringUtils.replace(key, "_nether", ""));
+        return players.get(key.replaceAll("_nether|_the_end", ""));
     }
 
     /**

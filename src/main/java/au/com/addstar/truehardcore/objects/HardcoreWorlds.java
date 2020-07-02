@@ -49,7 +49,7 @@ public class HardcoreWorlds {
      * @return hardcore world
      */
     public HardcoreWorld get(String world) {
-        String key = StringUtils.replace(world, "_nether", "");
+        String key = world.replaceAll("_nether|_the_end", "");
         if (worlds.containsKey(key)) {
             return worlds.get(key);
         }
@@ -62,7 +62,7 @@ public class HardcoreWorlds {
      * @return bool
      */
     public boolean contains(String world) {
-        String key = StringUtils.replace(world, "_nether", "");
+        String key = world.replaceAll("_nether|_the_end", "");
         return worlds.containsKey(key);
     }
 

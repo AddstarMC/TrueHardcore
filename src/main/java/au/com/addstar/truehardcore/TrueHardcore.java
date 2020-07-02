@@ -523,8 +523,9 @@ public final class TrueHardcore extends JavaPlugin {
                               .loadProtectionsByPlayer(player.getUniqueId().toString());
                         String w = world.getName();
                         for (Protection prot : prots) {
-                            if (prot.getWorld().equals(w) || prot.getWorld()
-                                  .equals(w + "_nether")) {
+                            if (prot.getWorld().equals(w)
+                                    || prot.getWorld().equals(w + "_nether")
+                                    || prot.getWorld().equals(w + "_the_end")) {
                                 count++;
                                 // Remove LWC protection
                                 prot.remove();
@@ -539,15 +540,18 @@ public final class TrueHardcore extends JavaPlugin {
 
                 if (prismHooked) {
                     // Queue rollback for the Overworld
-                    rollbackHandler.queueRollback("ROLLBACK", player, world,
-                          hcw.getRollbackDelay());
+                    rollbackHandler.queueRollback("ROLLBACK", player, world, hcw.getRollbackDelay());
 
                     // Queue rollback for The Nether
-                    World netherworld = instance.getServer().getWorld(world.getName()
-                          + "_nether");
+                    World netherworld = instance.getServer().getWorld(world.getName() + "_nether");
                     if (netherworld != null) {
-                        rollbackHandler.queueRollback("ROLLBACK", player, netherworld,
-                              hcw.getRollbackDelay());
+                        rollbackHandler.queueRollback("ROLLBACK", player, netherworld, hcw.getRollbackDelay());
+                    }
+
+                    // Queue rollback for The End
+                    World endworld = instance.getServer().getWorld(world.getName() + "_the_end");
+                    if (endworld != null) {
+                        rollbackHandler.queueRollback("ROLLBACK", player, endworld, hcw.getRollbackDelay());
                     }
                 }
             } catch (Exception e) {

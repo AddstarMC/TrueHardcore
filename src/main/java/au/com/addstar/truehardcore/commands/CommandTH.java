@@ -419,7 +419,11 @@ public class CommandTH implements CommandExecutor {
 
                     // Corresponding nether world
                     world = plugin.getServer().getWorld(entry.getKey() + "_nether");
-                    playing = outputPlayingForWorld(sender, playing, world);
+                    if (world != null) playing = outputPlayingForWorld(sender, playing, world);
+
+                    // Corresponding end world
+                    world = plugin.getServer().getWorld(entry.getKey() + "_the_end");
+                    if (world != null) playing = outputPlayingForWorld(sender, playing, world);
                 }
                 if (!playing) {
                     sender.sendMessage(ChatColor.RED + "None");
