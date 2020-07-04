@@ -547,7 +547,7 @@ public class PlayerListener implements Listener {
         QueryResult lookupResult = aq.lookup(parameters);
         if (lookupResult.getActionResults().size() > 0) {
             Handler handle = lookupResult.getActionResults().get(0);
-            UUID killerUuid = handle.getUUID();
+            UUID killerUuid = handle.getUuid();
             OfflinePlayer killer = Bukkit.getOfflinePlayer(killerUuid);
             Bukkit.getScheduler().runTask(plugin, () -> updateGame(worldName, killed, killer,
                   displayName));

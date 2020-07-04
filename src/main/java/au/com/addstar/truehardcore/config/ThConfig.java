@@ -105,7 +105,6 @@ public class ThConfig extends AutoConfig {
 
     @Override
     protected void onPostLoad(YamlConfiguration yaml) throws InvalidConfigurationException {
-        super.onPostLoad(yaml);
         if(debugEnabled) {
             Logger.getAnonymousLogger().info("Loading worlds...");
         }
