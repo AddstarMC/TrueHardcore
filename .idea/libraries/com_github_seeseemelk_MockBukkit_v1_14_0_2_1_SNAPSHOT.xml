@@ -15,6 +15,8 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/seeseemelk/MockBukkit-v1.14/0.2.1-SNAPSHOT/MockBukkit-v1.14-0.2.1-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bukkit/bukkit/1.14.4-R0.1-SNAPSHOT/bukkit-1.14.4-R0.1-SNAPSHOT-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.6/commons-lang-2.6-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/21.0/guava-21.0-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.8.0/gson-2.8.0-sources.jar!/" />

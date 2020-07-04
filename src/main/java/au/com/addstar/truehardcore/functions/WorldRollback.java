@@ -234,8 +234,8 @@ public class WorldRollback {
                                 paramList.add(parameters);
 
                                 final ActionsQuery aq = new ActionsQuery(prism);
-                                final long minId = aq.getMinIDForQuery(parameters);
-                                final long maxId = aq.getMaxIDForQuery(parameters);
+                                final long minId = parameters.getMinPrimaryKey();
+                                final long maxId = parameters.getMaxPrimaryKey();
 
                                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
                                         new PurgeTask(prism, paramList, 20, minId, maxId, callback));
