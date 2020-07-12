@@ -27,7 +27,6 @@ import me.botsko.prism.actionlibs.QueryParameters;
 import me.botsko.prism.actionlibs.QueryResult;
 import me.botsko.prism.appliers.PrismProcessType;
 import me.botsko.prism.appliers.Rollback;
-import me.botsko.prism.commands.DeleteCommand;
 import me.botsko.prism.purge.PurgeTask;
 import me.botsko.prism.purge.SenderPurgeCallback;
 import org.bukkit.Bukkit;
@@ -39,8 +38,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static au.com.addstar.truehardcore.TrueHardcore.debug;
 import static au.com.addstar.truehardcore.TrueHardcore.warn;
+import static au.com.addstar.truehardcore.TrueHardcore.debug;
+import static au.com.addstar.truehardcore.TrueHardcore.log;
 
 public class WorldRollback {
     private Prism prism;
@@ -194,7 +194,7 @@ public class WorldRollback {
                                     // Always add a purge query for this death to the end of the queue
                                     queueRollback("PURGE", req.player, req.world, 20);
 
-                                    debug("Rolling back " + result.getActionResults().size()
+                                    log("Rolling back " + result.getActionResults().size()
                                             + " changes for " + req.player.getName() + " ("
                                             + req.world.getName() + ")...");
                                     Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(),
@@ -240,7 +240,7 @@ public class WorldRollback {
                                 plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
                                         new PurgeTask(prism, paramList, 20, minId, maxId, callback));
 
-                                debug("Purge queued for " + req.player.getName() + " ("
+                                log("Purge queued for " + req.player.getName() + " ("
                                       + req.world.getName() + ")...");
                             } catch (Exception e) {
                                 warn("Activity purge failed for " + req.player.getName()

@@ -119,6 +119,7 @@ public class PlayerListener implements Listener {
 
     private void handlePlayerExit(PlayerEvent event) {
         final Player player = event.getPlayer();
+        TrueHardcore.instance.removeAllowedTeleport(player.getUniqueId());
         if (!plugin.isHardcoreWorld(player.getWorld())) {
             return;
         }
@@ -158,6 +159,7 @@ public class PlayerListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         final Player player = event.getPlayer();
+        TrueHardcore.instance.removeAllowedTeleport(player.getUniqueId());
         if (!plugin.isHardcoreWorld(player.getWorld())) {
             return;
         }
@@ -290,6 +292,11 @@ public class PlayerListener implements Listener {
             // Some teleport methods are fine.. let them go
             if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL)
                   || (cause == TeleportCause.NETHER_PORTAL)) {
+                return;
+            }
+
+            if (TrueHardcore.instance.isTeleportAllowed(player.getUniqueId())) {
+                TrueHardcore.debug("Player teleport is temporarily allowed.");
                 return;
             }
 
@@ -638,6 +645,4 @@ public class PlayerListener implements Listener {
         }
 
     }
-
-
 }

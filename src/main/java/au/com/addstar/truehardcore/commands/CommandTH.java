@@ -21,7 +21,6 @@ package au.com.addstar.truehardcore.commands;
 
 import au.com.addstar.monolith.lookup.Lookup;
 import au.com.addstar.truehardcore.TrueHardcore;
-import au.com.addstar.truehardcore.config.ThConfig;
 import au.com.addstar.truehardcore.functions.Util;
 import au.com.addstar.truehardcore.functions.WorldRollback;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
@@ -45,7 +44,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
 
 public class CommandTH implements CommandExecutor {
     private final TrueHardcore plugin;
@@ -594,7 +592,6 @@ public class CommandTH implements CommandExecutor {
                 sender.sendMessage(ChatColor.RED + "TrueHardcore has been disabled.");
                 break;
             case "ENABLE":
-
                 if (sender instanceof Player) {
                     if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
                         return true;
@@ -685,6 +682,26 @@ public class CommandTH implements CommandExecutor {
                     } else {
                         sender.sendMessage(ChatColor.RED + "Player record failed to load!");
                     }
+                }
+                break;
+            case "TP":
+                if (sender instanceof Player) {
+                    if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+                if (args.length < 4) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th tp <player> <player>");
+                    return true;
+                }
+                Player from = Bukkit.getPlayer(args[1]);
+                Player to = Bukkit.getPlayer(args[2]);
+                if (Util.teleport(from, to.getLocation())) {
+                    sender.sendMessage(ChatColor.GREEN + "Teleported "
+                            + from.getDisplayName() + " to " + to.getDisplayName());
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Unable to teleport "
+                            + from.getDisplayName() + " to " + to.getDisplayName());
                 }
                 break;
             default:

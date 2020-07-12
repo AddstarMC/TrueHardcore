@@ -175,6 +175,14 @@ public class HardcoreWorlds {
             }
             return world.getDifficulty() == getDifficulty();
         }
+
+        public String getDeathCommand() {
+            return config.deathcommand;
+        }
+
+        public void setDeathCommand(String command) {
+            this.config.deathcommand = command;
+        }
     }
 
 }

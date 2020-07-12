@@ -20,10 +20,7 @@
 package au.com.addstar.truehardcore.functions;
 
 import au.com.addstar.truehardcore.TrueHardcore;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 
 import java.text.DateFormat;
@@ -31,10 +28,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
-
 
 public class Util {
 
@@ -221,7 +218,25 @@ public class Util {
             return false;
         } else {
             TrueHardcore.debugLog("Teleport (" + player.getName() + "): " + loc);
+            final UUID uuid = player.getUniqueId();
+            TrueHardcore.instance.addAllowedTeleport(uuid);
+            Bukkit.getScheduler().runTaskLater(TrueHardcore.instance, () -> {
+                TrueHardcore.instance.removeAllowedTeleport(uuid);
+            }, 60L);
             return player.teleport(loc);
+        }
+    }
+
+    /**
+     * Force loads a chunk into memory, typically to pre-load before teleporting
+     * @param loc a block location within the chunk to be loaded
+     */
+    public static void loadChunk(Location loc) {
+        if (loc == null) return;
+        Chunk chunk = loc.getChunk();
+        if (Bukkit.getServer().getWorld(loc.getWorld().getName()) != null) {
+            loc.getWorld().loadChunk(chunk);
+            loc.getBlock();
         }
     }
 

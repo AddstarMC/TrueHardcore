@@ -22,7 +22,6 @@ package au.com.addstar.truehardcore.config;
 import au.com.addstar.monolith.util.configuration.AutoConfig;
 import au.com.addstar.monolith.util.configuration.ConfigField;
 import au.com.addstar.truehardcore.functions.Util;
-import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -68,6 +67,9 @@ public class HardcoreWorldConfig extends AutoConfig {
 
     @ConfigField(comment = "World difficulty: PEACEFUL, NORMAL, HARD")
     public String difficulty = "HARD";
+
+    @ConfigField(comment = "Command to be run on death (can use <player> <displayname> <score> <cause>")
+    public String deathcommand = "";
 
     /**
      * Constructor.

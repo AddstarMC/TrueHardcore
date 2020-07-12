@@ -45,13 +45,7 @@ import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
@@ -70,18 +64,14 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
@@ -93,41 +83,55 @@ public final class TrueHardcore extends JavaPlugin {
     private static ThConfig cfg;
     private static PluginDescriptionFile pdfFile = null;
     // Hardcore worlds
-    public final au.com.addstar.truehardcore.objects.HardcoreWorlds hardcoreWorlds
-          = new HardcoreWorlds();
+    public final HardcoreWorlds hardcoreWorlds = new HardcoreWorlds();
     // Data for ALL hardcore players
     public final HardcorePlayers hcPlayers = new HardcorePlayers();
+    private Set<UUID> allowedTeleport = new HashSet<UUID>();
+
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
     private final List<Material> spawnBlocks = Arrays.asList(
-          Material.DIRT,
-          Material.COARSE_DIRT,
-          Material.PODZOL,
-          Material.GRASS,
-          Material.GRASS_BLOCK,
-          Material.GRASS_PATH,
-          Material.SAND,
-          Material.SANDSTONE,
-          Material.SMOOTH_SANDSTONE,
-          Material.SMOOTH_RED_SANDSTONE,
-          Material.SMOOTH_STONE,
-          Material.STONE,
-          Material.DIORITE,
-          Material.COBBLESTONE,
-          Material.SMOOTH_STONE,
-          Material.BEDROCK,
-          Material.SNOW,
-          Material.SNOW_BLOCK,
-          Material.CLAY,
-          Material.TERRACOTTA,
-          Material.ICE,
-          Material.PACKED_ICE,
-          Material.BLUE_ICE,
-          Material.RED_SAND,
-          Material.RED_SANDSTONE,
-          Material.CUT_SANDSTONE
-
+        Material.COARSE_DIRT,
+        Material.DIRT,
+        Material.PODZOL,
+        Material.GRASS,
+        Material.GRASS_BLOCK,
+        Material.GRASS_PATH,
+        Material.SAND,
+        Material.SANDSTONE,
+        Material.SMOOTH_SANDSTONE,
+        Material.SMOOTH_RED_SANDSTONE,
+        Material.SMOOTH_STONE,
+        Material.STONE,
+        Material.DIORITE,
+        Material.COBBLESTONE,
+        Material.SMOOTH_STONE,
+        Material.BEDROCK,
+        Material.SNOW,
+        Material.SNOW_BLOCK,
+        Material.CLAY,
+        Material.TERRACOTTA,
+        Material.ICE,
+        Material.PACKED_ICE,
+        Material.BLUE_ICE,
+        Material.RED_SAND,
+        Material.RED_SANDSTONE,
+        Material.CUT_SANDSTONE,
+        Material.OAK_LEAVES,
+        Material.BIRCH_LEAVES,
+        Material.ACACIA_LEAVES,
+        Material.DARK_OAK_LEAVES,
+        Material.JUNGLE_LEAVES,
+        Material.SPRUCE_LEAVES,
+        Material.MYCELIUM,
+        Material.BROWN_MUSHROOM_BLOCK,
+        Material.RED_MUSHROOM_BLOCK,
+        Material.ORANGE_TERRACOTTA,
+        Material.BROWN_TERRACOTTA,
+        Material.WHITE_TERRACOTTA,
+        Material.YELLOW_TERRACOTTA
     );
+
     public CombatTracker combatTracker;
     public WorldRollback rollbackHandler;
     public Boolean prismHooked = false;
@@ -447,6 +451,7 @@ public final class TrueHardcore extends JavaPlugin {
         broadcastToAllServers(header + "Final Score: " + ChatColor.GREEN
               + player.getTotalExperience() + " " + ChatColor.AQUA
               + "(" + hcp.getWorld() + ")");
+
         event.setDeathMessage(null);
         if (hcp.getScore() > 0) {
             // Check if this is the player's personal best
@@ -485,6 +490,18 @@ public final class TrueHardcore extends JavaPlugin {
                 player.sendMessage(ChatColor.GREEN
                       + "Congratulations! You just beat your personal high score!");
             }
+        }
+
+        // Execute death command if one is configured
+        if (!hcw.getDeathCommand().isEmpty()) {
+            String cmd = hcw.getDeathCommand()
+                    .replaceAll("<player>", player.getName())
+                    .replaceAll("<displayname>", player.getDisplayName())
+                    .replaceAll("<cause>", deathMessage)
+                    .replaceAll("<score>", Integer.toString(hcp.getScore())
+                    );
+            debug("Executing: " + cmd);
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
         }
 
         savePlayer(hcp);
@@ -609,59 +626,8 @@ public final class TrueHardcore extends JavaPlugin {
         }
 
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
-            player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..");
-            Location spawn;
             World w = getServer().getWorld(world);
-            // Never played before... create them!
-            if (hcp == null) {
-                debug("New hardcore player: " + player.getName() + " (" + world + ")");
-                hcp = hcPlayers.newPlayer(world, player.getUniqueId(), player.getName());
-                spawn = getNewLocation(w, 0, 0, hcw.getSpawnDistance());
-            } else if (hcp.getDeathPos() == null) {
-                warn("No previous position found for known " + player.getName());
-                spawn = getNewLocation(w, 0, 0, hcw.getSpawnDistance());
-            } else {
-                debug(player.getName() + " is restarting game (" + world + ")");
-                spawn = getNewLocation(w, hcp.getDeathPos().getBlockX(),
-                      hcp.getDeathPos().getBlockZ(), hcw.getSpawnDistance());
-            }
-
-            if (spawn != null) {
-                hcp.setState(PlayerState.IN_GAME);
-                if (newSpawn(player, spawn)) {
-                    setProtected(hcp, hcw.getSpawnProtection());
-                    hcp.setGameTime(0);
-                    hcp.setChickenKills(0);
-                    hcp.setCowKills(0);
-                    hcp.setPigKills(0);
-                    hcp.setSheepKills(0);
-                    hcp.setChickenKills(0);
-                    hcp.setCreeperKills(0);
-                    hcp.setZombieKills(0);
-                    hcp.setSkeletonKills(0);
-                    hcp.setSpiderKills(0);
-                    hcp.setEnderKills(0);
-                    hcp.setSlimeKills(0);
-                    hcp.setMooshKills(0);
-                    hcp.setOtherKills(0);
-                    hcp.setPlayerKills(0);
-                    hcp.updatePlayer(player);
-                    savePlayer(hcp);
-                    cleanAndGreet(player, world);
-                    broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
-                          + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
-                          + hcp.getWorld(), player.getName());
-                    return true;
-                } else {
-                    return false;
-                }
-            } else {
-                player.sendMessage(ChatColor.RED + "Unable to find suitable spawn location."
-                      + " Please try again.");
-                warn("Unable to find suitable spawn location for " + player.getName()
-                      + " (" + world + ")");
-                return false;
-            }
+            findNewSpawn(player, world, hcp);
         } else if (hcp.getState() == PlayerState.IN_GAME) {
             player.sendMessage(ChatColor.RED + "You are already playing hardcore!");
             return false;
@@ -674,8 +640,8 @@ public final class TrueHardcore extends JavaPlugin {
             joinGame(world, player);
             savePlayer(hcp);
             cleanAndGreet(player, world);
-            return true;
         }
+        return true;
     }
 
     private void cleanAndGreet(Player player, String world) {
@@ -686,21 +652,153 @@ public final class TrueHardcore extends JavaPlugin {
         }
     }
 
+    private void findNewSpawn(Player player, String world, HardcorePlayer hcp) {
+        final HardcoreWorld hcw = hardcoreWorlds.get(world);
+        final int oldX;
+        final int oldZ;
+        final int hcDist = hcw.getSpawnDistance();
+
+        if (hcp == null) {
+            // Never played before
+            oldX = 0;
+            oldZ = 0;
+        } else {
+            // New life for an existing player
+            oldX = hcp.getDeathPos().getBlockX();
+            oldZ = hcp.getDeathPos().getBlockZ();
+        }
+
+        player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..");
+
+        final Location l = new Location(hcw.getWorld(), oldX, 255, oldZ);
+        debug("Selecting spawn point " + hcDist + " blocks from: "
+                + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
+
+        // Attempt to find a new location once per tick so we don't cause too much lag
+        new BukkitRunnable() {
+            int attempt = 0;
+
+            @Override
+            public void run() {
+                attempt++;
+                TrueHardcore.debug("Attempt #" + attempt + " to find location...");
+                boolean goodSpawn = false;
+                String reason = "Unable to find valid block";
+
+                // Lets do some trig!!
+                int dist = hcDist + (int) (Math.random() * 100);// Random radius padding
+                int deg = (int) (Math.random() * 360); // Random degrees
+                double x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();
+                double z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
+
+                // Get the highest block at the selected location
+                int startY = 200;
+                Location nl = new Location(hcw.getWorld(), x, startY, z);
+                Block b = nl.getBlock();
+                for (int y = startY; y > 10; y--) {
+                    if (b.isLiquid()) {
+                        // We never want lava or water, so just skip this location
+                        reason = "BAD: Found liquid (" + b.getType() + ")";
+                        break;
+                    } else if (b.getType().isBlock() && b.getType().isSolid()) {
+                        // We've found a real block so lets check it
+                        if (spawnBlocks.contains(b.getType())) {
+                            // Make sure it's inside the world border (if one exists)
+                            if (insideWorldBorder(b.getLocation())) {
+                                goodSpawn = true;
+                                reason = "Allowed block type (" + b.getType() + ")!";
+                            } else {
+                                reason = "Outside world border";
+                            }
+                            break;
+                        } else {
+                            reason = "Wrong block type (" + b.getType() + ")";
+                        }
+                    }
+                    b = b.getRelative(BlockFace.DOWN);
+                }
+
+                Location spawn = b.getLocation().add(0, 1, 0);
+                if (goodSpawn) {
+                    this.cancel();
+                    debug("Block: " + spawn.getBlockX() + " " + spawn.getBlockY() + " " + spawn.getBlockZ());
+
+                    // Center player on block for safety
+                    spawn.add(0.5, 0, 0);
+                    spawn.add(0, 0, 0.5);
+
+                    debug("GOOD: "
+                            + Util.padLeft(String.valueOf(spawn.getX()), 9)
+                            + Util.padLeft(String.valueOf(spawn.getY()), 7)
+                            + Util.padLeft(String.valueOf(spawn.getZ()), 9)
+                            + "   (" + dist + " blocks away)"
+                            + "  => " + reason);
+
+                    // Return the good location
+                    spawn.setPitch(0F);
+                    spawn.setYaw(0F);
+                    if (player.isOnline()) {
+                        newSpawn(player, spawn);
+                    } else {
+                        debug("WARNING: Player " + player.getName() + " is no longer online!");
+                    }
+                } else {
+                    debug("BAD : "
+                            + Util.padLeft(String.valueOf(spawn.getX()), 9)
+                            + Util.padLeft(String.valueOf(spawn.getY()), 7)
+                            + Util.padLeft(String.valueOf(spawn.getZ()), 9)
+                            + "   (" + dist + " blocks away)"
+                            + "  => " + reason);
+                }
+
+                // Abort if we tried too many times
+                if (attempt >= 20) {
+                    this.cancel();
+                    debug("Unable to find a good spawn point after " + attempt + " attempts!");
+                }
+            }
+        }.runTaskTimer(instance, 2L, 20L);
+    }
+
     /**
      * Allocate a new spawn point for a player.
      *
      * @param player the player
-     * @param spawn  the location
+     * @param spawn the location
      * @return true on success
      */
     private boolean newSpawn(Player player, Location spawn) {
+        String world = spawn.getWorld().getName();
+        HardcoreWorld hcw = hardcoreWorlds.get(world);
         HardcorePlayer hcp = hcPlayers.get(spawn.getWorld(), player);
-        if (hcp == null) {
-            throw new NullPointerException("Player was null");
-        }
+
+        Util.loadChunk(spawn);
         if (Util.teleport(player, spawn)) {
+            if (hcp == null) {
+                // New player so lets make a new record for them
+                hcp = hcPlayers.newPlayer(spawn.getWorld().getName(), player.getUniqueId(), player.getName());
+                //throw new NullPointerException("Player was null");
+            }
             hcp.setState(PlayerState.IN_GAME);
             hcp.setSpawnPos(spawn);
+            setProtected(hcp, hcw.getSpawnProtection());
+            hcp.setGameTime(0);
+            hcp.setChickenKills(0);
+            hcp.setCowKills(0);
+            hcp.setPigKills(0);
+            hcp.setSheepKills(0);
+            hcp.setChickenKills(0);
+            hcp.setCreeperKills(0);
+            hcp.setZombieKills(0);
+            hcp.setSkeletonKills(0);
+            hcp.setSpiderKills(0);
+            hcp.setEnderKills(0);
+            hcp.setSlimeKills(0);
+            hcp.setMooshKills(0);
+            hcp.setOtherKills(0);
+            hcp.setPlayerKills(0);
+            hcp.updatePlayer(player);
+            savePlayer(hcp);
             player.setFallDistance(0);
             player.setHealth(20.0D);
             player.setFoodLevel(20);
@@ -717,96 +815,26 @@ public final class TrueHardcore extends JavaPlugin {
             Objects.requireNonNull(player.getEquipment()).clear();
             player.getInventory().clear();
             player.eject();
+
+            cleanAndGreet(player, spawn.getWorld().getName());
+            broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
+                    + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
+                    + hcp.getWorld(), player.getName());
             player.sendMessage(ChatColor.RED + "!!!! WARNING !!!! WARNING !!!!");
             player.sendMessage(ChatColor.RED
-                  + "This plugin is highly experimental! Use at own risk!");
+                + "This plugin is highly experimental! Use at own risk!");
             player.sendMessage(ChatColor.RED + "Please report ALL problems in detail.");
             player.sendMessage(ChatColor.GREEN
-                  + "Welcome to TrueHardcore. Good luck on your adventure!");
+                + "Welcome to TrueHardcore. Good luck on your adventure!");
             player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
-                  + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+                + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
             return true;
         } else {
             warn("Teleport failed!");
+            player.sendMessage(ChatColor.RED + "Sorry, teleport into hardcore has failed!");
+            player.sendMessage(ChatColor.RED + "Please make a ticket for this to let us know.");
             return false;
         }
-    }
-
-    private Location getNewLocation(World world, int oldX, int oldZ, int dist) {
-        Location l = new Location(world, oldX, 255, oldZ);
-        debug("Selecting spawn point " + dist + " blocks from: "
-              + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
-        double x;
-        double z;
-        int deg;
-        Location nl;
-        // Only try to find a good place 30 times
-        for (int count = 0; count < 30; count++) {
-            boolean goodSpawn = false;
-
-            // Lets do some trig!!
-            dist = dist + (int) (Math.random() * 100);// Random radius padding
-            deg = (int) (Math.random() * 360); // Random degrees
-            x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();
-            z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
-            nl = new Location(world, x, 255, z);
-
-            // Get the highest block at the selected location
-            Block b = nl.getBlock();
-            while ((b.getType() == Material.AIR) && (b.getY() > 1)) {
-                b = b.getRelative(BlockFace.DOWN);
-            }
-            String reason;
-            Location spawn = new Location(b.getWorld(), b.getX(), b.getY() + 2, b.getZ());
-            if (spawnBlocks.contains(b.getType())) {
-                if (spawn.getBlockX() >= 0) {
-                    spawn.setX(spawn.getBlockX() + 0.5);
-                }
-                if (spawn.getBlockX() < 0) {
-                    spawn.setX(spawn.getBlockX() - 0.5);
-                }
-
-                if (spawn.getBlockZ() >= 0) {
-                    spawn.setZ(spawn.getBlockZ() + 0.5);
-                }
-                if (spawn.getBlockZ() < 0) {
-                    spawn.setZ(spawn.getBlockZ() - 0.5);
-                }
-
-                // Make sure it's inside the world border (if one exists)
-                if (insideWorldBorder(spawn)) {
-                    goodSpawn = true;
-                    reason = "Allowed block type (" + b.getType() + ")!";
-                } else {
-                    reason = "Outside world border";
-                }
-            } else {
-                reason = "Wrong block type (" + b.getType() + ")";
-            }
-
-            if (goodSpawn) {
-                debug("GOOD: "
-                      + Util.padLeft(String.valueOf(spawn.getX()), 9)
-                      + Util.padLeft(String.valueOf(spawn.getY()), 7)
-                      + Util.padLeft(String.valueOf(spawn.getZ()), 9)
-                      + "   (" + dist + " blocks away)"
-                      + "  => " + reason);
-
-                // Return the good location
-                spawn.setPitch(0F);
-                spawn.setYaw(0F);
-                return spawn;
-            } else {
-                debug("BAD : "
-                      + Util.padLeft(String.valueOf(spawn.getX()), 9)
-                      + Util.padLeft(String.valueOf(spawn.getY()), 7)
-                      + Util.padLeft(String.valueOf(spawn.getZ()), 9)
-                      + "   (" + dist + " blocks away)"
-                      + "  => " + reason);
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -994,6 +1022,7 @@ public final class TrueHardcore extends JavaPlugin {
         if (hcp != null) {
             if (hcp.getLastPos() != null) {
                 debugLog("Returning player to: " + hcp.getLastPos());
+                Util.loadChunk(hcp.getLastPos());
                 if (Util.teleport(player, hcp.getLastPos())) {
                     player.setWalkSpeed(0.2F);
                     player.setFlySpeed(0.2F);
@@ -1350,5 +1379,17 @@ public final class TrueHardcore extends JavaPlugin {
         if (bcHooked) {
             BungeeChat.mirrorChat(msg, cfg.broadcastChannel);
         }
+    }
+
+    public boolean isTeleportAllowed(UUID uuid) {
+        return allowedTeleport.contains(uuid);
+    }
+
+    public void addAllowedTeleport(UUID uuid) {
+        allowedTeleport.add(uuid);
+    }
+
+    public void removeAllowedTeleport(UUID uuid) {
+        allowedTeleport.remove(uuid);
     }
 }

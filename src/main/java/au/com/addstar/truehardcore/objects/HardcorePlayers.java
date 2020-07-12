@@ -20,7 +20,6 @@
 package au.com.addstar.truehardcore.objects;
 
 import au.com.addstar.truehardcore.TrueHardcore;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
