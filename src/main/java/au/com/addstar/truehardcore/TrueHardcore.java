@@ -625,6 +625,34 @@ public final class TrueHardcore extends JavaPlugin {
             }
         }
 
+        // Always update player/ip tracking
+        updateTracking(player);
+
+        // Check if this account is already marked as an alt or primary
+        String accType = getAccountType(player);
+        if (accType != null) {
+            if (accType.equals("alt")) {
+                // Account already marked as alt - refuse entry
+                player.sendMessage(ChatColor.RED + "Sorry, your account has been detected as an Alt of another.");
+                player.sendMessage(ChatColor.RED + "If you believe this is an error or you have a legitimate use,");
+                player.sendMessage(ChatColor.RED + "please make a /ticket requesting an exclusion and why.");
+                setAccountType(player, "alt");
+                return false;
+            }
+        } else {
+            if (isAltAccount(player)) {
+                // Alt detected - refuse entry and flag account
+                player.sendMessage(ChatColor.RED + "Sorry, your account has been detected as an Alt of another.");
+                player.sendMessage(ChatColor.RED + "If you believe this is an error or you have a legitimate use,");
+                player.sendMessage(ChatColor.RED + "please make a /ticket requesting an exclusion and why.");
+                setAccountType(player, "alt");
+                return false;
+            } else {
+                // Not a known alt or detected as an alt, so mark as a Primary account
+                setAccountType(player, "primary");
+            }
+        }
+
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
             World w = getServer().getWorld(world);
             findNewSpawn(player, world, hcp);
@@ -1243,6 +1271,72 @@ public final class TrueHardcore extends JavaPlugin {
             return false;
         }
         return true;
+    }
+
+    private String getAccountType(Player player) {
+        String query = "SELECT type FROM `accounts` WHERE id=?";
+        try {
+            UUID uuid = player.getUniqueId();
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{uuid.toString()});
+            if ((res != null) && (res.next())) {
+                return res.getString("type");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private boolean setAccountType(Player player, String type) {
+        String query = "INSERT INTO `accounts` (id, playername, type) VALUES (?, ?, ?) "
+                + "ON DUPLICATE KEY UPDATE playername=?, type=?";
+        try {
+            UUID uuid = player.getUniqueId();
+            String[] params = {
+                    uuid.toString(),
+                    player.getName(),
+                    type,
+                    player.getName(),
+                    type
+            };
+            int result = dbConnection.preparedUpdate(query, params);
+            if (result > 0) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean isAltAccount(Player player) {
+        String query = "SELECT * FROM `tracking` WHERE ip=? AND id!=? "
+            + "AND lastseen > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 1";
+        try {
+            String ip = player.getAddress().getAddress().getHostAddress();
+            UUID uuid = player.getUniqueId();
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{ip.toString(), uuid.toString()});
+            if ((res != null) && (res.next())) {
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean updateTracking(Player player) {
+        String query = "INSERT INTO `tracking` SET id=?, ip=?, playername=?, firstseen=NOW(), lastseen=NOW() "
+            + "ON DUPLICATE KEY UPDATE lastseen=NOW(), playername=?";
+        try {
+            String ip = player.getAddress().getAddress().getHostAddress();
+            UUID uuid = player.getUniqueId();
+            String[] params = { uuid.toString(), ip, player.getName(), player.getName() };
+            int result = dbConnection.preparedUpdate(query, params);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**
