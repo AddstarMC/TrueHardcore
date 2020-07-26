@@ -1273,10 +1273,13 @@ public final class TrueHardcore extends JavaPlugin {
         return true;
     }
 
-    private String getAccountType(Player player) {
+    public String getAccountType(Player player) {
+        return getAccountType(player.getUniqueId());
+    }
+
+    public String getAccountType(UUID uuid) {
         String query = "SELECT type FROM `accounts` WHERE id=?";
         try {
-            UUID uuid = player.getUniqueId();
             ResultSet res = dbConnection.preparedQuery(query, new String[]{uuid.toString()});
             if ((res != null) && (res.next())) {
                 return res.getString("type");
@@ -1287,18 +1290,15 @@ public final class TrueHardcore extends JavaPlugin {
         return null;
     }
 
-    private boolean setAccountType(Player player, String type) {
+    public boolean setAccountType(Player player, String type) {
+        return setAccountType(player.getUniqueId(), player.getName(), type);
+    }
+
+    public boolean setAccountType(UUID uuid, String name, String type) {
         String query = "INSERT INTO `accounts` (id, playername, type) VALUES (?, ?, ?) "
                 + "ON DUPLICATE KEY UPDATE playername=?, type=?";
         try {
-            UUID uuid = player.getUniqueId();
-            String[] params = {
-                    uuid.toString(),
-                    player.getName(),
-                    type,
-                    player.getName(),
-                    type
-            };
+            String[] params = { uuid.toString(), name, type, name, type };
             int result = dbConnection.preparedUpdate(query, params);
             if (result > 0) {
                 return true;
@@ -1309,7 +1309,7 @@ public final class TrueHardcore extends JavaPlugin {
         return false;
     }
 
-    private boolean isAltAccount(Player player) {
+    public boolean isAltAccount(Player player) {
         String query = "SELECT * FROM `tracking` WHERE ip=? AND id!=? "
             + "AND lastseen > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 1";
         try {

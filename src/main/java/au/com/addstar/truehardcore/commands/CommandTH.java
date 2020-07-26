@@ -704,6 +704,44 @@ public class CommandTH implements CommandExecutor {
                             + from.getDisplayName() + " to " + to.getDisplayName());
                 }
                 break;
+            case "ACCOUNT":
+                if (sender instanceof Player) {
+                    if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th account <player> [primary|alt]");
+                    return true;
+                }
+
+                //noinspection deprecation
+                OfflinePlayer p = Bukkit.getOfflinePlayer(args[1]);
+                if (p == null || p.hasPlayedBefore() == false) {
+                    sender.sendMessage(ChatColor.RED + "Player " + args[1] + " does not exist!");
+                    return true;
+                }
+
+                if (args.length == 2) {
+                    String type = TrueHardcore.instance.getAccountType(p.getUniqueId());
+                    if (type != null) {
+                        sender.sendMessage(ChatColor.GREEN + "Account " + p.getName()
+                            + " has account type: " + ChatColor.AQUA + type);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Account " + p.getName()
+                                + " has no existing account.");
+                    }
+                } else {
+                    String type = args[2].toLowerCase();
+                    if (type.equals("alt") || type.equals("primary")) {
+                        TrueHardcore.instance.setAccountType(p.getUniqueId(), p.getName(), type);
+                        sender.sendMessage(ChatColor.GREEN + "Account type for " + p.getName()
+                                + " has been set to: " + ChatColor.AQUA + type);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Usage: /th account <player> [primary|alt]");
+                    }
+                }
+                break;
             default:
                 sender.sendMessage(ChatColor.LIGHT_PURPLE + "TrueHardcore Commands:");
                 sender.sendMessage(ChatColor.AQUA + "/th play       " + ChatColor.YELLOW
@@ -734,6 +772,8 @@ public class CommandTH implements CommandExecutor {
                           + ": Load player data from DB");
                     sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW
                           + ": Add/remove player to whitelist");
+                    sender.sendMessage(ChatColor.AQUA + "/th account  " + ChatColor.YELLOW
+                            + ": Manage account types");
                     sender.sendMessage(ChatColor.AQUA + "/th debug  " + ChatColor.YELLOW
                           + ": Toggle debug until restart");
                     sender.sendMessage(ChatColor.AQUA + "/th queue  " + ChatColor.YELLOW
