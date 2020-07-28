@@ -28,12 +28,17 @@ import au.com.addstar.truehardcore.functions.CombatTracker;
 import au.com.addstar.truehardcore.functions.Util;
 import au.com.addstar.truehardcore.functions.WorldRollback;
 import au.com.addstar.truehardcore.listeners.ChunkListener;
+import au.com.addstar.truehardcore.listeners.PacketListener;
 import au.com.addstar.truehardcore.listeners.PlayerListener;
 import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLib;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.ListenerPriority;
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
@@ -259,6 +264,19 @@ public final class TrueHardcore extends JavaPlugin {
             log("VanishNoPacket not found! Vanished players will not be unvanished...");
         }
         oiHooked = checkOpenInventory();
+
+        p = pm.getPlugin("ProtocolLib");
+        if (p instanceof ProtocolLib) {
+            ProtocolLibrary.getProtocolManager().addPacketListener(
+                new PacketListener(
+                    this,
+                    ListenerPriority.NORMAL,
+                    PacketType.Play.Server.RESPAWN,
+                    PacketType.Play.Server.LOGIN));
+            log("ProtocolLib found! Hardcore hearts will be enabled.");
+        } else {
+            log("ProtocolLib not found! Hardcore hearts will not work.");
+        }
 
         // Open/initialise the database
         dbConnection = new Database();
@@ -495,9 +513,9 @@ public final class TrueHardcore extends JavaPlugin {
         // Execute death command if one is configured
         if (!hcw.getDeathCommand().isEmpty()) {
             String cmd = hcw.getDeathCommand()
-                    .replaceAll("<player>", player.getName())
-                    .replaceAll("<displayname>", player.getDisplayName())
-                    .replaceAll("<cause>", deathMessage)
+                    .replaceAll("<player>", ChatColor.stripColor(player.getName()))
+                    .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
+                    .replaceAll("<cause>", ChatColor.stripColor(deathMessage))
                     .replaceAll("<score>", Integer.toString(hcp.getScore())
                     );
             debug("Executing: " + cmd);
