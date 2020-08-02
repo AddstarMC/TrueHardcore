@@ -291,7 +291,7 @@ public class PlayerListener implements Listener {
 
             // Some teleport methods are fine.. let them go
             if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL)
-                  || (cause == TeleportCause.NETHER_PORTAL)) {
+                  || (cause == TeleportCause.NETHER_PORTAL) || (cause == TeleportCause.END_GATEWAY)) {
                 return;
             }
 
