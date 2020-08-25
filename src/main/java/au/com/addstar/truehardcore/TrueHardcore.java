@@ -30,6 +30,7 @@ import au.com.addstar.truehardcore.functions.WorldRollback;
 import au.com.addstar.truehardcore.listeners.ChunkListener;
 import au.com.addstar.truehardcore.listeners.PacketListener;
 import au.com.addstar.truehardcore.listeners.PlayerListener;
+import au.com.addstar.truehardcore.objects.ChunkStorage;
 import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
@@ -89,9 +90,10 @@ public final class TrueHardcore extends JavaPlugin {
     private static PluginDescriptionFile pdfFile = null;
     // Hardcore worlds
     public final HardcoreWorlds hardcoreWorlds = new HardcoreWorlds();
+    public final ChunkStorage chunkStorage = new ChunkStorage();
     // Data for ALL hardcore players
     public final HardcorePlayers hcPlayers = new HardcorePlayers();
-    private Set<UUID> allowedTeleport = new HashSet<UUID>();
+    private Set<UUID> allowedTeleport = new HashSet<>();
 
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
@@ -306,7 +308,7 @@ public final class TrueHardcore extends JavaPlugin {
         enableCombatLog(cfg.antiCombatLog);
         if (cfg.autoSaveEnabled) {
             log("Launching auto-save timer (every 5 minutes)...");
-            getServer().getScheduler().runTaskTimer(this, this::saveInGamePlayers,
+            getServer().getScheduler().runTaskTimer(this, this::runMaintenance,
                   300 * 20L, 300 * 20L);
         }
 
@@ -450,7 +452,8 @@ public final class TrueHardcore extends JavaPlugin {
             throw new NullPointerException("World was null");
         }
         final HardcoreWorld hcw = hardcoreWorlds.get(world.getName());
-
+        chunkStorage.addChunk(player.getChunk(), System.currentTimeMillis() + hcw.getChunkHoldOnDeathDelay());
+        player.getChunk().setForceLoaded(true);
         hcp.setState(PlayerState.DEAD);
         hcp.setCombat(false);
         hcp.setCombatTime(0);
@@ -1197,7 +1200,8 @@ public final class TrueHardcore extends JavaPlugin {
         }
     }
 
-    private void saveInGamePlayers() {
+    private void runMaintenance() {
+        //Saving in game players synchronously
         for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
             HardcorePlayer hcp = entry.getValue();
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
@@ -1208,6 +1212,7 @@ public final class TrueHardcore extends JavaPlugin {
                 }
             }
         }
+        Bukkit.getScheduler().runTaskAsynchronously(this, chunkStorage::expireOldChunks);
     }
 
     /**

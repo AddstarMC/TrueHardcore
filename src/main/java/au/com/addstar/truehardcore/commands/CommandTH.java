@@ -23,6 +23,7 @@ import au.com.addstar.monolith.lookup.Lookup;
 import au.com.addstar.truehardcore.TrueHardcore;
 import au.com.addstar.truehardcore.functions.Util;
 import au.com.addstar.truehardcore.functions.WorldRollback;
+import au.com.addstar.truehardcore.objects.ChunkStorage;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
@@ -44,6 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public class CommandTH implements CommandExecutor {
     private final TrueHardcore plugin;
@@ -317,6 +319,8 @@ public class CommandTH implements CommandExecutor {
                     }
                 }
                 if (args.length == 1) {
+                    Map<UUID, List<ChunkStorage.TrueHardCoreChunk>> stored
+                          = TrueHardcore.instance.chunkStorage.getSnapShot();
                     for (Map.Entry<String, HardcoreWorld> entry :
                           plugin.hardcoreWorlds.allRecords().entrySet()) {
                         HardcoreWorld hcw = entry.getValue();
@@ -339,6 +343,12 @@ public class CommandTH implements CommandExecutor {
                               + hcw.getDeathDrops());
                         sender.sendMessage(ChatColor.YELLOW + " Whitelisted   : " + ChatColor.AQUA
                               + hcw.isWhitelisted());
+                        List<ChunkStorage.TrueHardCoreChunk> chunks = stored.get(hcw.getWorld().getUID());
+                        sender.sendMessage(ChatColor.YELLOW + " Chunks Held:" + chunks.size());
+                        for (ChunkStorage.TrueHardCoreChunk chunk : chunks) {
+                            sender.sendMessage(ChatColor.GRAY + "      Chunk: X:" + chunk.getX() + " Z:" + chunk.getZ()
+                                  + " Expiry:" + chunk.getExpiry());
+                        }
                     }
                 }
                 break;
@@ -417,11 +427,15 @@ public class CommandTH implements CommandExecutor {
 
                     // Corresponding nether world
                     world = plugin.getServer().getWorld(entry.getKey() + "_nether");
-                    if (world != null) playing = outputPlayingForWorld(sender, playing, world);
+                    if (world != null) {
+                        playing = outputPlayingForWorld(sender, playing, world);
+                    }
 
                     // Corresponding end world
                     world = plugin.getServer().getWorld(entry.getKey() + "_the_end");
-                    if (world != null) playing = outputPlayingForWorld(sender, playing, world);
+                    if (world != null) {
+                        playing = outputPlayingForWorld(sender, playing, world);
+                    }
                 }
                 if (!playing) {
                     sender.sendMessage(ChatColor.RED + "None");
@@ -632,7 +646,7 @@ public class CommandTH implements CommandExecutor {
                     }
                 }
                 sender.sendMessage(ChatColor.GREEN + "Queue locked: "
-                        + ChatColor.YELLOW + plugin.rollbackHandler.isQueueLocked());
+                      + ChatColor.YELLOW + plugin.rollbackHandler.isQueueLocked());
                 sender.sendMessage(ChatColor.GREEN + "Hardcore rollback queue:");
                 for (int x = 0; x < plugin.rollbackHandler.getQueue().size(); x++) {
                     WorldRollback.RollbackRequest req = plugin.rollbackHandler.getQueue().get(x);
@@ -696,12 +710,12 @@ public class CommandTH implements CommandExecutor {
                 }
                 Player from = Bukkit.getPlayer(args[1]);
                 Player to = Bukkit.getPlayer(args[2]);
-                if (Util.teleport(from, to.getLocation())) {
+                if (to != null && Util.teleport(from, to.getLocation())) {
                     sender.sendMessage(ChatColor.GREEN + "Teleported "
-                            + from.getDisplayName() + " to " + to.getDisplayName());
+                          + from.getDisplayName() + " to " + to.getDisplayName());
                 } else {
                     sender.sendMessage(ChatColor.RED + "Unable to teleport "
-                            + from.getDisplayName() + " to " + to.getDisplayName());
+                          + from.getDisplayName() + " to " + to.getDisplayName());
                 }
                 break;
             case "ACCOUNT":
@@ -717,7 +731,7 @@ public class CommandTH implements CommandExecutor {
 
                 //noinspection deprecation
                 OfflinePlayer p = Bukkit.getOfflinePlayer(args[1]);
-                if (p == null || p.hasPlayedBefore() == false) {
+                if (!p.hasPlayedBefore()) {
                     sender.sendMessage(ChatColor.RED + "Player " + args[1] + " does not exist!");
                     return true;
                 }
@@ -726,17 +740,17 @@ public class CommandTH implements CommandExecutor {
                     String type = TrueHardcore.instance.getAccountType(p.getUniqueId());
                     if (type != null) {
                         sender.sendMessage(ChatColor.GREEN + "Account " + p.getName()
-                            + " has account type: " + ChatColor.AQUA + type);
+                              + " has account type: " + ChatColor.AQUA + type);
                     } else {
                         sender.sendMessage(ChatColor.RED + "Account " + p.getName()
-                                + " has no existing account.");
+                              + " has no existing account.");
                     }
                 } else {
                     String type = args[2].toLowerCase();
                     if (type.equals("alt") || type.equals("primary")) {
                         TrueHardcore.instance.setAccountType(p.getUniqueId(), p.getName(), type);
                         sender.sendMessage(ChatColor.GREEN + "Account type for " + p.getName()
-                                + " has been set to: " + ChatColor.AQUA + type);
+                              + " has been set to: " + ChatColor.AQUA + type);
                     } else {
                         sender.sendMessage(ChatColor.RED + "Usage: /th account <player> [primary|alt]");
                     }
@@ -773,7 +787,7 @@ public class CommandTH implements CommandExecutor {
                     sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW
                           + ": Add/remove player to whitelist");
                     sender.sendMessage(ChatColor.AQUA + "/th account  " + ChatColor.YELLOW
-                            + ": Manage account types");
+                          + ": Manage account types");
                     sender.sendMessage(ChatColor.AQUA + "/th debug  " + ChatColor.YELLOW
                           + ": Toggle debug until restart");
                     sender.sendMessage(ChatColor.AQUA + "/th queue  " + ChatColor.YELLOW

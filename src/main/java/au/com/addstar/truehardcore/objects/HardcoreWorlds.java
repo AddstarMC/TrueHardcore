@@ -141,6 +141,10 @@ public class HardcoreWorlds {
             return config.rollbackdelay;
         }
 
+        public Integer getChunkHoldOnDeathDelay() {
+            return config.chunkHoldOnDeath;
+        }
+
         public void setRollbackDelay(Integer rollbackdelay) {
             this.config.rollbackdelay = rollbackdelay;
         }

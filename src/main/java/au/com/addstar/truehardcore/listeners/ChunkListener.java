@@ -19,11 +19,13 @@
 
 package au.com.addstar.truehardcore.listeners;
 
+import au.com.addstar.truehardcore.TrueHardcore;
 import org.bukkit.Chunk;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 
 /**
  * Created for the AddstarMC Project.

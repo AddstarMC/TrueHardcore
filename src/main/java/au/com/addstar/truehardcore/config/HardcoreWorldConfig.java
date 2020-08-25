@@ -62,6 +62,9 @@ public class HardcoreWorldConfig extends AutoConfig {
     @ConfigField(comment = "Does the player drop items on death")
     public boolean deathdrops = true;
 
+    @ConfigField(comment = "How long to keep a chunk loaded after death.")
+    public int chunkHoldOnDeath = 6000;
+
     @ConfigField(comment = "Does this world use the whitelist")
     public boolean whitelisted = true;
 
