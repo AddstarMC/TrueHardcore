@@ -123,7 +123,7 @@
       <dependency>
           <groupId>com.destroystokyo.paper</groupId>
           <artifactId>paper-api</artifactId>
-          <version>1.16.1-R0.1-SNAPSHOT</version>
+          <version>${spigot.version}</version>
           <scope>provided</scope>
       </dependency>
     <!-- WorldGuard for some of the sk functions -->
