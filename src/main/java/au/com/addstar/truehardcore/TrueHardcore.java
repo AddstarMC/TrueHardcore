@@ -98,45 +98,45 @@ public final class TrueHardcore extends JavaPlugin {
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
     private final List<Material> spawnBlocks = Arrays.asList(
-        Material.COARSE_DIRT,
-        Material.DIRT,
-        Material.PODZOL,
-        Material.GRASS,
-        Material.GRASS_BLOCK,
-        Material.GRASS_PATH,
-        Material.SAND,
-        Material.SANDSTONE,
-        Material.SMOOTH_SANDSTONE,
-        Material.SMOOTH_RED_SANDSTONE,
-        Material.SMOOTH_STONE,
-        Material.STONE,
-        Material.DIORITE,
-        Material.COBBLESTONE,
-        Material.SMOOTH_STONE,
-        Material.BEDROCK,
-        Material.SNOW,
-        Material.SNOW_BLOCK,
-        Material.CLAY,
-        Material.TERRACOTTA,
-        Material.ICE,
-        Material.PACKED_ICE,
-        Material.BLUE_ICE,
-        Material.RED_SAND,
-        Material.RED_SANDSTONE,
-        Material.CUT_SANDSTONE,
-        Material.OAK_LEAVES,
-        Material.BIRCH_LEAVES,
-        Material.ACACIA_LEAVES,
-        Material.DARK_OAK_LEAVES,
-        Material.JUNGLE_LEAVES,
-        Material.SPRUCE_LEAVES,
-        Material.MYCELIUM,
-        Material.BROWN_MUSHROOM_BLOCK,
-        Material.RED_MUSHROOM_BLOCK,
-        Material.ORANGE_TERRACOTTA,
-        Material.BROWN_TERRACOTTA,
-        Material.WHITE_TERRACOTTA,
-        Material.YELLOW_TERRACOTTA
+          Material.COARSE_DIRT,
+          Material.DIRT,
+          Material.PODZOL,
+          Material.GRASS,
+          Material.GRASS_BLOCK,
+          Material.GRASS_PATH,
+          Material.SAND,
+          Material.SANDSTONE,
+          Material.SMOOTH_SANDSTONE,
+          Material.SMOOTH_RED_SANDSTONE,
+          Material.SMOOTH_STONE,
+          Material.STONE,
+          Material.DIORITE,
+          Material.COBBLESTONE,
+          Material.SMOOTH_STONE,
+          Material.BEDROCK,
+          Material.SNOW,
+          Material.SNOW_BLOCK,
+          Material.CLAY,
+          Material.TERRACOTTA,
+          Material.ICE,
+          Material.PACKED_ICE,
+          Material.BLUE_ICE,
+          Material.RED_SAND,
+          Material.RED_SANDSTONE,
+          Material.CUT_SANDSTONE,
+          Material.OAK_LEAVES,
+          Material.BIRCH_LEAVES,
+          Material.ACACIA_LEAVES,
+          Material.DARK_OAK_LEAVES,
+          Material.JUNGLE_LEAVES,
+          Material.SPRUCE_LEAVES,
+          Material.MYCELIUM,
+          Material.BROWN_MUSHROOM_BLOCK,
+          Material.RED_MUSHROOM_BLOCK,
+          Material.ORANGE_TERRACOTTA,
+          Material.BROWN_TERRACOTTA,
+          Material.WHITE_TERRACOTTA,
+          Material.YELLOW_TERRACOTTA
     );
 
     public CombatTracker combatTracker;
@@ -270,11 +270,11 @@ public final class TrueHardcore extends JavaPlugin {
         p = pm.getPlugin("ProtocolLib");
         if (p instanceof ProtocolLib) {
             ProtocolLibrary.getProtocolManager().addPacketListener(
-                new PacketListener(
-                    this,
-                    ListenerPriority.NORMAL,
-                    PacketType.Play.Server.RESPAWN,
-                    PacketType.Play.Server.LOGIN));
+                  new PacketListener(
+                        this,
+                        ListenerPriority.NORMAL,
+                        PacketType.Play.Server.RESPAWN,
+                        PacketType.Play.Server.LOGIN));
             log("ProtocolLib found! Hardcore hearts will be enabled.");
         } else {
             log("ProtocolLib not found! Hardcore hearts will not work.");
@@ -308,10 +308,10 @@ public final class TrueHardcore extends JavaPlugin {
         enableCombatLog(cfg.antiCombatLog);
         if (cfg.autoSaveEnabled) {
             log("Launching auto-save timer (every 5 minutes)...");
-            getServer().getScheduler().runTaskTimer(this, this::runMaintenance,
+            getServer().getScheduler().runTaskTimer(this, this::saveInGamePlayers,
                   300 * 20L, 300 * 20L);
         }
-
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, chunkStorage::expireOldChunks, 360 * 20L, 360 * 20L);
         log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 
@@ -516,11 +516,11 @@ public final class TrueHardcore extends JavaPlugin {
         // Execute death command if one is configured
         if (!hcw.getDeathCommand().isEmpty()) {
             String cmd = hcw.getDeathCommand()
-                    .replaceAll("<player>", ChatColor.stripColor(player.getName()))
-                    .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
-                    .replaceAll("<cause>", ChatColor.stripColor(deathMessage))
-                    .replaceAll("<score>", Integer.toString(hcp.getScore())
-                    );
+                  .replaceAll("<player>", ChatColor.stripColor(player.getName()))
+                  .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
+                  .replaceAll("<cause>", ChatColor.stripColor(deathMessage))
+                  .replaceAll("<score>", Integer.toString(hcp.getScore())
+                  );
             debug("Executing: " + cmd);
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
         }
@@ -562,8 +562,8 @@ public final class TrueHardcore extends JavaPlugin {
                         String w = world.getName();
                         for (Protection prot : prots) {
                             if (prot.getWorld().equals(w)
-                                    || prot.getWorld().equals(w + "_nether")
-                                    || prot.getWorld().equals(w + "_the_end")) {
+                                  || prot.getWorld().equals(w + "_nether")
+                                  || prot.getWorld().equals(w + "_the_end")) {
                                 count++;
                                 // Remove LWC protection
                                 prot.remove();
@@ -721,7 +721,7 @@ public final class TrueHardcore extends JavaPlugin {
 
         final Location l = new Location(hcw.getWorld(), oldX, 255, oldZ);
         debug("Selecting spawn point " + hcDist + " blocks from: "
-                + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
+              + l.getBlockX() + " / " + l.getBlockY() + " / " + l.getBlockZ());
 
         // Attempt to find a new location once per tick so we don't cause too much lag
         new BukkitRunnable() {
@@ -777,11 +777,11 @@ public final class TrueHardcore extends JavaPlugin {
                     spawn.add(0, 0, 0.5);
 
                     debug("GOOD: "
-                            + Util.padLeft(String.valueOf(spawn.getX()), 9)
-                            + Util.padLeft(String.valueOf(spawn.getY()), 7)
-                            + Util.padLeft(String.valueOf(spawn.getZ()), 9)
-                            + "   (" + dist + " blocks away)"
-                            + "  => " + reason);
+                          + Util.padLeft(String.valueOf(spawn.getX()), 9)
+                          + Util.padLeft(String.valueOf(spawn.getY()), 7)
+                          + Util.padLeft(String.valueOf(spawn.getZ()), 9)
+                          + "   (" + dist + " blocks away)"
+                          + "  => " + reason);
 
                     // Return the good location
                     spawn.setPitch(0F);
@@ -793,11 +793,11 @@ public final class TrueHardcore extends JavaPlugin {
                     }
                 } else {
                     debug("BAD : "
-                            + Util.padLeft(String.valueOf(spawn.getX()), 9)
-                            + Util.padLeft(String.valueOf(spawn.getY()), 7)
-                            + Util.padLeft(String.valueOf(spawn.getZ()), 9)
-                            + "   (" + dist + " blocks away)"
-                            + "  => " + reason);
+                          + Util.padLeft(String.valueOf(spawn.getX()), 9)
+                          + Util.padLeft(String.valueOf(spawn.getY()), 7)
+                          + Util.padLeft(String.valueOf(spawn.getZ()), 9)
+                          + "   (" + dist + " blocks away)"
+                          + "  => " + reason);
                 }
 
                 // Abort if we tried too many times
@@ -813,7 +813,7 @@ public final class TrueHardcore extends JavaPlugin {
      * Allocate a new spawn point for a player.
      *
      * @param player the player
-     * @param spawn the location
+     * @param spawn  the location
      * @return true on success
      */
     private boolean newSpawn(Player player, Location spawn) {
@@ -867,16 +867,16 @@ public final class TrueHardcore extends JavaPlugin {
 
             cleanAndGreet(player, spawn.getWorld().getName());
             broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
-                    + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
-                    + hcp.getWorld(), player.getName());
+                  + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
+                  + hcp.getWorld(), player.getName());
             player.sendMessage(ChatColor.RED + "!!!! WARNING !!!! WARNING !!!!");
             player.sendMessage(ChatColor.RED
-                + "This plugin is highly experimental! Use at own risk!");
+                  + "This plugin is highly experimental! Use at own risk!");
             player.sendMessage(ChatColor.RED + "Please report ALL problems in detail.");
             player.sendMessage(ChatColor.GREEN
-                + "Welcome to TrueHardcore. Good luck on your adventure!");
+                  + "Welcome to TrueHardcore. Good luck on your adventure!");
             player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
-                + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+                  + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
             return true;
         } else {
             warn("Teleport failed!");
@@ -1200,7 +1200,7 @@ public final class TrueHardcore extends JavaPlugin {
         }
     }
 
-    private void runMaintenance() {
+    private void saveInGamePlayers() {
         //Saving in game players synchronously
         for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
             HardcorePlayer hcp = entry.getValue();
@@ -1212,11 +1212,11 @@ public final class TrueHardcore extends JavaPlugin {
                 }
             }
         }
-        Bukkit.getScheduler().runTaskAsynchronously(this, chunkStorage::expireOldChunks);
     }
 
     /**
      * true if a hardcore world.
+     *
      * @param world the world.
      * @return boolean.
      */
@@ -1319,9 +1319,9 @@ public final class TrueHardcore extends JavaPlugin {
 
     public boolean setAccountType(UUID uuid, String name, String type) {
         String query = "INSERT INTO `accounts` (id, playername, type) VALUES (?, ?, ?) "
-                + "ON DUPLICATE KEY UPDATE playername=?, type=?";
+              + "ON DUPLICATE KEY UPDATE playername=?, type=?";
         try {
-            String[] params = { uuid.toString(), name, type, name, type };
+            String[] params = {uuid.toString(), name, type, name, type};
             int result = dbConnection.preparedUpdate(query, params);
             if (result > 0) {
                 return true;
@@ -1334,7 +1334,7 @@ public final class TrueHardcore extends JavaPlugin {
 
     public boolean isAltAccount(Player player) {
         String query = "SELECT * FROM `tracking` WHERE ip=? AND id!=? "
-            + "AND lastseen > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 1";
+              + "AND lastseen > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 1";
         try {
             String ip = player.getAddress().getAddress().getHostAddress();
             UUID uuid = player.getUniqueId();
@@ -1350,11 +1350,11 @@ public final class TrueHardcore extends JavaPlugin {
 
     private boolean updateTracking(Player player) {
         String query = "INSERT INTO `tracking` SET id=?, ip=?, playername=?, firstseen=NOW(), lastseen=NOW() "
-            + "ON DUPLICATE KEY UPDATE lastseen=NOW(), playername=?";
+              + "ON DUPLICATE KEY UPDATE lastseen=NOW(), playername=?";
         try {
             String ip = player.getAddress().getAddress().getHostAddress();
             UUID uuid = player.getUniqueId();
-            String[] params = { uuid.toString(), ip, player.getName(), player.getName() };
+            String[] params = {uuid.toString(), ip, player.getName(), player.getName()};
             int result = dbConnection.preparedUpdate(query, params);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1364,6 +1364,7 @@ public final class TrueHardcore extends JavaPlugin {
 
     /**
      * Un vanish a player.
+     *
      * @param player the player
      */
     public void unVanishPlayer(Player player) {
@@ -1413,10 +1414,11 @@ public final class TrueHardcore extends JavaPlugin {
 
     /**
      * True if the player is save from monsters.
+     *
      * @param player player
-     * @param x location x
-     * @param y location y
-     * @param z location z
+     * @param x      location x
+     * @param y      location y
+     * @param z      location z
      * @return boolean
      */
     public boolean isPlayerSafe(Player player, double x, double y, double z) {
@@ -1452,7 +1454,8 @@ public final class TrueHardcore extends JavaPlugin {
 
     /**
      * Broadcast to the Hardcore server excluding certain players.
-     * @param rawMsg the message
+     *
+     * @param rawMsg        the message
      * @param excludePlayer the excluded players
      */
     public void broadCastToHardcore(String rawMsg, String excludePlayer) {
@@ -1474,6 +1477,7 @@ public final class TrueHardcore extends JavaPlugin {
 
     /**
      * True if a location is inside the world border.
+     *
      * @param loc the location to test
      * @return boolean.
      */
@@ -1489,6 +1493,7 @@ public final class TrueHardcore extends JavaPlugin {
 
     /**
      * Broadcast to all servers.
+     *
      * @param msg the message
      */
     public void broadcastToAllServers(String msg) {
