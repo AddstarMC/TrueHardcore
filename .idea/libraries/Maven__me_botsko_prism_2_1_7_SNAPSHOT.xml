@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="Maven: me.botsko:prism:2.1.7-SNAPSHOT">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/prism/2.1.7-SNAPSHOT/prism-2.1.7-20200727.073814-50.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/prism/2.1.7-SNAPSHOT/prism-2.1.7-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/prism/2.1.7-SNAPSHOT/prism-2.1.7-20200727.073814-50-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/prism/2.1.7-SNAPSHOT/prism-2.1.7-SNAPSHOT-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/prism/2.1.7-SNAPSHOT/prism-2.1.7-20200727.073814-50-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/prism/2.1.7-SNAPSHOT/prism-2.1.7-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
