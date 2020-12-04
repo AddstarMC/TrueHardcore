@@ -68,6 +68,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -84,6 +85,26 @@ public class PlayerListener implements Listener {
     public PlayerListener(TrueHardcore instance) {
         plugin = instance;
         hardcorePlayers = plugin.hcPlayers;
+    }
+
+    private static String eventToString(PlayerEvent event) {
+        StringBuilder out = new StringBuilder(event.getClass().getSimpleName() + " player:" + event.getPlayer());
+        try {
+            Field[] fields = event.getClass().getDeclaredFields();
+            for (Field field : fields) {
+                try {
+                    field.setAccessible(true);
+                    out.append(field.getName()).append(": ");
+                    Object ob = field.get(event);
+                    out.append(ob != null ? ob.toString() : "NULL");
+                } catch (IllegalArgumentException | IllegalAccessException e) {
+                    //suppress
+                }
+            }
+        } catch (Exception e) {
+          out.append("ERROR DECODING:").append(e.getMessage());
+        }
+        return out.toString();
     }
 
     /**
@@ -124,8 +145,8 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        TrueHardcore.debugLog("EVENT: " + event.getEventName());
-        TrueHardcore.debugLog("LOCATION: " + player.getLocation().toString());
+        TrueHardcore.debug("EVENT: " + event.getEventName());
+        TrueHardcore.debug("LOCATION: " + player.getLocation().toString());
         // We only care about existing hardcore players
         HardcorePlayer hcp = hardcorePlayers.get(player);
         if (hcp == null) {
@@ -138,7 +159,7 @@ public class PlayerListener implements Listener {
             hcp.calcGameTime();
             plugin.savePlayer(hcp);
             plugin.broadCastToHardcore(plugin.header + ChatColor.YELLOW
-                  + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
+                    + player.getDisplayName() + " has left " + hcp.getWorld(), player.getName());
         }
     }
 
@@ -150,7 +171,6 @@ public class PlayerListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         handlePlayerExit(event);
     }
-
 
     /**
      * Handle players joining the server in the hardcore world.
@@ -164,12 +184,12 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        TrueHardcore.debugLog("EVENT: " + event.getEventName());
-        TrueHardcore.debugLog("LOCATION: " + player.getLocation().toString());
+        TrueHardcore.debug("EVENT: " + event.getEventName());
+        TrueHardcore.debug("LOCATION: " + player.getLocation().toString());
 
         if (player.isDead()) {
             TrueHardcore.debug(player.getName() + " joined " + player.getWorld()
-                  + " while dead! Ignoring event...");
+                    + " while dead! Ignoring event...");
             return;
         }
         // Check if player is resuming a game or somehow stuck in the world but not playing
@@ -177,19 +197,19 @@ public class PlayerListener implements Listener {
         HardcorePlayer hcp = hardcorePlayers.get(player);
         if (hcp == null) {
             TrueHardcore.warn(player.getName()
-                  + " joined in hardcore world with no player record!");
+                    + " joined in hardcore world with no player record!");
             loc = plugin.getLobbyLocation(player, player.getWorld().getName());
         } else if ((hcp.getState() == PlayerState.ALIVE)
-              || (hcp.getState() == PlayerState.IN_GAME)) {
+                || (hcp.getState() == PlayerState.IN_GAME)) {
             // Send player to game lobby
             TrueHardcore.debug(player.getName() + " joined in " + player.getWorld().getName()
-                  + "! Returning player to lobby...");
+                    + "! Returning player to lobby...");
             loc = plugin.getLobbyLocation(player, hcp.getWorld());
             hcp.setState(PlayerState.ALIVE);
         } else {
             TrueHardcore.warn(player.getName()
-                  + " joined in hardcore world with no game in progress (State="
-                  + hcp.getState() + ")!");
+                    + " joined in hardcore world with no game in progress (State="
+                    + hcp.getState() + ")!");
             loc = plugin.getLobbyLocation(player, hcp.getWorld());
         }
 
@@ -211,18 +231,18 @@ public class PlayerListener implements Listener {
                 // Mark the player as in game (don't do this by default! causes teleport problems
                 // and interop issues with NCP)
                 TrueHardcore.warn("Unable to send " + player.getName()
-                      + " to lobby! Resuming game play...");
+                        + " to lobby! Resuming game play...");
                 hcp.setState(PlayerState.IN_GAME);
                 plugin.savePlayer(hcp);
                 if (plugin.isPlayerVanished(player)) {
                     plugin.unVanishPlayer(player);
                 }
                 plugin.broadCastToHardcore(plugin.header + ChatColor.GREEN
-                      + player.getDisplayName() + " has entered "
-                      + hcp.getWorld(), player.getName());
+                        + player.getDisplayName() + " has entered "
+                        + hcp.getWorld(), player.getName());
             } else {
                 TrueHardcore.warn("Unable to send " + player.getName()
-                      + " to lobby and no player record!! THAT IS BAD!");
+                        + " to lobby and no player record!! THAT IS BAD!");
             }
         }
     }
@@ -233,24 +253,23 @@ public class PlayerListener implements Listener {
      **/
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+
         final Player player = event.getPlayer();
+        TrueHardcore.debug(eventToString(event));
         if (!plugin.isHardcoreWorld(player.getWorld())) {
             return;
         }
-
         // We only care about players who have played and are dead
         HardcorePlayer hcp = hardcorePlayers.get(player.getWorld(), event.getPlayer());
         if ((hcp == null) || (hcp.getState() != PlayerState.DEAD)) {
             return;
         }
-        TrueHardcore.debugLog("EVENT: " + event.getEventName());
-        TrueHardcore.debugLog("LOCATION: " + player.getLocation().toString());
-
+        TrueHardcore.debug("PLAYER STATE : " + hcp.getState().toString());
         Location loc = plugin.getLobbyLocation(player, player.getWorld().getName());
         event.setRespawnLocation(loc);
         HardcoreWorld hcw = plugin.hardcoreWorlds.get(player.getWorld().getName());
         player.sendMessage(ChatColor.RED + "You are now banned from " + hcw.getWorld().getName()
-              + " for " + Util.long2Time(hcw.getBantime()) + "!");
+                + " for " + Util.long2Time(hcw.getBantime()) + "!");
     }
 
     /**
@@ -259,6 +278,7 @@ public class PlayerListener implements Listener {
      **/
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
+        TrueHardcore.debug(eventToString(event));
         final Player player = event.getPlayer();
         final Location from = event.getFrom();
         final Location to = event.getTo();
@@ -282,12 +302,7 @@ public class PlayerListener implements Listener {
                 return;
             }
             TeleportCause cause = event.getCause();
-            TrueHardcore.debugLog(
-                  "PlayerTeleportEvent (" + player.getName() + "): " + worldFrom.getName()
-                        + " " + from.getX() + " " + from.getY() + " " + from.getZ() + " [TO] "
-                        + worldTo.getName() + " " + to.getX() + " " + to.getY() + " " + to.getZ()
-                        + " (" + cause + ")"
-            );
+            TrueHardcore.debugLog(eventToString(event));
 
             // Some teleport methods are fine.. let them go
             if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL)
@@ -315,32 +330,32 @@ public class PlayerListener implements Listener {
                     if (worldFrom.equals(worldTo)) {
                         // Prevent unauthorised teleport within hardcore worlds
                         if (player.isOp() || player.hasPermission(
-                              "truehardcore.bypass.teleport")) {
+                                "truehardcore.bypass.teleport")) {
                             TrueHardcore.debug("Teleport override (within world) allowed for "
-                                  + player.getName());
+                                    + player.getName());
                             return;
                         } else {
                             TrueHardcore.debug(player.getName()
-                                  + " teleport within hardcore cancelled!");
+                                    + " teleport within hardcore cancelled!");
                             player.sendMessage(ChatColor.RED
-                                  + "You are not allowed to teleport while in hardcore!");
+                                    + "You are not allowed to teleport while in hardcore!");
                         }
                     } else {
                         // Prevent unauthorised exit from hardcore
                         if (player.isOp()
-                              || player.hasPermission("truehardcore.bypass.teleportout")) {
+                                || player.hasPermission("truehardcore.bypass.teleportout")) {
                             TrueHardcore.debug("Teleport override (out of world) allowed for "
-                                  + player.getName());
+                                    + player.getName());
                             return;
                         } else {
                             TrueHardcore.debug(player.getName()
-                                  + " teleport out of hardcore cancelled!");
+                                    + " teleport out of hardcore cancelled!");
                             player.sendMessage(ChatColor.RED
-                                  + "You are not allowed to teleport out of hardcore!");
+                                    + "You are not allowed to teleport out of hardcore!");
                         }
                     }
                     player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
-                          + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+                            + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
                     TrueHardcore.debug("From: " + from);
                     TrueHardcore.debug("To  : " + to);
                     event.setCancelled(true);
@@ -350,15 +365,15 @@ public class PlayerListener implements Listener {
                 HardcorePlayer hcp = hardcorePlayers.get(worldTo, player);
                 if ((hcp == null) || (hcp.getState() != PlayerState.IN_GAME)) {
                     if (player.isOp() || player.hasPermission(
-                          "truehardcore.bypass.teleportin")) {
+                            "truehardcore.bypass.teleportin")) {
                         TrueHardcore.debug("Teleport override (into world) allowed for "
-                              + player.getName());
+                                + player.getName());
                     } else {
                         event.setCancelled(true);
                         TrueHardcore.debug(player.getName()
-                              + "teleport into hardcore was cancelled!");
+                                + "teleport into hardcore was cancelled!");
                         player.sendMessage(ChatColor.RED
-                              + "You are not allowed to teleport to a hardcore world.");
+                                + "You are not allowed to teleport to a hardcore world.");
                     }
                 }
             }
@@ -404,31 +419,31 @@ public class PlayerListener implements Listener {
             if (!(ent instanceof Player)) {
                 return;
             }
-            TrueHardcore.debugLog("EntityDeathByBlock: " + ent.getName() + " killed by "
-                  + ent.getLastDamageCause());
+            TrueHardcore.debug("EntityDeathByBlock: " + ent.getName() + " killed by "
+                    + ent.getLastDamageCause());
 
             // We only care about TNT events
             EntityDamageByBlockEvent causeB = (EntityDamageByBlockEvent) ent.getLastDamageCause();
             if (
-                  (causeB == null) || (causeB.getDamager() == null)
-                        || ((causeB.getDamager().getType() != Material.TNT)
-                        && (causeB.getDamager().getType() != Material.TNT_MINECART))) {
+                    (causeB == null) || (causeB.getDamager() == null)
+                            || ((causeB.getDamager().getType() != Material.TNT)
+                            && (causeB.getDamager().getType() != Material.TNT_MINECART))) {
                 return;
             }
             Location blockLoc = new Location(causeB.getDamager().getWorld(),
-                  causeB.getDamager().getX(),
-                  causeB.getDamager().getY(),
-                  causeB.getDamager().getZ());
+                    causeB.getDamager().getX(),
+                    causeB.getDamager().getY(),
+                    causeB.getDamager().getZ());
             OfflinePlayer killed = ((Player) ent).getPlayer();
             String killedDisplayName = ((Player) ent).getDisplayName();
             if (blockLoc.getWorld() == null) {
-                TrueHardcore.debugLog("Error - null world - EntityDeathByBlock: "
-                      + ent.getName() + " killed by " + ent.getLastDamageCause());
+                TrueHardcore.debug("Error - null world - EntityDeathByBlock: "
+                        + ent.getName() + " killed by " + ent.getLastDamageCause());
                 return;
             }
             Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                  () -> findPlacer(blockLoc, blockLoc.getWorld().getName(), killed,
-                        killedDisplayName));
+                    () -> findPlacer(blockLoc, blockLoc.getWorld().getName(), killed,
+                            killedDisplayName));
             return;
         }
         if (!(ent.getLastDamageCause() instanceof EntityDamageByEntityEvent)) {
@@ -447,17 +462,17 @@ public class PlayerListener implements Listener {
             if ((hcp != null) && (hcp.getState() == PlayerState.IN_GAME)) {
                 if (ent instanceof Player) {
                     Player killed = (Player) ent;
-                    TrueHardcore.debugLog("EntityDeath: " + killer.getName() + " killed "
-                          + killed.getName());
+                    TrueHardcore.debug("EntityDeath: " + killer.getName() + " killed "
+                            + killed.getName());
 
                     hcp.setPlayerKills(hcp.getPlayerKills() + 1);
                     giveSkullOnline(killed, killed.getDisplayName(), killer);
                     plugin.broadcastToAllServers(ChatColor.RED + killer.getDisplayName()
-                          + " has taken the life of " + killed.getDisplayName()
-                          + " and gained a trophy!");
+                            + " has taken the life of " + killed.getDisplayName()
+                            + " and gained a trophy!");
                 } else {
-                    TrueHardcore.debugLog("EntityDeath: " + killer.getName() + " killed "
-                          + ent.getType());
+                    TrueHardcore.debug("EntityDeath: " + killer.getName() + " killed "
+                            + ent.getType());
                     switch (ent.getType()) {
                         case COW:
                             hcp.setCowKills(hcp.getCowKills() + 1);
@@ -502,27 +517,29 @@ public class PlayerListener implements Listener {
                     }
                 }
             } else {
-                TrueHardcore.debugLog("Ignoring hardcore death: " + killer.getName()
-                      + " killed " + ent.getType());
+                TrueHardcore.debug("Ignoring hardcore death: " + killer.getName()
+                        + " killed " + ent.getType());
             }
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     private void playerExitPortal(PlayerPortalEvent event) {
+        TrueHardcore.debug(eventToString(event));
         Location to = event.getTo();
         if ((to != null) && (plugin.isHardcoreWorld(to.getWorld()))) {
             if (!plugin.insideWorldBorder(to)) {
                 event.setCancelled(true);
                 Player player = event.getPlayer();
                 player.sendMessage(ChatColor.RED + "Sorry, this portal destination is not inside "
-                      + "the borders of a Hardcore world. Please move it to another location.");
+                        + "the borders of a Hardcore world. Please move it to another location.");
             }
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     private void playerEnterPortal(PlayerPortalEvent event) {
+        TrueHardcore.debug(eventToString(event));
         Player player = event.getPlayer();
         if (player.hasPermission("truehardcore.endteleport")) {
             return;
@@ -530,12 +547,12 @@ public class PlayerListener implements Listener {
         if (event.getCause() == TeleportCause.END_PORTAL) {
             event.setCancelled(true);
             player.sendMessage(ChatColor.RED + "Sorry, this portal destination is unavailable. "
-                  + "Best get out of that fire quick you have temporary resistance!!");
+                    + "Best get out of that fire quick you have temporary resistance!!");
             PotionEffect effect = new PotionEffect(PotionEffectType.FIRE_RESISTANCE,
-                  400, 2, false, true);
+                    400, 2, false, true);
             player.addPotionEffect(effect);
             player.playNote(event.getPlayer().getLocation(), Instrument.PIANO,
-                  Note.natural(1, Note.Tone.B));
+                    Note.natural(1, Note.Tone.B));
         }
     }
 
@@ -557,7 +574,7 @@ public class PlayerListener implements Listener {
             UUID killerUuid = handle.getUuid();
             OfflinePlayer killer = Bukkit.getOfflinePlayer(killerUuid);
             Bukkit.getScheduler().runTask(plugin, () -> updateGame(worldName, killed, killer,
-                  displayName));
+                    displayName));
 
         }
     }
@@ -566,7 +583,7 @@ public class PlayerListener implements Listener {
                             String killedDN) {
         HardcorePlayer hcp = hardcorePlayers.get(worldName, killer.getUniqueId());
         if (hcp != null) {
-            TrueHardcore.debugLog("EntityDeath: " + killer.getName() + " killed " + killedDN);
+            TrueHardcore.debug("EntityDeath: " + killer.getName() + " killed " + killedDN);
             hcp.setPlayerKills(hcp.getPlayerKills() + 1);
             if (killer.isOnline()) {
                 Player killerOnline = Bukkit.getPlayer(killer.getUniqueId());
@@ -578,7 +595,6 @@ public class PlayerListener implements Listener {
             }
         }
     }
-
 
     private void giveSkullOffline(OfflinePlayer killedName, String killedDN, OfflinePlayer killer) {
         IOpenInv openInv = plugin.openInv;
@@ -621,22 +637,22 @@ public class PlayerListener implements Listener {
             Inventory binv = inv.getBukkitInventory();
             HashMap<Integer, ItemStack> left = binv.addItem(skull);
             if (!left.isEmpty()) {
-                TrueHardcore.debugLog("Unable to add item to normal inventory: "
-                      + skull.toString());
+                TrueHardcore.debug("Unable to add item to normal inventory: "
+                        + skull.toString());
                 for (Map.Entry<Integer, ItemStack> e : left.entrySet()) {
                     if (e.getKey() > 0) {
                         ISpecialEnderChest sec = plugin.openInv
-                              .getSpecialEnderChest(killer, isOnline);
+                                .getSpecialEnderChest(killer, isOnline);
                         Inventory enderInv = sec.getBukkitInventory();
                         ItemStack item = e.getValue();
                         item.setAmount(e.getKey());
                         HashMap<Integer, ItemStack> leftNew = enderInv.addItem(item);
                         if (!leftNew.isEmpty()) {
                             TrueHardcore.log("Unable to add item to enderchest: "
-                                  + item.toString());
+                                    + item.toString());
                         }
                         TrueHardcore.log("Unable to add item to enderchest: "
-                              + item.toString());
+                                + item.toString());
                     }
                 }
             }

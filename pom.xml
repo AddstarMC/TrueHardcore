@@ -8,7 +8,7 @@
   <properties>
     <build.number/>
       <spigot.api.version>1.16</spigot.api.version>
-      <spigot.version>1.16.1-R0.1-SNAPSHOT</spigot.version>
+      <spigot.version>1.16.2-R0.1-SNAPSHOT</spigot.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -22,7 +22,7 @@
     <developer>
       <id>AddstarMC</id>
       <name>AddstarMC</name>
-      <url>http://github.com/AddstarMC</url>
+      <url>https://github.com/AddstarMC</url>
       <roles>
         <role>developer</role>
         <role>maintainer</role>
@@ -90,7 +90,7 @@
       <!-- For Vault -->
       <repository>
           <id>vault-repo</id>
-          <url>http://nexus.hc.to/content/repositories/pub_releases</url>
+          <url>https://nexus.hc.to/content/repositories/pub_releases</url>
       </repository>
 
       <!-- BStats -->
@@ -225,8 +225,8 @@
       </dependency>
       <dependency>
           <groupId>com.github.seeseemelk</groupId>
-          <artifactId>MockBukkit-v1.14</artifactId>
-          <version>0.2.2-SNAPSHOT</version>
+          <artifactId>MockBukkit-v1.16</artifactId>
+          <version>0.16.0</version>
           <scope>test</scope>
       </dependency>
   </dependencies>
