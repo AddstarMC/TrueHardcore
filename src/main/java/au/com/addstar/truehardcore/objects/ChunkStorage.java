@@ -24,12 +24,10 @@ import com.google.common.collect.ImmutableMap;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * Created for use for the Add5tar MC Minecraft server
@@ -43,9 +41,29 @@ public final class ChunkStorage {
      * Stores References to chunks that might be forceloaded.
      */
     public ChunkStorage() {
+    }
+
+    public void enable() {
         for (Map.Entry<String, HardcoreWorlds.HardcoreWorld> entry : TrueHardcore.instance.hardcoreWorlds.allRecords().entrySet()) {
             heldChunks.put(entry.getValue().getWorld().getUID(), new ArrayList<>());
         }
+    }
+
+    public void disable() {
+        heldChunks.forEach((uuid, trueHardCoreChunks) -> {
+            Iterator<TrueHardCoreChunk> i = trueHardCoreChunks.iterator();
+            while (i.hasNext()) {
+                TrueHardCoreChunk coreChunk = i.next();
+                World world = Bukkit.getWorld(uuid);
+                if (world != null && world.getUID() == coreChunk.world) {
+                    Chunk chunk = world.getChunkAt(coreChunk.coOrdX, coreChunk.coOrdZ);
+                    chunk.setForceLoaded(false);
+                    i.remove();
+                } else {
+                    TrueHardcore.debug("Null Chunk on shutdown.");
+                }
+            }
+        });
     }
 
     /**
@@ -141,15 +159,6 @@ public final class ChunkStorage {
         final int coOrdZ;
 
         final UUID world;
-
-        public long getExpiry() {
-            return expiry;
-        }
-
-        public void setExpiry(long expiry) {
-            this.expiry = expiry;
-        }
-
         transient Long expiry = null;
 
         public TrueHardCoreChunk(Chunk chunk) {
@@ -160,6 +169,14 @@ public final class ChunkStorage {
             this.coOrdX = coOrdX;
             this.coOrdZ = coOrdZ;
             this.world = uuid;
+        }
+
+        public long getExpiry() {
+            return expiry;
+        }
+
+        public void setExpiry(long expiry) {
+            this.expiry = expiry;
         }
 
         public int getX() {

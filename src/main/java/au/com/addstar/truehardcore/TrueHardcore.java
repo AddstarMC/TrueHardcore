@@ -46,6 +46,7 @@ import com.griefcraft.model.Protection;
 import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
+import io.papermc.lib.PaperLib;
 import me.botsko.prism.Prism;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -74,6 +75,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
+import org.omg.CORBA.Environment;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -93,7 +95,7 @@ public final class TrueHardcore extends JavaPlugin {
     public final ChunkStorage chunkStorage = new ChunkStorage();
     // Data for ALL hardcore players
     public final HardcorePlayers hcPlayers = new HardcorePlayers();
-    private Set<UUID> allowedTeleport = new HashSet<>();
+    private final Set<UUID> allowedTeleport = new HashSet<>();
 
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
@@ -194,10 +196,12 @@ public final class TrueHardcore extends JavaPlugin {
 
     @Override
     public void onEnable() {
+
         instance = this;
         pdfFile = this.getDescription();
         loadConfig();
         // This block configure the logger with handler and formatter
+        chunkStorage.enable();
         try {
             debuglog.setUseParentHandlers(false);
             debugFileHandler = new FileHandler("plugins/TrueHardcore/debug.log", true);
@@ -208,7 +212,6 @@ public final class TrueHardcore extends JavaPlugin {
             e.printStackTrace();
         }
         pm = this.getServer().getPluginManager();
-
         // Check if vault is loaded (required for economy)
         vaultEnabled = setupEconomy();
         if (vaultEnabled) {
@@ -338,6 +341,7 @@ public final class TrueHardcore extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        chunkStorage.disable();
         // cancel all tasks we created
         if (combatTracker != null) {
             combatTracker.onDisable();
@@ -481,7 +485,6 @@ public final class TrueHardcore extends JavaPlugin {
                 hcp.setTopScore(hcp.getScore());
                 personalbest = true;
             }
-
             // Check if this is a high score
             boolean highscore = true;
             for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
@@ -816,74 +819,83 @@ public final class TrueHardcore extends JavaPlugin {
      * @param spawn  the location
      * @return true on success
      */
-    private boolean newSpawn(Player player, Location spawn) {
+    private void newSpawn(Player player, Location spawn) {
         String world = spawn.getWorld().getName();
         HardcoreWorld hcw = hardcoreWorlds.get(world);
-        HardcorePlayer hcp = hcPlayers.get(spawn.getWorld(), player);
-
+        final HardcorePlayer hcp = hcPlayers.get(spawn.getWorld(), player);
         Util.loadChunk(spawn);
-        if (Util.teleport(player, spawn)) {
-            if (hcp == null) {
-                // New player so lets make a new record for them
-                hcp = hcPlayers.newPlayer(spawn.getWorld().getName(), player.getUniqueId(), player.getName());
-                //throw new NullPointerException("Player was null");
-            }
-            hcp.setState(PlayerState.IN_GAME);
-            hcp.setSpawnPos(spawn);
-            setProtected(hcp, hcw.getSpawnProtection());
-            hcp.setGameTime(0);
-            hcp.setChickenKills(0);
-            hcp.setCowKills(0);
-            hcp.setPigKills(0);
-            hcp.setSheepKills(0);
-            hcp.setChickenKills(0);
-            hcp.setCreeperKills(0);
-            hcp.setZombieKills(0);
-            hcp.setSkeletonKills(0);
-            hcp.setSpiderKills(0);
-            hcp.setEnderKills(0);
-            hcp.setSlimeKills(0);
-            hcp.setMooshKills(0);
-            hcp.setOtherKills(0);
-            hcp.setPlayerKills(0);
-            hcp.updatePlayer(player);
-            savePlayer(hcp);
-            player.setFallDistance(0);
-            player.setHealth(20.0D);
-            player.setFoodLevel(20);
-            player.setAllowFlight(false);
-            player.setFlying(false);
-            player.setExp(0);
-            player.setLevel(0);
-            player.setTotalExperience(0);
-            player.setWalkSpeed(0.2F);
-            player.setFlySpeed(0.2F);
-            player.setGameMode(GameMode.SURVIVAL);
-            player.setOp(false);
-            player.getEnderChest().clear();
-            Objects.requireNonNull(player.getEquipment()).clear();
-            player.getInventory().clear();
-            player.eject();
+        Util.teleport(player,spawn).thenAccept(result -> {
+            if (result) {
 
-            cleanAndGreet(player, spawn.getWorld().getName());
-            broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
-                  + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
-                  + hcp.getWorld(), player.getName());
-            player.sendMessage(ChatColor.RED + "!!!! WARNING !!!! WARNING !!!!");
-            player.sendMessage(ChatColor.RED
-                  + "This plugin is highly experimental! Use at own risk!");
-            player.sendMessage(ChatColor.RED + "Please report ALL problems in detail.");
-            player.sendMessage(ChatColor.GREEN
-                  + "Welcome to TrueHardcore. Good luck on your adventure!");
-            player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
-                  + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
-            return true;
-        } else {
-            warn("Teleport failed!");
-            player.sendMessage(ChatColor.RED + "Sorry, teleport into hardcore has failed!");
-            player.sendMessage(ChatColor.RED + "Please make a ticket for this to let us know.");
-            return false;
-        }
+                if (hcp == null) {
+                    // New player so lets make a new record for them
+                    HardcorePlayer p  = hcPlayers.newPlayer(spawn.getWorld().getName(), player.getUniqueId(), player.getName());
+                    welcomePlayer(p,spawn,hcw,player);
+                    return;
+                }
+                welcomePlayer(hcp,spawn,hcw,player);
+            } else {
+                warn("Teleport failed!");
+                player.sendMessage(ChatColor.RED + "Sorry, teleport into hardcore has failed!");
+                player.sendMessage(ChatColor.RED + "Please make a ticket for this to let us know.");
+            }
+        });
+    }
+
+    private void welcomePlayer(HardcorePlayer hcp, Location spawn, HardcoreWorld hcw, Player player){
+        hcp.setState(PlayerState.IN_GAME);
+        hcp.setSpawnPos(spawn);
+        setProtected(hcp, hcw.getSpawnProtection());
+        hcp.setGameTime(0);
+        hcp.setChickenKills(0);
+        hcp.setCowKills(0);
+        hcp.setPigKills(0);
+        hcp.setSheepKills(0);
+        hcp.setChickenKills(0);
+        hcp.setCreeperKills(0);
+        hcp.setZombieKills(0);
+        hcp.setSkeletonKills(0);
+        hcp.setSpiderKills(0);
+        hcp.setEnderKills(0);
+        hcp.setSlimeKills(0);
+        hcp.setMooshKills(0);
+        hcp.setOtherKills(0);
+        hcp.setPlayerKills(0);
+        hcp.updatePlayer(player);
+        savePlayer(hcp);
+        Bukkit.getScheduler().runTask(this, new Runnable() {
+            @Override
+            public void run() {
+                player.setFallDistance(0);
+                player.setHealth(20.0D);
+                player.setFoodLevel(20);
+                player.setAllowFlight(false);
+                player.setFlying(false);
+                player.setExp(0);
+                player.setLevel(0);
+                player.setTotalExperience(0);
+                player.setWalkSpeed(0.2F);
+                player.setFlySpeed(0.2F);
+                player.setGameMode(GameMode.SURVIVAL);
+                player.setOp(false);
+                player.getEnderChest().clear();
+                Objects.requireNonNull(player.getEquipment()).clear();
+                player.getInventory().clear();
+                player.eject();
+            }
+        });
+        cleanAndGreet(player, spawn.getWorld().getName());
+        broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
+                + " has " + ChatColor.AQUA + "started " + ChatColor.GREEN
+                + hcp.getWorld(), player.getName());
+        player.sendMessage(ChatColor.RED + "!!!! WARNING !!!! WARNING !!!!");
+        player.sendMessage(ChatColor.RED
+                + "This plugin is highly experimental! Use at own risk!");
+        player.sendMessage(ChatColor.RED + "Please report ALL problems in detail.");
+        player.sendMessage(ChatColor.GREEN
+                + "Welcome to TrueHardcore. Good luck on your adventure!");
+        player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
+                + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
     }
 
     /**
@@ -898,17 +910,19 @@ public final class TrueHardcore extends JavaPlugin {
                 // We have to change the game state to allow the teleport out of the world
                 hcp.setState(PlayerState.ALIVE);
                 hcp.updatePlayer(player);
-                if (Util.teleport(player, getLobbyLocation(player, hcp.getWorld()))) {
-                    broadCastToHardcore(header + ChatColor.YELLOW
-                          + player.getDisplayName() + " has left "
-                          + hcp.getWorld(), player.getName());
-                    hcp.calcGameTime();
-                    savePlayer(hcp);
-                } else {
-                    // Teleport failed so set the game state back
-                    hcp.setState(PlayerState.IN_GAME);
-                    player.sendMessage(ChatColor.RED + "Teleportation failed.");
-                }
+                Util.teleport(player,getLobbyLocation(player,hcp.getWorld())).thenAccept(result -> {
+                    if (result) {
+                        broadCastToHardcore(header + ChatColor.YELLOW
+                                + player.getDisplayName() + " has left "
+                                + hcp.getWorld(), player.getName());
+                        hcp.calcGameTime();
+                        savePlayer(hcp);
+                    } else {
+                        // Teleport failed so set the game state back
+                        hcp.setState(PlayerState.IN_GAME);
+                        player.sendMessage(ChatColor.RED + "Teleportation failed.");
+                    }
+                });
             } else {
                 player.sendMessage(ChatColor.RED + "You cannot leave while you are a passenger.");
             }
@@ -1072,20 +1086,25 @@ public final class TrueHardcore extends JavaPlugin {
             if (hcp.getLastPos() != null) {
                 debugLog("Returning player to: " + hcp.getLastPos());
                 Util.loadChunk(hcp.getLastPos());
-                if (Util.teleport(player, hcp.getLastPos())) {
-                    player.setWalkSpeed(0.2F);
-                    player.setFlySpeed(0.2F);
-                    player.setGameMode(GameMode.SURVIVAL);
-                    player.setOp(false);
-                    player.setAllowFlight(false);
-                    player.setFlying(false);
-                    player.setFallDistance(0);
-                    player.setNoDamageTicks(60);
-                    broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
-                          + " has entered " + hcp.getWorld(), player.getName());
-                } else {
-                    warn("Teleport failed!");
-                }
+                Util.teleport(player,hcp.getLastPos()).thenAccept(result -> {
+                    if (result) {
+                        Bukkit.getScheduler().runTask(this, () -> {
+                            player.setWalkSpeed(0.2F);
+                            player.setFlySpeed(0.2F);
+                            player.setGameMode(GameMode.SURVIVAL);
+                            player.setOp(false);
+                            player.setAllowFlight(false);
+                            player.setFlying(false);
+                            player.setFallDistance(0);
+                            player.setNoDamageTicks(60);
+                        });
+                        broadCastToHardcore(header + ChatColor.GREEN + player.getDisplayName()
+                                + " has entered " + hcp.getWorld(), player.getName());
+                    } else {
+                        warn("Teleport failed!");
+
+                    }
+                });
             }
         } else {
             warn("Player record NOT found!");

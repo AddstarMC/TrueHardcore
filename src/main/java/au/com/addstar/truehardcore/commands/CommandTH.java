@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 public class CommandTH implements CommandExecutor {
     private final TrueHardcore plugin;
@@ -710,12 +712,18 @@ public class CommandTH implements CommandExecutor {
                 }
                 Player from = Bukkit.getPlayer(args[1]);
                 Player to = Bukkit.getPlayer(args[2]);
-                if (to != null && Util.teleport(from, to.getLocation())) {
-                    sender.sendMessage(ChatColor.GREEN + "Teleported "
-                          + from.getDisplayName() + " to " + to.getDisplayName());
+                if (to != null && from !=null) {
+                    Util.teleport(from,to.getLocation()).thenAccept(aBoolean -> {
+                        if (aBoolean) {
+                            sender.sendMessage(ChatColor.GREEN + "Teleported "
+                                    + from.getDisplayName() + " to " + to.getDisplayName());
+                        } else {
+                            sender.sendMessage(ChatColor.RED + "Unable to teleport "
+                                    + from.getDisplayName() + " to " + to.getDisplayName());
+                        }
+                    });
                 } else {
-                    sender.sendMessage(ChatColor.RED + "Unable to teleport "
-                          + from.getDisplayName() + " to " + to.getDisplayName());
+                    sender.sendMessage("One of the two players could not be found");
                 }
                 break;
             case "ACCOUNT":

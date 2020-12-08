@@ -20,8 +20,10 @@
 package au.com.addstar.truehardcore.functions;
 
 import au.com.addstar.truehardcore.TrueHardcore;
+import io.papermc.lib.PaperLib;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -29,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
@@ -210,20 +213,21 @@ public class Util {
      * Teleport a player.
      * @param player the player
      * @param loc location
-     * @return true on success
+     * @return CompletableFuture
      */
-    public static boolean teleport(Player player, Location loc) {
+    public static CompletableFuture<Boolean> teleport(Player player, Location loc) {
+
         if ((loc == null) || (player == null)) {
             TrueHardcore.debugLog("Teleport location or player null!");
-            return false;
+            return CompletableFuture.completedFuture(false);
         } else {
             TrueHardcore.debugLog("Teleport (" + player.getName() + "): " + loc);
             final UUID uuid = player.getUniqueId();
             TrueHardcore.instance.addAllowedTeleport(uuid);
-            Bukkit.getScheduler().runTaskLater(TrueHardcore.instance, () -> {
+            Bukkit.getScheduler().runTaskLaterAsynchronously(TrueHardcore.instance, () -> {
                 TrueHardcore.instance.removeAllowedTeleport(uuid);
             }, 60L);
-            return player.teleport(loc);
+            return player.teleportAsync(loc, PlayerTeleportEvent.TeleportCause.PLUGIN);
         }
     }
 

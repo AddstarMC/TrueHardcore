@@ -76,6 +76,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PlayerListener implements Listener {
 
@@ -226,25 +227,27 @@ public class PlayerListener implements Listener {
         }
 
         // Send the player to the lobby
-        if (!Util.teleport(player, loc)) {
-            if (hcp != null) {
-                // Mark the player as in game (don't do this by default! causes teleport problems
-                // and interop issues with NCP)
-                TrueHardcore.warn("Unable to send " + player.getName()
-                        + " to lobby! Resuming game play...");
-                hcp.setState(PlayerState.IN_GAME);
-                plugin.savePlayer(hcp);
-                if (plugin.isPlayerVanished(player)) {
-                    plugin.unVanishPlayer(player);
+        Util.teleport(player,loc).thenAccept(result -> {
+            if(result){
+                if (hcp != null) {
+                    // Mark the player as in game (don't do this by default! causes teleport problems
+                    // and interop issues with NCP)
+                    TrueHardcore.warn("Unable to send " + player.getName()
+                            + " to lobby! Resuming game play...");
+                    hcp.setState(PlayerState.IN_GAME);
+                    plugin.savePlayer(hcp);
+                    if (plugin.isPlayerVanished(player)) {
+                        plugin.unVanishPlayer(player);
+                    }
+                    plugin.broadCastToHardcore(plugin.header + ChatColor.GREEN
+                            + player.getDisplayName() + " has entered "
+                            + hcp.getWorld(), player.getName());
+                } else {
+                    TrueHardcore.warn("Unable to send " + player.getName()
+                            + " to lobby and no player record!! THAT IS BAD!");
                 }
-                plugin.broadCastToHardcore(plugin.header + ChatColor.GREEN
-                        + player.getDisplayName() + " has entered "
-                        + hcp.getWorld(), player.getName());
-            } else {
-                TrueHardcore.warn("Unable to send " + player.getName()
-                        + " to lobby and no player record!! THAT IS BAD!");
             }
-        }
+        });
     }
 
     /**
