@@ -46,7 +46,6 @@ import com.griefcraft.model.Protection;
 import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
-import io.papermc.lib.PaperLib;
 import me.botsko.prism.Prism;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -75,11 +74,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.kitteh.vanish.VanishManager;
 import org.kitteh.vanish.VanishPlugin;
-import org.omg.CORBA.Environment;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
