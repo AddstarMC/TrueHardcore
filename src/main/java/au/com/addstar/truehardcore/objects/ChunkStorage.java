@@ -112,7 +112,7 @@ public final class ChunkStorage {
         UUID uuid = chunk.getWorld().getUID();
         TrueHardCoreChunk thChunk = new TrueHardCoreChunk(chunk.getX(), chunk.getZ(), uuid);
         thChunk.setExpiry(expiry);
-        List<TrueHardCoreChunk> chunks = heldChunks.get(uuid);
+        List<TrueHardCoreChunk> chunks = heldChunks.computeIfAbsent(uuid, k -> new ArrayList<>());
         chunks.add(thChunk);
     }
 
