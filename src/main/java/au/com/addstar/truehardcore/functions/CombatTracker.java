@@ -123,8 +123,8 @@ public class CombatTracker implements Listener {
             return;
         }
         hcp.setCombat(true);
-        hcp.setCombatTime(System.currentTimeMillis() + TrueHardcore.getCfg().combatTime);
-        player.sendMessage(" You have entered combat logging out will incur a penalty. Until:"
-              + Util.long2Time(hcp.getCombatTime() - System.currentTimeMillis()));
+        hcp.setCombatTime(System.currentTimeMillis() + (TrueHardcore.getCfg().combatTime * 1000L));
+        player.sendMessage("You have entered combat - Logging out will incur a penalty. Until:"
+              + Util.long2Time(hcp.getCombatTime()));
     }
 }
