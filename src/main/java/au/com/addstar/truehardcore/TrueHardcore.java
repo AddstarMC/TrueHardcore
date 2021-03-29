@@ -313,7 +313,11 @@ public final class TrueHardcore extends JavaPlugin {
         if (baseChunkTime > 0) {
             pm.registerEvents(new ChunkListener(baseChunkTime), this);
         }
-        enableCombatLog(cfg.antiCombatLog);
+
+        // Enable combat log tracker
+        combatTracker = new CombatTracker(this);
+        pm.registerEvents(combatTracker, this);
+
         if (cfg.autoSaveEnabled) {
             log("Launching auto-save timer (every 5 minutes)...");
             getServer().getScheduler().runTaskTimer(this, this::saveInGamePlayers,
@@ -323,40 +327,15 @@ public final class TrueHardcore extends JavaPlugin {
         log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 
-    /**
-     * Enable combat log.
-     *
-     * @param enable boolean
-     */
-    public void enableCombatLog(boolean enable) {
-        if (enable) {
-            if (combatTracker == null) {
-                combatTracker = new CombatTracker(this);
-                pm.registerEvents(combatTracker, this);
-            }
-        } else {
-            if (combatTracker != null) {
-                combatTracker.onDisable();
-            }
-            combatTracker = null;
-        }
-        log("Combat Logging is " + cfg.antiCombatLog);
-
-    }
-
     @Override
     public void onDisable() {
         chunkStorage.disable();
-        // cancel all tasks we created
-        if (combatTracker != null) {
-            combatTracker.onDisable();
-        }
+        combatTracker.onDisable();
         rollbackHandler.onDisable();
         getServer().getScheduler().cancelTasks(this);
         saveAllPlayers();
         log(pdfFile.getName() + " has been disabled!");
         debugFileHandler.close();
-
     }
 
     /**
@@ -464,7 +443,7 @@ public final class TrueHardcore extends JavaPlugin {
         chunkStorage.addChunk(player.getChunk(), System.currentTimeMillis() + hcw.getChunkHoldOnDeathDelay());
         player.getChunk().setForceLoaded(true);
         hcp.setState(PlayerState.DEAD);
-        hcp.setCombat(false);
+        hcp.setInCombat(false);
         hcp.setCombatTime(0);
         hcp.setDeathMsg(event.getDeathMessage());
         hcp.setDeathPos(player.getLocation());
@@ -1177,6 +1156,7 @@ public final class TrueHardcore extends JavaPlugin {
     private void loadPlayerFromData(HardcorePlayer hcp, ResultSet res) {
         try {
             hcp.setLoadDataOnly(true);
+            hcp.setSpawnPos(Util.str2Loc(res.getString("spawnpos")));
             hcp.setLastPos(Util.str2Loc(res.getString("lastpos")));
             hcp.setLastJoin(Util.mysql2Date(res.getString("lastjoin")));
             hcp.setLastQuit(Util.mysql2Date(res.getString("lastquit")));

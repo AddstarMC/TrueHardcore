@@ -46,8 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 public class CommandTH implements CommandExecutor {
     private final TrueHardcore plugin;
@@ -117,15 +115,13 @@ public class CommandTH implements CommandExecutor {
                     return true;
                 }
                 HardcorePlayer hcPlayer = plugin.hcPlayers.get(player);
-                if (hcPlayer.isCombat() && hcPlayer.getCombatTime() > System.currentTimeMillis()) {
-                    player.sendMessage(ChatColor.RED + "It's not safe to leave.. you are in combat "
-                          + "until " + Util.long2Time(hcPlayer.getCombatTime()
-                          - System.currentTimeMillis()));
+                if (hcPlayer.isInCombat() && hcPlayer.getCombatTime() > System.currentTimeMillis()) {
+                    player.sendMessage(ChatColor.RED + "It's not safe to leave.. you are in combat! Please wait...");
                     return true;
-                } else if (hcPlayer.isCombat() && (hcPlayer.getCombatTime()
+                } else if (hcPlayer.isInCombat() && (hcPlayer.getCombatTime()
                       < System.currentTimeMillis())) {
                     hcPlayer.setCombatTime(0);
-                    hcPlayer.setCombat(false);
+                    hcPlayer.setInCombat(false);
                 }
                 player.sendMessage(ChatColor.GOLD + "Teleportation will commence in "
                       + ChatColor.RED + "5 seconds" + ChatColor.GOLD + ". Don't move.");
@@ -307,8 +303,8 @@ public class CommandTH implements CommandExecutor {
                         sender.sendMessage(ChatColor.YELLOW + "Modified       : " + ChatColor.AQUA
                               + hcp.isModified());
                         outputKillScores(sender, hcp);
-                        sender.sendMessage(ChatColor.YELLOW + "Player in Combat?   : "
-                              + ChatColor.AQUA + hcp.isCombat() + " : "
+                        sender.sendMessage(ChatColor.YELLOW + "In Combat?     : "
+                              + ChatColor.AQUA + hcp.isInCombat() + " : "
                               + Util.long2Time(hcp.getCombatTime()));
 
                     }
@@ -345,10 +341,16 @@ public class CommandTH implements CommandExecutor {
                               + hcw.getDeathDrops());
                         sender.sendMessage(ChatColor.YELLOW + " Whitelisted   : " + ChatColor.AQUA
                               + hcw.isWhitelisted());
+                        sender.sendMessage(ChatColor.YELLOW + " AntiCombatLog : " + ChatColor.AQUA
+                                + hcw.getAntiCombatLog());
+                        sender.sendMessage(ChatColor.YELLOW + " CombatTime    : " + ChatColor.AQUA
+                                + hcw.getCombatTime());
                         List<ChunkStorage.TrueHardCoreChunk> chunks = stored.get(hcw.getWorld().getUID());
-                        sender.sendMessage(ChatColor.YELLOW + " Chunks Held:" + chunks.size());
+                        sender.sendMessage(ChatColor.YELLOW + " Chunks Held   : " + ChatColor.AQUA
+                                + chunks.size());
                         for (ChunkStorage.TrueHardCoreChunk chunk : chunks) {
-                            sender.sendMessage(ChatColor.GRAY + "      Chunk: X:" + chunk.getX() + " Z:" + chunk.getZ()
+                            sender.sendMessage(ChatColor.GRAY + "      Chunk: X:" + chunk.getX()
+                                  + " Z:" + chunk.getZ()
                                   + " Expiry:" + chunk.getExpiry());
                         }
                     }
@@ -364,7 +366,6 @@ public class CommandTH implements CommandExecutor {
                     switch (args[1].toUpperCase()) {
                         case "EXIT":
                             if (sender instanceof Player) {
-
                                 World world = plugin.getServer().getWorld(args[2]);
                                 if ((plugin.isHardcoreWorld(world))) {
                                     HardcoreWorld hcw = plugin.hardcoreWorlds.get(world.getName());
@@ -383,23 +384,6 @@ public class CommandTH implements CommandExecutor {
                                 sender.sendMessage(ChatColor.RED
                                       + "Error: Must be an in game player.");
                             }
-                            break;
-                        case "COMBATLOG":
-                            switch (args[2].toUpperCase()) {
-                                case "ENABLE":
-                                    TrueHardcore.getCfg().antiCombatLog = true;
-                                    plugin.enableCombatLog(true);
-                                    break;
-                                case "DISABLE":
-                                    TrueHardcore.getCfg().antiCombatLog = false;
-                                    plugin.enableCombatLog(false);
-                                    break;
-                                default:
-                                    throw new IllegalArgumentException(
-                                          " Please use: Enable or Disable");
-                            }
-                            sender.sendMessage("AntiCombatLogging is now: "
-                                  + TrueHardcore.getCfg().antiCombatLog);
                             break;
                         default:
                             sender.sendMessage(ChatColor.RED + "Invalid option \""

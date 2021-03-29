@@ -65,6 +65,12 @@ public class HardcoreWorldConfig extends AutoConfig {
     @ConfigField(comment = "How long to keep a chunk loaded after death.")
     public int chunkHoldOnDeath = 6000;
 
+    @ConfigField(comment = "This prevents a player quiting hardcore properly while in combat")
+    public boolean antiCombatLog = false;
+
+    @ConfigField(comment = "How long to consider players in combat mode, in seconds")
+    public int combatTime = 30;
+
     @ConfigField(comment = "Does this world use the whitelist")
     public boolean whitelisted = true;
 

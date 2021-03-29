@@ -42,8 +42,10 @@ public class ThConfig extends AutoConfig {
 
     @ConfigField(comment = "Set true to enable debug mode ")
     public boolean debugEnabled = false;
+
     @ConfigField(comment = "A list of worlds")
     public HashSet<String> worlds = new HashSet<>();
+
     @ConfigField(comment = "Set true to enable ")
     public boolean gameEnabled = true;
 
@@ -72,15 +74,11 @@ public class ThConfig extends AutoConfig {
     @ConfigField(category = "Database", name = "Password",
           comment = "The password of the database")
     public String password = "password";
-    @ConfigField(category = "CombatLogPrevention", name = "enabled",
-          comment = "This prevents a player quiting hardcore properly while in combat ")
-    public boolean antiCombatLog = false;
-    @ConfigField(category = "CombatLogPrevention",
-          comment = "How long to hold them in combat in s")
-    public int combatTime = 30;
+
     @ConfigField(category = "Difficulty",
           comment = "Set from 0 - 50 will make a chunk harder on initial load")
     public int baseChunkTime = 0;
+
     @ConfigField(comment = "The lobby game world name")
     public String lobbyWorld = "games";
 

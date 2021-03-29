@@ -227,7 +227,7 @@ public class PlayerListener implements Listener {
 
         // Send the player to the lobby
         Util.teleport(player,loc).thenAccept(result -> {
-            if(result){
+            if(!result){
                 if (hcp != null) {
                     // Mark the player as in game (don't do this by default! causes teleport problems
                     // and interop issues with NCP)
@@ -255,17 +255,29 @@ public class PlayerListener implements Listener {
      **/
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-
         final Player player = event.getPlayer();
+        TrueHardcore.debug("PlayerRespawn event for " + player.getName() + ": " + player.getLocation());
         TrueHardcore.debug(eventToString(event));
-        if (!plugin.isHardcoreWorld(player.getWorld())) {
-            return;
-        }
-        // We only care about players who have played and are dead
         HardcorePlayer hcp = hardcorePlayers.get(player.getWorld(), event.getPlayer());
-        if ((hcp == null) || (hcp.getState() != PlayerState.DEAD)) {
+        if (!plugin.isHardcoreWorld(player.getWorld()) || hcp == null) {
             return;
         }
+
+        if (hcp.getState() != PlayerState.DEAD) {
+            // Handle players using the exit portal in the end
+            if (player.getWorld().getName().contains("the_end")) {
+                TrueHardcore.debug("Respawning " + player.getName() + " at " + "(" + hcp.getSpawnPos() + ")");
+                player.sendMessage(ChatColor.GREEN + "You have been sent back to your initial spawn location.");
+                TrueHardcore.debug("PlayerSpawnPos: " + hcp.getSpawnPos());
+                event.setRespawnLocation(hcp.getSpawnPos());
+
+                // Give the player 10s invincibility after teleport to protect them
+                player.setNoDamageTicks(200);
+            }
+            // Don't want to do anything else if the player isn't dead
+            return;
+        }
+
         TrueHardcore.debug("PLAYER STATE : " + hcp.getState().toString());
         Location loc = plugin.getLobbyLocation(player, player.getWorld().getName());
         event.setRespawnLocation(loc);

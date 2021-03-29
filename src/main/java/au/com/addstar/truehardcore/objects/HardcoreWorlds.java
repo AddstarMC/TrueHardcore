@@ -92,7 +92,6 @@ public class HardcoreWorlds {
         public World getWorld() {
             return world;
         }
-
         public void setWorld(World world) {
             this.world = world;
         }
@@ -100,7 +99,6 @@ public class HardcoreWorlds {
         public String getGreeting() {
             return config.greeting;
         }
-
         public void setGreeting(String greeting) {
             this.config.greeting = greeting;
         }
@@ -108,7 +106,6 @@ public class HardcoreWorlds {
         public Integer getBantime() {
             return config.banTime;
         }
-
         public void setBantime(Integer bantime) {
             this.config.banTime = bantime;
         }
@@ -116,7 +113,6 @@ public class HardcoreWorlds {
         public Integer getSpawnDistance() {
             return config.spawnDistance;
         }
-
         public void setSpawnDistance(Integer spawndistance) {
             this.config.spawnDistance = spawndistance;
         }
@@ -124,7 +120,6 @@ public class HardcoreWorlds {
         public Integer getSpawnProtection() {
             return config.spawnProtection;
         }
-
         public void setSpawnProtection(Integer spawnprotection) {
             this.config.spawnProtection = spawnprotection;
         }
@@ -132,7 +127,6 @@ public class HardcoreWorlds {
         public Location getExitPos() {
             return config.exitLocation;
         }
-
         public void setExitPos(Location exitpos) {
             this.config.exitLocation = exitpos;
         }
@@ -140,11 +134,6 @@ public class HardcoreWorlds {
         public Integer getRollbackDelay() {
             return config.rollbackdelay;
         }
-
-        public Integer getChunkHoldOnDeathDelay() {
-            return config.chunkHoldOnDeath;
-        }
-
         public void setRollbackDelay(Integer rollbackdelay) {
             this.config.rollbackdelay = rollbackdelay;
         }
@@ -152,7 +141,6 @@ public class HardcoreWorlds {
         public Boolean getDeathDrops() {
             return config.deathdrops;
         }
-
         public void setDeathDrops(Boolean deathdrops) {
             this.config.deathdrops = deathdrops;
         }
@@ -160,7 +148,6 @@ public class HardcoreWorlds {
         public Boolean isWhitelisted() {
             return config.whitelisted;
         }
-
         public void setWhitelisted(Boolean whitelisted) {
             this.config.whitelisted = whitelisted;
         }
@@ -168,9 +155,26 @@ public class HardcoreWorlds {
         public Difficulty getDifficulty() {
             return config.bukkitDifficulty;
         }
-
         public void setDifficulty(Difficulty difficulty) {
             this.config.bukkitDifficulty = difficulty;
+        }
+
+        public Boolean getAntiCombatLog() {
+            return config.antiCombatLog;
+        }
+        public void setAntiCombatLog(Boolean combatlog) {
+            this.config.antiCombatLog = combatlog;
+        }
+
+        public Integer getCombatTime() {
+            return config.combatTime;
+        }
+        public void setCombatTime(Integer combattime) {
+            this.config.combatTime = combattime;
+        }
+
+        public Integer getChunkHoldOnDeathDelay() {
+            return config.chunkHoldOnDeath;
         }
 
         protected boolean checkandSetDifficulty() {
@@ -183,7 +187,6 @@ public class HardcoreWorlds {
         public String getDeathCommand() {
             return config.deathcommand;
         }
-
         public void setDeathCommand(String command) {
             this.config.deathcommand = command;
         }

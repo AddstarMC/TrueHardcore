@@ -893,11 +893,11 @@ public class HardcorePlayers {
             this.godMode = godMode;
         }
 
-        public boolean isCombat() {
+        public boolean isInCombat() {
             return combat;
         }
 
-        public void setCombat(boolean combat) {
+        public void setInCombat(boolean combat) {
             this.combat = combat;
         }
 
