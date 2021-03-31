@@ -24,12 +24,17 @@ import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.concurrent.ExecutionException;
@@ -124,12 +129,32 @@ public class CombatTracker implements Listener {
         if (!plugin.isHardcoreWorld(event.getDamager().getWorld())) {
             return;
         }
-        if (event.getDamager() instanceof Player) {
+        Player attacker = null;
+        if (event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE) {
+            // Projectile attack (arrow, trident, snowball, splash potion, fireball, etc)
+            if (event.getDamager() instanceof Projectile) {
+                // Find who fired the projectile
+                ProjectileSource shooter = ((Projectile) event.getDamager()).getShooter();
+                if (shooter instanceof Player) {
+                    attacker = (Player) shooter;
+                }
+            }
+        } else {
+            // Direct attack from a player
+            if (event.getDamager() instanceof Player) {
+                attacker = (Player) event.getDamager();
+            }
+        }
+
+        if (attacker != null) {
             if (event.getEntity() instanceof Player) {
-                HardcoreWorlds.HardcoreWorld hcw = plugin.hardcoreWorlds.get(event.getEntity().getWorld().getName());
-                if (hcw != null && hcw.getAntiCombatLog()) {
-                    // Mark and notify players about combat, if necessary
-                    playersInCombat((Player) event.getDamager(), (Player) event.getEntity());
+                Player defender = (Player) event.getEntity();
+                if (attacker != defender) {
+                    HardcoreWorlds.HardcoreWorld hcw = plugin.hardcoreWorlds.get(defender.getWorld().getName());
+                    if (hcw != null && hcw.getAntiCombatLog()) {
+                        // Mark and notify players about combat, if necessary
+                        playersInCombat(attacker, defender);
+                    }
                 }
             }
         }
