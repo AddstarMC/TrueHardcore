@@ -674,6 +674,17 @@ public final class TrueHardcore extends JavaPlugin {
             debug(player.getName() + " is returning to " + hcw.getWorld().getName());
             hcp.setState(PlayerState.IN_GAME);
             joinGame(world, player);
+            TrueHardcore.debug("AFTER: Player has " + hcp.getScore() + " score - "
+                    + "Level:" + player.getLevel() + ", "
+                    + "XP:" + player.getExp() + ", "
+                    + "TotalXP:" + player.getTotalExperience());
+            player.setTotalExperience(hcp.getScore());
+            player.setExp(hcp.getExp());
+            player.setLevel(hcp.getLevel());
+            TrueHardcore.debug("AFTER: Player has " + hcp.getScore() + " score - "
+                    + "Level:" + player.getLevel() + ", "
+                    + "XP:" + player.getExp() + ", "
+                    + "TotalXP:" + player.getTotalExperience());
             savePlayer(hcp);
             cleanAndGreet(player, world);
         }
