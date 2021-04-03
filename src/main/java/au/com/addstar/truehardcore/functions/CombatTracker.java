@@ -115,8 +115,10 @@ public class CombatTracker implements Listener {
         if (hcp != null) {
             hcp.setCombatTime(0);
             hcp.setInCombat(false);
-            plugin.getLogger().info(ChatColor.YELLOW + "Player " + event.getPlayer().getName()
-                    + " left " + hcp.getWorld() + " while in combat mode!");
+            String msg = "Player " + event.getPlayer().getName() + " left "
+                    + hcp.getWorld() + " while in combat mode!";
+            plugin.getLogger().info(ChatColor.YELLOW + msg);
+            TrueHardcore.debug(msg);
         }
     }
 
@@ -173,17 +175,21 @@ public class CombatTracker implements Listener {
 
         // If either player is not already in combat, log to console about it
         if (!attacker.isInCombat() || !defender.isInCombat()) {
-            plugin.getLogger().info(String.format("[Combat Log] %s attacked %s",
-                attacker.getPlayerName(),
-                defender.getPlayerName()));
+            String msg = attacker.getPlayerName() + " attacked " + defender.getPlayerName();
+            plugin.getLogger().info("[CombatLog] " + msg);
+            TrueHardcore.debug(msg);
         }
 
         // If a player is not already in combat, mark them and notify them
         if (!attacker.isInCombat()) {
+            TrueHardcore.debug(attacker.getPlayerName() + " has entered combat mode with "
+                + defender.getPlayerName() + ".");
             attacker.setInCombat(true);
             giveWarning(player1);
         }
         if (!defender.isInCombat()) {
+            TrueHardcore.debug(defender.getPlayerName() + " has entered combat mode with "
+                + attacker.getPlayerName() + ".");
             defender.setInCombat(true);
             giveWarning(player2);
         }
