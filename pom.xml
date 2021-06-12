@@ -130,7 +130,7 @@
           <artifactId>paperlib</artifactId>
           <version>1.0.3</version>
       </dependency>
-    <!-- WorldGuard for some of the sk functions -->
+      <!-- WorldGuard for some of the sk functions -->
       <dependency>
           <groupId>com.sk89q.worldguard</groupId>
           <artifactId>worldguard-bukkit</artifactId>
@@ -163,7 +163,7 @@
         <!--Used for Prism stuff -->
         <dependency>
             <groupId>me.botsko</groupId>
-            <artifactId>prism</artifactId>
+            <artifactId>Prism</artifactId>
             <version>2.1.8-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
@@ -173,6 +173,13 @@
             </exclusions>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>me.botsko</groupId>
+          <artifactId>Prism-Api</artifactId>
+          <version>2.1.8-SNAPSHOT</version>
+          <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.lishid</groupId>
             <artifactId>openinvapi</artifactId>
