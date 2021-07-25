@@ -19,7 +19,7 @@
 
 package au.com.addstar.truehardcore;
 
-import au.com.addstar.bc.BungeeChat;
+import au.com.addstar.pandora.MasterPlugin;
 import au.com.addstar.truehardcore.commands.CommandTH;
 import au.com.addstar.truehardcore.config.ConfigManager;
 import au.com.addstar.truehardcore.config.ThConfig;
@@ -46,6 +46,7 @@ import com.griefcraft.model.Protection;
 import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
+import de.myzelyam.api.vanish.VanishAPI;
 import me.botsko.prism.Prism;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -72,8 +73,6 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-import org.kitteh.vanish.VanishManager;
-import org.kitteh.vanish.VanishPlugin;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -158,11 +157,10 @@ public final class TrueHardcore extends JavaPlugin {
     private Database dbConnection = null;
     private Boolean lwcHooked = false;
     private Boolean wbHooked = false;
-    private Boolean vnpHooked = false;
-    private Boolean bcHooked = false;
+    private Boolean pvHooked = false;
     private LWC lwc;
     private WorldBorder wb;
-    private VanishManager vnp;
+    private VanishAPI pv;
 
     public TrueHardcore() {
         super();
@@ -255,24 +253,15 @@ public final class TrueHardcore extends JavaPlugin {
             log("WorldBorder not found! Spawning will not be limited...");
         }
 
-        p = pm.getPlugin("BungeeChatBukkit");
-        if (p instanceof BungeeChat) {
-            bcHooked = true;
-            log("BungeeChat found, hooking it.");
-        } else {
-            bcHooked = false;
-            log("BungeeChat not found! No cross server messages");
-        }
-
-        p = pm.getPlugin("VanishNoPacket");
-        if (p instanceof VanishPlugin) {
-            vnpHooked = true;
-            vnp = ((VanishPlugin) p).getManager();
-            log("VanishNoPacket found, hooking it.");
+        p = pm.getPlugin("PremiumVanish");
+        if (p != null && p.isEnabled()) {
+            pvHooked = true;
+            log("PremiumVanish found, will use it.");
         } else {
             wbHooked = false;
-            log("VanishNoPacket not found! Vanished players will not be unvanished...");
+            log("PremiumVanish not found! Vanished players will not be unvanished.");
         }
+
         oiHooked = checkOpenInventory();
 
         p = pm.getPlugin("ProtocolLib");
@@ -444,7 +433,7 @@ public final class TrueHardcore extends JavaPlugin {
         player.getChunk().setForceLoaded(true);
         hcp.setState(PlayerState.DEAD);
         hcp.setInCombat(false);
-        hcp.setCombatTime(0);
+        hcp.setCombatExpiry(0);
         hcp.setDeathMsg(event.getDeathMessage());
         hcp.setDeathPos(player.getLocation());
         hcp.setDeaths(hcp.getDeaths() + 1);
@@ -1385,12 +1374,12 @@ public final class TrueHardcore extends JavaPlugin {
     public void unVanishPlayer(Player player) {
         if (isPlayerVanished(player)) {
             debug("UnVanishing: " + player.getName());
-            vnp.toggleVanish(player);
+            VanishAPI.showPlayer(player);
         }
     }
 
     public boolean isPlayerVanished(Player player) {
-        return (vnpHooked) && (vnp.isVanished(player));
+        return (pvHooked) && (VanishAPI.isInvisible(player));
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -1512,10 +1501,8 @@ public final class TrueHardcore extends JavaPlugin {
      * @param msg the message
      */
     public void broadcastToAllServers(String msg) {
-        Bukkit.getServer().broadcastMessage(msg);
-        if (bcHooked) {
-            BungeeChat.mirrorChat(msg, cfg.broadcastChannel);
-        }
+        // Send ChatControl broadcast via Pandora
+        MasterPlugin.getInstance().sendChatControlMessage(Bukkit.getConsoleSender(), cfg.broadcastChannel, msg);
     }
 
     public boolean isTeleportAllowed(UUID uuid) {
