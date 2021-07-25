@@ -98,7 +98,8 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.bstats:bstats-bukkit:1.7" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.milkbowl.vault:VaultAPI:1.7" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.griefcraft:lwc:4.7.0-SNAPSHOT" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: me.botsko:prism:2.1.8-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: me.botsko:Prism:2.1.8-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: me.botsko:Prism-Api:2.1.8-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.lishid:openinvapi:3.3.7-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.wimbli.WorldBorder:WorldBorder:1.9.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.spigotmc:spigot-api:1.13.1-R0.1-SNAPSHOT" level="project" />
