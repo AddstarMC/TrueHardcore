@@ -115,12 +115,12 @@ public class CommandTH implements CommandExecutor {
                     return true;
                 }
                 HardcorePlayer hcPlayer = plugin.hcPlayers.get(player);
-                if (hcPlayer.isInCombat() && hcPlayer.getCombatTime() > System.currentTimeMillis()) {
+                if (hcPlayer.isInCombat() && hcPlayer.getCombatExpiry() > System.currentTimeMillis()) {
                     player.sendMessage(ChatColor.RED + "It's not safe to leave.. you are in combat! Please wait...");
                     return true;
-                } else if (hcPlayer.isInCombat() && (hcPlayer.getCombatTime()
+                } else if (hcPlayer.isInCombat() && (hcPlayer.getCombatExpiry()
                       < System.currentTimeMillis())) {
-                    hcPlayer.setCombatTime(0);
+                    hcPlayer.setCombatExpiry(0);
                     hcPlayer.setInCombat(false);
                 }
                 player.sendMessage(ChatColor.GOLD + "Teleportation will commence in "
@@ -305,7 +305,7 @@ public class CommandTH implements CommandExecutor {
                         outputKillScores(sender, hcp);
                         sender.sendMessage(ChatColor.YELLOW + "In Combat?     : "
                               + ChatColor.AQUA + hcp.isInCombat() + " : "
-                              + Util.long2Time(hcp.getCombatTime()));
+                              + Util.long2Time(hcp.getCombatExpiry()));
 
                     }
                 }

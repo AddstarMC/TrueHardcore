@@ -187,7 +187,7 @@ public class HardcorePlayers {
         private boolean godMode = false;
 
         private boolean combat = false;
-        private long combatTime = 0;
+        private long combatExpiry = 0;
 
         /**
          * Check if its only load data.
@@ -901,12 +901,12 @@ public class HardcorePlayers {
             this.combat = combat;
         }
 
-        public long getCombatTime() {
-            return combatTime;
+        public long getCombatExpiry() {
+            return combatExpiry;
         }
 
-        public void setCombatTime(long combatTime) {
-            this.combatTime = combatTime;
+        public void setCombatExpiry(long combatExpiry) {
+            this.combatExpiry = combatExpiry;
         }
     }
 }

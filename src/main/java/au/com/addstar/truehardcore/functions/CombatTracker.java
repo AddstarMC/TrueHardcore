@@ -24,10 +24,8 @@ import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
-import org.bukkit.entity.Trident;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -40,7 +38,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.concurrent.ExecutionException;
 
 /**
- * This class will track players in combat and remove the status when adequate time has passed...
+ * This class will track players in combat and warn/log when players logout during combat
  * Created for the AddstarMC Project. Created by Narimm on 15/10/2018.
  */
 public class CombatTracker implements Listener {
@@ -49,7 +47,7 @@ public class CombatTracker implements Listener {
     private BukkitTask task;
 
     /**
-     * A Extension that tracks combat and drops a players inventory if they log out in combat.
+     * A Extension that tracks player combat and log when players logout during combat
      * @param plugin the plugin.
      */
     public CombatTracker(TrueHardcore plugin) {
@@ -65,7 +63,7 @@ public class CombatTracker implements Listener {
         for (Player player : Bukkit.getOnlinePlayers()) {
             HardcorePlayers.HardcorePlayer hcPlayer = plugin.hcPlayers.get(player);
             hcPlayer.setInCombat(false);
-            hcPlayer.setCombatTime(0);
+            hcPlayer.setCombatExpiry(0);
         }
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         task.cancel();
@@ -87,8 +85,8 @@ public class CombatTracker implements Listener {
                     }
                     HardcorePlayers.HardcorePlayer hcp = plugin.hcPlayers.get(player);
                     if (hcp != null && hcp.isInCombat()) {
-                        if (hcp.getCombatTime() <= currTime) {
-                            hcp.setCombatTime(0);
+                        if (hcp.getCombatExpiry() <= currTime) {
+                            hcp.setCombatExpiry(0);
                             hcp.setInCombat(false);
                             plugin.getLogger().info("Combat mode has ended for " + player.getName());
                             if (player.isOnline()) {
@@ -112,8 +110,8 @@ public class CombatTracker implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         HardcorePlayers.HardcorePlayer hcp = plugin.hcPlayers.get(event.getPlayer());
-        if (hcp != null) {
-            hcp.setCombatTime(0);
+        if ((hcp != null) && (hcp.isInCombat())) {
+            hcp.setCombatExpiry(0);
             hcp.setInCombat(false);
             String msg = "Player " + event.getPlayer().getName() + " left "
                     + hcp.getWorld() + " while in combat mode!";
@@ -170,7 +168,8 @@ public class CombatTracker implements Listener {
         HardcorePlayers.HardcorePlayer defender = plugin.hcPlayers.get(player2);
         if (attacker == null || defender == null) return false;
 
-        long combatTime = System.currentTimeMillis()
+        // time when combat should expire
+        long combatExpiry = System.currentTimeMillis()
                 + (TrueHardcore.getCfg().getWorldConfig(defender.getWorld()).combatTime * 1000L);
 
         // If either player is not already in combat, log to console about it
@@ -195,8 +194,8 @@ public class CombatTracker implements Listener {
         }
 
         // Always reset the combat expiry time for the most recent attack
-        attacker.setCombatTime(combatTime);
-        defender.setCombatTime(combatTime);
+        attacker.setCombatExpiry(combatExpiry);
+        defender.setCombatExpiry(combatExpiry);
         return true;
     }
 
