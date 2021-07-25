@@ -126,9 +126,11 @@ public class CombatTracker implements Listener {
      */
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamagebyEntity(EntityDamageByEntityEvent event) {
-        if (!plugin.isHardcoreWorld(event.getDamager().getWorld())) {
+        // Ignore non-hardcore worlds or worlds where combat logging is disabled
+        HardcoreWorlds.HardcoreWorld hcw = plugin.hardcoreWorlds.get(event.getEntity().getWorld().getName());
+        if (hcw == null || !hcw.getAntiCombatLog())
             return;
-        }
+
         Player attacker = null;
         if (event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE) {
             // Projectile attack (arrow, trident, snowball, splash potion, fireball, etc)
@@ -150,7 +152,6 @@ public class CombatTracker implements Listener {
             if (event.getEntity() instanceof Player) {
                 Player defender = (Player) event.getEntity();
                 if (attacker != defender) {
-                    HardcoreWorlds.HardcoreWorld hcw = plugin.hardcoreWorlds.get(defender.getWorld().getName());
                     if (hcw != null && hcw.getAntiCombatLog()) {
                         // Mark and notify players about combat, if necessary
                         playersInCombat(attacker, defender);
