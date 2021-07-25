@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: me.botsko:Prism-Api:2.1.8-SNAPSHOT">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/Prism-Api/2.1.8-SNAPSHOT/Prism-Api-2.1.8-20210628.045404-10.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/Prism-Api/2.1.8-SNAPSHOT/Prism-Api-2.1.8-20210628.045404-10-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/me/botsko/Prism-Api/2.1.8-SNAPSHOT/Prism-Api-2.1.8-20210628.045404-10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
