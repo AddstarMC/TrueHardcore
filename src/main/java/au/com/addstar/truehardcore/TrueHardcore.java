@@ -109,7 +109,7 @@ public final class TrueHardcore extends JavaPlugin {
           Material.PODZOL,
           Material.GRASS,
           Material.GRASS_BLOCK,
-          Material.GRASS_PATH,
+          Material.DIRT_PATH,
           Material.SAND,
           Material.SANDSTONE,
           Material.SMOOTH_SANDSTONE,
