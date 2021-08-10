@@ -21,7 +21,7 @@
       <module name="geSuitSpawn" target="1.8" />
       <module name="geSuitTeleports" target="1.8" />
       <module name="geSuitWarps" target="1.8" />
-      <module name="TrueHardcore" target="1.8" />
+      <module name="TrueHardcore" target="16" />
     </bytecodeTargetLevel>
   </component>
 </project>

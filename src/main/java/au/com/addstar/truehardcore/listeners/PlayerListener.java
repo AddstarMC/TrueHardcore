@@ -25,9 +25,6 @@ import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
-import com.lishid.openinv.IOpenInv;
-import com.lishid.openinv.internal.ISpecialEnderChest;
-import com.lishid.openinv.internal.ISpecialPlayerInventory;
 import me.botsko.prism.actionlibs.ActionsQuery;
 import me.botsko.prism.api.actions.MatchRule;
 import me.botsko.prism.actionlibs.QueryParameters;
@@ -61,20 +58,16 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class PlayerListener implements Listener {
@@ -605,17 +598,9 @@ public class PlayerListener implements Listener {
                     giveSkullOnline(killed, killedDN, killerOnline);
                 }
             } else {
-                giveSkullOffline(killed, killedDN, killer);
+                TrueHardcore.debug(killer.getName() + " is offline and killed " + killedDN);
             }
         }
-    }
-
-    private void giveSkullOffline(OfflinePlayer killedName, String killedDN, OfflinePlayer killer) {
-        IOpenInv openInv = plugin.openInv;
-        Player loadedKiller = openInv.loadPlayer(killer);
-        openInv.retainPlayer(loadedKiller, plugin);
-        giveSkull(killedName, killedDN, loadedKiller, false);
-        openInv.releasePlayer(loadedKiller, plugin);
     }
 
     private void giveSkullOnline(OfflinePlayer killedName, String killedDN, Player killer) {
@@ -646,33 +631,5 @@ public class PlayerListener implements Listener {
         }
         skull.setItemMeta(skullMeta);
         killer.getWorld().dropItem(killer.getLocation(), skull);
-        try {
-            ISpecialPlayerInventory inv = plugin.openInv.getSpecialInventory(killer, isOnline);
-            Inventory binv = inv.getBukkitInventory();
-            HashMap<Integer, ItemStack> left = binv.addItem(skull);
-            if (!left.isEmpty()) {
-                TrueHardcore.debug("Unable to add item to normal inventory: "
-                        + skull.toString());
-                for (Map.Entry<Integer, ItemStack> e : left.entrySet()) {
-                    if (e.getKey() > 0) {
-                        ISpecialEnderChest sec = plugin.openInv
-                                .getSpecialEnderChest(killer, isOnline);
-                        Inventory enderInv = sec.getBukkitInventory();
-                        ItemStack item = e.getValue();
-                        item.setAmount(e.getKey());
-                        HashMap<Integer, ItemStack> leftNew = enderInv.addItem(item);
-                        if (!leftNew.isEmpty()) {
-                            TrueHardcore.log("Unable to add item to enderchest: "
-                                    + item.toString());
-                        }
-                        TrueHardcore.log("Unable to add item to enderchest: "
-                                + item.toString());
-                    }
-                }
-            }
-        } catch (InstantiationException e) {
-            TrueHardcore.log(e.getMessage());
-        }
-
     }
 }
