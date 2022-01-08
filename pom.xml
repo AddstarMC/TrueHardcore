@@ -227,7 +227,7 @@
         <dependency>
             <groupId>au.com.addstar</groupId>
             <artifactId>Monolith</artifactId>
-            <version>1.16.1-SNAPSHOT</version>
+            <version>1.16.5-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
