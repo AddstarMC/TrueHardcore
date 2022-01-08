@@ -178,6 +178,7 @@ public class WorldRollback {
                 params.addActionType("entity-dye");
                 params.addActionType("water-bucket");
                 params.addActionType("lighter");
+                params.addActionType("portal-create");
 
                 switch (req.type) {
                     case "ROLLBACK":
