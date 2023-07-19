@@ -118,11 +118,11 @@
           <url>https://jitpack.io</url>
       </repository>
 
-      <!-- Prism -->
-      <repository>
+      <!-- Prism: Disabled temporarily because host is down -->
+      <!--<repository>
           <id>darkhelmet</id>
           <url>https://nexus.darkhelmet.network/repository/maven-releases/</url>
-      </repository>
+      </repository>-->
   </repositories>
 
   <dependencies>
