@@ -47,7 +47,7 @@ import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 import de.myzelyam.api.vanish.VanishAPI;
-import me.botsko.prism.Prism;
+import network.darkhelmet.prism.Prism;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;

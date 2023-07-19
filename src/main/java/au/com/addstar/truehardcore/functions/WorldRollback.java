@@ -20,15 +20,15 @@
 package au.com.addstar.truehardcore.functions;
 
 import au.com.addstar.truehardcore.TrueHardcore;
-import me.botsko.prism.Prism;
-import me.botsko.prism.actionlibs.ActionsQuery;
-import me.botsko.prism.api.actions.MatchRule;
-import me.botsko.prism.actionlibs.QueryParameters;
-import me.botsko.prism.actionlibs.QueryResult;
-import me.botsko.prism.api.actions.PrismProcessType;
-import me.botsko.prism.appliers.Rollback;
-import me.botsko.prism.purge.PurgeTask;
-import me.botsko.prism.purge.SenderPurgeCallback;
+import network.darkhelmet.prism.Prism;
+import network.darkhelmet.prism.actionlibs.ActionsQuery;
+import network.darkhelmet.prism.api.actions.MatchRule;
+import network.darkhelmet.prism.actionlibs.QueryParameters;
+import network.darkhelmet.prism.actionlibs.QueryResult;
+import network.darkhelmet.prism.api.actions.PrismProcessType;
+import network.darkhelmet.prism.appliers.Rollback;
+import network.darkhelmet.prism.purge.PurgeTask;
+import network.darkhelmet.prism.purge.SenderPurgeCallback;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;

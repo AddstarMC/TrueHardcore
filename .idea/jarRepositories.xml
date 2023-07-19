@@ -22,6 +22,11 @@
       <option name="url" value="https://repo.maven.apache.org/maven2" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="darkhelmet" />
+      <option name="name" value="darkhelmet" />
+      <option name="url" value="https://nexus.darkhelmet.network/repository/maven-releases/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="papermc" />
       <option name="name" value="papermc" />
       <option name="url" value="https://papermc.io/repo/repository/maven-public/" />
@@ -50,6 +55,11 @@
       <option name="id" value="maven-central" />
       <option name="name" value="maven-central" />
       <option name="url" value="https://repo1.maven.org/maven2/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="mikeprimm" />
+      <option name="name" value="mikeprimm" />
+      <option name="url" value="https://repo.mikeprimm.com/" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="sk89q-repo" />

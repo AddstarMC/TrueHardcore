@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>TrueHardcore</groupId>
   <artifactId>TrueHardcore</artifactId>
-  <version>1.4-SNAPSHOT</version>
+  <version>1.5-SNAPSHOT</version>
   <name>TrueHardcore</name>
   <url>http://dev.bukkit.org/bukkit-plugins/truehardcore</url>
   <properties>
@@ -117,6 +117,12 @@
           <id>jitpack.io</id>
           <url>https://jitpack.io</url>
       </repository>
+
+      <!-- Prism -->
+      <repository>
+          <id>darkhelmet</id>
+          <url>https://nexus.darkhelmet.network/repository/maven-releases/</url>
+      </repository>
   </repositories>
 
   <dependencies>
@@ -165,6 +171,17 @@
 
         <!--Used for Prism stuff -->
         <dependency>
+          <groupId>network.darkhelmet.prism</groupId>
+          <artifactId>Prism-Api</artifactId>
+          <version>1.0.0</version>
+        </dependency>
+        <dependency>
+          <groupId>network.darkhelmet</groupId>
+          <artifactId>prism</artifactId>
+          <version>3.3.1</version>
+        </dependency>
+
+       <!--<dependency>
             <groupId>me.botsko</groupId>
             <artifactId>Prism</artifactId>
             <version>2.1.8-SNAPSHOT</version>
@@ -175,13 +192,7 @@
                 </exclusion>
             </exclusions>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-          <groupId>me.botsko</groupId>
-          <artifactId>Prism-Api</artifactId>
-          <version>2.2.0-SNAPSHOT</version>
-          <scope>provided</scope>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>com.lishid</groupId>
@@ -238,8 +249,8 @@
         </dependency>
         <dependency>
           <groupId>com.github.seeseemelk</groupId>
-          <artifactId>MockBukkit-v1.17</artifactId>
-          <version>1.13.0</version>
+          <artifactId>MockBukkit-v1.18</artifactId>
+          <version>1.15.0</version>
           <scope>test</scope>
         </dependency>
   </dependencies>

@@ -10,18 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="BukkitModule" target="1.8" />
-      <module name="geSuit" target="1.8" />
-      <module name="geSuit-parent" target="1.5" />
-      <module name="geSuitAdmin" target="1.8" />
-      <module name="geSuitBans" target="1.8" />
-      <module name="geSuitCommon" target="1.8" />
-      <module name="geSuitHomes" target="1.8" />
-      <module name="geSuitPortals" target="1.8" />
-      <module name="geSuitSpawn" target="1.8" />
-      <module name="geSuitTeleports" target="1.8" />
-      <module name="geSuitWarps" target="1.8" />
-      <module name="TrueHardcore" target="16" />
+      <module name="TrueHardcore" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>
