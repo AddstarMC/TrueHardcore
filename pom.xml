@@ -178,21 +178,8 @@
         <dependency>
           <groupId>network.darkhelmet</groupId>
           <artifactId>prism</artifactId>
-          <version>3.3.1</version>
+          <version>3.6.0</version>
         </dependency>
-
-       <!--<dependency>
-            <groupId>me.botsko</groupId>
-            <artifactId>Prism</artifactId>
-            <version>2.1.8-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.bukkit</groupId>
-                    <artifactId>bukkit</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>provided</scope>
-        </dependency>-->
 
         <dependency>
             <groupId>com.lishid</groupId>

@@ -9,8 +9,5 @@
         <module name="TrueHardcore" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="TrueHardcore" target="17" />
-    </bytecodeTargetLevel>
   </component>
 </project>

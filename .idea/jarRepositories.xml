@@ -7,6 +7,11 @@
       <option name="url" value="http://nexus.hc.to/content/repositories/pub_releases" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Central Repository" />
+      <option name="url" value="https://repo.maven.apache.org/maven2" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="md5-repo" />
       <option name="name" value="md5-repo" />
       <option name="url" value="http://repo.md-5.net/content/groups/public/" />
@@ -15,11 +20,6 @@
       <option name="id" value="mikeprimm" />
       <option name="name" value="mikeprimm" />
       <option name="url" value="http://repo.mikeprimm.com/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="central" />
-      <option name="name" value="Central Repository" />
-      <option name="url" value="https://repo.maven.apache.org/maven2" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="darkhelmet" />
@@ -82,6 +82,11 @@
       <option name="url" value="https://repo.codemc.org/repository/maven-public" />
     </remote-repository>
     <remote-repository>
+      <option name="id" value="dmulloy2-repo" />
+      <option name="name" value="dmulloy2-repo" />
+      <option name="url" value="https://repo.dmulloy2.net/nexus/repository/public/" />
+    </remote-repository>
+    <remote-repository>
       <option name="id" value="maven-central" />
       <option name="name" value="maven-central" />
       <option name="url" value="http://repo1.maven.org/maven2/" />
@@ -90,11 +95,6 @@
       <option name="id" value="vault-repo" />
       <option name="name" value="vault-repo" />
       <option name="url" value="https://nexus.hc.to/content/repositories/pub_releases" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="dmulloy2-repo" />
-      <option name="name" value="dmulloy2-repo" />
-      <option name="url" value="https://repo.dmulloy2.net/nexus/repository/public/" />
     </remote-repository>
   </component>
 </project>
