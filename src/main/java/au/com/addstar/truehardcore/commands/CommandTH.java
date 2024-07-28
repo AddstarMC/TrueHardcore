@@ -137,7 +137,6 @@ public class CommandTH implements CommandExecutor {
                 }, 5 * 20L);
                 break;
             case "INFO":
-
                 HardcorePlayer hcp = null;
                 if (args.length == 1) {
                     if (sender instanceof Player) {
@@ -581,6 +580,60 @@ public class CommandTH implements CommandExecutor {
                     }
                 }
                 break;
+            case "REDUCETIME":
+                if (sender instanceof Player) {
+                    if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+
+                if (args.length < 3) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th reducetime <player> <hours>");
+                    return true;
+                } else if (args.length == 3) {
+                    // Find each record for the specified player in each world where they are dead
+                    // and reduce their death time by the specified amount of hours
+                    int hours = Integer.parseInt(args[2]);
+                    Player p = Bukkit.getPlayer(args[1]);
+                    if ((p == null) || (!p.isOnline())) {
+                        sender.sendMessage(ChatColor.RED + "Player must online to peform this command");
+                        return true;
+                    }
+                    for (Map.Entry<String, HardcoreWorld> entry : plugin.hardcoreWorlds.allRecords().entrySet()) {
+                        HardcoreWorld hcw = entry.getValue();
+                        // Ensure earliest gameend time is: Now - World Bantime + 5 mins
+                        // In case the player just died, we need to allow +5 mins for rollbacks, etc
+                        Date minEndTime = new Date(System.currentTimeMillis() - (hcw.getBantime() * 1000) + 300000);
+
+                        // Ensure we always have an up-to-date record
+                        plugin.loadPlayer(hcw.getWorld().getName(), p.getUniqueId());
+                        hcp = plugin.hcPlayers.get(hcw.getWorld().getName(), p.getUniqueId());
+
+                        // Ensure their name is updated
+                        hcp.setPlayerName(p.getName());
+
+                        // If player is dead in this world, reduce their death time
+                        if ((hcp != null) && (hcp.getState() == PlayerState.DEAD)) {
+                            // Always ensure the new end time is not before the min end time
+                            Date newEndTime = new Date(hcp.getGameEnd().getTime() - (hours * 3600000));
+                            if (newEndTime.before(minEndTime))
+                                newEndTime = minEndTime;
+
+                            // Set their new end time and save record
+                            hcp.setGameEnd(newEndTime);
+                            plugin.savePlayer(hcp);
+
+                            // Log what has happened and the current state
+                            Date now = new Date();
+                            long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
+                            long wait = (hcw.getBantime() - diff);
+                            TrueHardcore.log("Reduced death time for " + hcp.getPlayerName() + " in "
+                                  + hcw.getWorld().getName() + " by " + hours + " hours "
+                                  + "(time left: " + Util.long2Time(wait) + " / death time: " + hcp.getGameEnd() + ")");
+                        }
+                    }
+                }
+                break;
             case "DISABLE":
                 if (sender instanceof Player) {
                     if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
@@ -776,6 +829,8 @@ public class CommandTH implements CommandExecutor {
                           + ": Save all in-memory changes");
                     sender.sendMessage(ChatColor.AQUA + "/th load       " + ChatColor.YELLOW
                           + ": Load player data from DB");
+                    sender.sendMessage(ChatColor.AQUA + "/th reducetime " + ChatColor.YELLOW
+                            + ": Reduce wait time for a player");
                     sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW
                           + ": Add/remove player to whitelist");
                     sender.sendMessage(ChatColor.AQUA + "/th account  " + ChatColor.YELLOW
