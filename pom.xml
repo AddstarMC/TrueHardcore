@@ -3,13 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>TrueHardcore</groupId>
   <artifactId>TrueHardcore</artifactId>
-  <version>1.5-SNAPSHOT</version>
+  <version>1.20-SNAPSHOT</version>
   <name>TrueHardcore</name>
-  <url>http://dev.bukkit.org/bukkit-plugins/truehardcore</url>
   <properties>
     <build.number/>
-      <spigot.api.version>1.18</spigot.api.version>
-      <spigot.version>1.18.1-R0.1-SNAPSHOT</spigot.version>
+      <spigot.api.version>1.20</spigot.api.version>
+      <spigot.version>1.20.4-R0.1-SNAPSHOT</spigot.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -136,7 +135,7 @@
         <dependency>
           <groupId>io.papermc</groupId>
           <artifactId>paperlib</artifactId>
-          <version>1.0.3</version>
+          <version>1.0.8</version>
         </dependency>
 
         <!-- WorldGuard for some of the sk functions -->
@@ -178,7 +177,7 @@
         <dependency>
           <groupId>network.darkhelmet</groupId>
           <artifactId>prism</artifactId>
-          <version>3.6.0</version>
+          <version>3.9.0</version>
         </dependency>
 
         <dependency>
