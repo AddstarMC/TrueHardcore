@@ -51,12 +51,14 @@ import network.darkhelmet.prism.Prism;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
@@ -76,14 +78,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 
@@ -100,6 +95,8 @@ public final class TrueHardcore extends JavaPlugin {
     // Data for ALL hardcore players
     public final HardcorePlayers hcPlayers = new HardcorePlayers();
     private final Set<UUID> allowedTeleport = new HashSet<>();
+    private final Set<UUID> playersJoining = new HashSet<>();
+    private final HashMap<HardcoreWorld, Integer> playersJoiningWorld = new HashMap<HardcoreWorld, Integer>();
 
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
@@ -107,7 +104,6 @@ public final class TrueHardcore extends JavaPlugin {
           Material.COARSE_DIRT,
           Material.DIRT,
           Material.PODZOL,
-          Material.GRASS,
           Material.GRASS_BLOCK,
           Material.DIRT_PATH,
           Material.SAND,
@@ -461,22 +457,20 @@ public final class TrueHardcore extends JavaPlugin {
             // Check if this is a high score
             boolean highscore = true;
             for (Map.Entry<String, HardcorePlayer> entry : hcPlayers.allRecords().entrySet()) {
-                HardcorePlayer h = entry.getValue();
-                if (h != null) {
-                    // Only compare other player's scores in the same world
-                    if ((h.getWorld().equals(hcp.getWorld())) && (!Objects.equals(h.getPlayerName(),
-                          hcp.getPlayerName()))) {
-                        if (h.getTopScore() >= hcp.getScore()) {
+                HardcorePlayer other = entry.getValue();
+                // Only compare other player's scores in the same world
+                if ((other != null) && (other.getWorld().equals(hcp.getWorld()))) {
+                    // Don't compare score to yourself
+                    if (!other.getPlayerName().equals(hcp.getPlayerName())) {
+                        if (hcp.getScore() <= other.getTopScore()) {
                             highscore = false;
                             debug(hcp.getPlayerName() + "'s score (" + hcp.getScore()
-                                  + ") did not beat " + h.getPlayerName() + " (" + h.getTopScore()
-                                  + ")");
+                                  + ") did not beat " + other.getPlayerName() + " (" + other.getTopScore() + ")");
                             break;
                         }
                     }
                 } else {
-                    warn("Record for key \"" + entry.getKey()
-                          + "\" not found! This should not happen!");
+                    warn("Record for key \"" + entry.getKey() + "\" not found! This should not happen!");
                 }
             }
 
@@ -517,13 +511,15 @@ public final class TrueHardcore extends JavaPlugin {
         player.setLevel(0);
         player.setExp(0);
 
-        if (hcw.getRollbackDelay() > 0) {
+        if ((hcw.getRollbackDelay() > 0) && (!hcw.getRollbackBroadcast().isEmpty())) {
             String wh = ChatColor.DARK_RED + "[" + ChatColor.RED + hcp.getWorld()
                   + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
             broadcastToWorld(hcp.getWorld(), wh + " "
-                  + ChatColor.YELLOW + "You now have " + Util.long2Time(hcw.getRollbackDelay())
-                  + " to raid " + ChatColor.AQUA + player.getName() + "'s " + ChatColor.YELLOW
-                  + "stuff before it all disappears!");
+                    + ChatColor.translateAlternateColorCodes('&', hcw.getRollbackBroadcast()
+                            .replace("%time%", Util.long2Time(hcw.getRollbackDelay()))
+                            .replace("%player%", player.getDisplayName())
+                    )
+            );
         }
 
         instance.getServer().getScheduler().runTaskLater(instance, () -> {
@@ -602,6 +598,18 @@ public final class TrueHardcore extends JavaPlugin {
         }
         if (!cfg.gameEnabled && Util.noPermission(player, "truehardcore.admin")) {
             player.sendMessage(ChatColor.RED + "TrueHardcore is currently disabled.");
+            return false;
+        }
+
+        if (isPlayerJoining(player)) {
+            player.sendMessage(ChatColor.RED
+                + "Still searching for a location, please wait...");
+            return false;
+        }
+
+        if (playerJoiningCount(hcw) > 0) {
+            player.sendMessage(ChatColor.RED + "Sorry, other players are currently joining, please wait...");
+            debug("Join cancelled, already " + playerJoiningCount(hcw) + " players joining " + hcw.getWorld().getName());
             return false;
         }
 
@@ -704,7 +712,22 @@ public final class TrueHardcore extends JavaPlugin {
             oldZ = hcp.getDeathPos().getBlockZ();
         }
 
+        // Mark the player as currently joining a world
+        // This is to prevent a player from joining again while waiting for a spawn location
+        setPlayerJoining(player, true);
+
+        // Increment the joining count for this world
+        setPlayerJoiningCount(hcw, playerJoiningCount(hcw) + 1);
+
         player.sendMessage(ChatColor.YELLOW + "Finding a new spawn location.. please wait..");
+
+        final BossBar bossbar = Bukkit.getServer().createBossBar(
+                ChatColor.GREEN + "Finding suitable spawn location...",
+                BarColor.GREEN,
+                BarStyle.SEGMENTED_20);
+        bossbar.setProgress(0);
+        bossbar.addPlayer(player);
+        bossbar.setVisible(true);
 
         final Location l = new Location(hcw.getWorld(), oldX, 255, oldZ);
         debug("Selecting spawn point " + hcDist + " blocks from: "
@@ -712,11 +735,17 @@ public final class TrueHardcore extends JavaPlugin {
 
         // Attempt to find a new location once per tick so we don't cause too much lag
         new BukkitRunnable() {
+            int maxattempts = 20;
             int attempt = 0;
 
             @Override
             public void run() {
                 attempt++;
+
+                // Set progress on bossbar
+                double progress = (((double) attempt / (double) maxattempts) * 100.0) / 100.0;
+                bossbar.setProgress(progress);
+
                 TrueHardcore.debug("Attempt #" + attempt + " to find location...");
                 boolean goodSpawn = false;
                 String reason = "Unable to find valid block";
@@ -773,11 +802,18 @@ public final class TrueHardcore extends JavaPlugin {
                     // Return the good location
                     spawn.setPitch(0F);
                     spawn.setYaw(0F);
+                    bossbar.setVisible(false);
+                    bossbar.removeAll();
+                    setPlayerJoining(player, false);
                     if (player.isOnline()) {
                         newSpawn(player, spawn);
                     } else {
                         debug("WARNING: Player " + player.getName() + " is no longer online!");
                     }
+                    Bukkit.getScheduler().runTaskLater(TrueHardcore.instance, () -> {
+                        // Decrement the joining count for this world
+                        setPlayerJoiningCount(hcw, playerJoiningCount(hcw) - 1);
+                    }, 50L);
                 } else {
                     debug("BAD : "
                           + Util.padLeft(String.valueOf(spawn.getX()), 9)
@@ -788,12 +824,22 @@ public final class TrueHardcore extends JavaPlugin {
                 }
 
                 // Abort if we tried too many times
-                if (attempt >= 20) {
+                if (attempt >= maxattempts) {
                     this.cancel();
                     debug("Unable to find a good spawn point after " + attempt + " attempts!");
+                    setPlayerJoining(player, false);
+                    if ((player != null) && (player.isOnline())) {
+                        player.sendMessage(ChatColor.RED + "Unable to find a suitable starting location. Try again soon.");
+                    }
+                    bossbar.setVisible(false);
+                    bossbar.removeAll();
+                    Bukkit.getScheduler().runTaskLater(TrueHardcore.instance, () -> {
+                        // Decrement the joining count for this world
+                        setPlayerJoiningCount(hcw, playerJoiningCount(hcw) - 1);
+                    }, 20L);
                 }
             }
-        }.runTaskTimer(instance, 2L, 20L);
+        }.runTaskTimer(instance, 2L, 25L);
     }
 
     /**
@@ -866,6 +912,15 @@ public final class TrueHardcore extends JavaPlugin {
                 Objects.requireNonNull(player.getEquipment()).clear();
                 player.getInventory().clear();
                 player.eject();
+
+                // Reset all player stats
+                for (Statistic stat : Statistic.values()) {
+                    try {
+                        player.setStatistic(stat, 0);
+                    } catch (Exception e) {
+                        Bukkit.getLogger().warning("Unable to reset " + stat.name() + " for player " + player.getName());
+                    }
+                }
             }
         });
         cleanAndGreet(player, spawn.getWorld().getName());
@@ -1260,8 +1315,7 @@ public final class TrueHardcore extends JavaPlugin {
             ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()});
             if (res != null) {
                 if (res.next()) {
-                    String[] worlds = StringUtils.split(res.getString("worlds"),
-                          ",");
+                    String[] worlds = res.getString("worlds").split(",");
                     for (String w : worlds) {
                         if ((w.equals(world)) || (w.equals("*"))) {
                             return true;
@@ -1515,5 +1569,39 @@ public final class TrueHardcore extends JavaPlugin {
 
     public void removeAllowedTeleport(UUID uuid) {
         allowedTeleport.remove(uuid);
+    }
+
+    public boolean isPlayerJoining(Player player) {
+        synchronized (playersJoining) {
+            return playersJoining.contains(player.getUniqueId());
+        }
+    }
+
+    public int playerJoiningCount(HardcoreWorld world) {
+        synchronized (playersJoiningWorld) {
+            return playersJoiningWorld.getOrDefault(world, 0);
+        }
+    }
+
+    public void setPlayerJoiningCount(HardcoreWorld world, Integer count) {
+        // Ensure the count is never negative
+        if (count < 0) count = 0;
+
+        synchronized (playersJoiningWorld) {
+            playersJoiningWorld.put(world, count);
+        }
+    }
+
+    public void setPlayerJoining(Player player, boolean joining) {
+        synchronized (playersJoining) {
+            if (joining) {
+                // Mark the player as currently joining a world
+                // This is to prevent a player from joining again while waiting for a spawn location
+                playersJoining.add(player.getUniqueId());
+            } else {
+                // No longer mark player as joining world
+                playersJoining.remove(player.getUniqueId());
+            }
+        }
     }
 }
