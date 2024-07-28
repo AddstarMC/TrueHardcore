@@ -45,11 +45,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByBlockEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -87,7 +83,7 @@ public class PlayerListener implements Listener {
             for (Field field : fields) {
                 try {
                     field.setAccessible(true);
-                    out.append(field.getName()).append(": ");
+                    out.append(", ").append(field.getName()).append(": ");
                     Object ob = field.get(event);
                     out.append(ob != null ? ob.toString() : "NULL");
                 } catch (IllegalArgumentException | IllegalAccessException e) {
@@ -209,7 +205,7 @@ public class PlayerListener implements Listener {
         // We need to send them away!
         // Riders must be ejected before teleport
         if (player.isInsideVehicle()) {
-            TrueHardcore.debug(player.getName() + " exiting vehicle...");
+            TrueHardcore.debug(player.getName() + " exiting vehicle before joining...");
             player.leaveVehicle();
         }
 
@@ -409,6 +405,43 @@ public class PlayerListener implements Listener {
 
         if ((hcp != null) && (hcp.isGodMode())) {
             event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerExhaustion(EntityExhaustionEvent event) {
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+        if (!plugin.isHardcoreWorld(event.getEntity().getWorld())) {
+            return;
+        }
+
+        Player player = (Player) event.getEntity();
+        HardcorePlayer hcp = hardcorePlayers.get(player);
+
+        if ((hcp != null) && (hcp.isGodMode())) {
+            event.setCancelled(true);
+            event.setExhaustion(0);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerPotionEffect(EntityPotionEffectEvent event) {
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+        if (!plugin.isHardcoreWorld(event.getEntity().getWorld())) {
+            return;
+        }
+
+        Player player = (Player) event.getEntity();
+        HardcorePlayer hcp = hardcorePlayers.get(player);
+
+        if ((hcp != null) && (hcp.isGodMode())) {
+            if (event.getNewEffect().getType().getEffectCategory() == PotionEffectType.Category.HARMFUL) {
+                event.setCancelled(true);
+            }
         }
     }
 
