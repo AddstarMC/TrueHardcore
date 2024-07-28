@@ -49,7 +49,7 @@ public class ThConfig extends AutoConfig {
     @ConfigField(comment = "Set true to enable ")
     public boolean gameEnabled = true;
 
-    @ConfigField(comment = "The Bungeechat channel name to broadcast messages")
+    @ConfigField(comment = "The ChatControlRed channel name to broadcast messages")
     public String broadcastChannel = "GamesBCast";
 
     @ConfigField(name = "AutoSaveEnabled", comment = "Boolean - set true to enable autosaving")
@@ -79,8 +79,8 @@ public class ThConfig extends AutoConfig {
           comment = "Set from 0 - 50 will make a chunk harder on initial load")
     public int baseChunkTime = 0;
 
-    @ConfigField(comment = "The lobby game world name")
-    public String lobbyWorld = "games";
+    @ConfigField(comment = "The lobby world name")
+    public String lobbyWorld = "lobby";
 
     private Map<String, HardcoreWorldConfig> configs;
     private File pluginDirectory;
