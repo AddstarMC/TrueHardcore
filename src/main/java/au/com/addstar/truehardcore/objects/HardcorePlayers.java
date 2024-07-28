@@ -447,7 +447,8 @@ public class HardcorePlayers {
          * @return score
          */
         public Integer getTopScore() {
-            return topScore;
+            // Return whichever is higher: current score or top score
+            return (getScore() > topScore) ? getScore() : topScore;
         }
 
         /**
