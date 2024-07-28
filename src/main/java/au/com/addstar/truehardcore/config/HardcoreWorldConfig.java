@@ -80,6 +80,9 @@ public class HardcoreWorldConfig extends AutoConfig {
     @ConfigField(comment = "Command to be run on death (can use <player> <displayname> <score> <cause>")
     public String deathcommand = "";
 
+    @ConfigField(comment = "Message to be sent to all players in the world when someone dies")
+    public String rollbackBroadcast = "&eYou now have %time% to raid &b%player%'s &estuff before it all disappears!";
+
     /**
      * Constructor.
      *

@@ -138,6 +138,13 @@ public class HardcoreWorlds {
             this.config.rollbackdelay = rollbackdelay;
         }
 
+        public String getRollbackBroadcast() {
+            return config.rollbackBroadcast;
+        }
+        public void setRollbackBroadcast(String msg) {
+            this.config.rollbackBroadcast = msg;
+        }
+
         public Boolean getDeathDrops() {
             return config.deathdrops;
         }
