@@ -1,38 +1,39 @@
-# Enable plugin debugging (warning: this is very verbose!)
-debug: true
+# HardCore Configuration
 
-# Auto save player state to the database every 5 minutes?
-auto-save: false
+# Set true to enable debug mode
+debugEnabled: false
 
-# BungeeChat Channel used for game broadcasts (eg. death)
-broadcast-channel: "GamesBCast" 
+# A list of worlds
+worlds: []
 
-lobbyWorld: games
+# Set true to enable
+gameEnabled: true
 
-# Which worlds are hardcore worlds
-worlds:
-  hardcore1:
-    greeting: "&f[&cHardcore1&f] &cLWC chest protection, no PVP and no raiding"
-    ban-time: 3600
-    spawn-distance: 5000
-    spawn-protection: 60
-    difficulty: "HARD"
-  hardcore2:
-    greeting: "&f[&cHardcore2&f] &cPVP and raiding are encouraged here!"
-    ban-time: 7200
-    spawn-distance: 4000
-    protection-time: 30
-    difficulty: "HARD"
+# The ChatControlRed channel name to broadcast messages
+broadcastChannel: GamesBCast
 
+# Boolean - set true to enable autosaving
+AutoSaveEnabled: false
 
-# Database settings
-mysql:
-  host: localhost
-  port: 3306
-  database: truehardcore
-  username: truehardcore
-  password: "truehardcore"
+Database:
+  # The ip or hostname of the database
+  Host: localhost
 
-#Difficulty Settings
-chunk:
-  baseTime: 0
+  # The port of the database
+  Port: '3306'
+
+  # The Name of the database
+  Name: hardcore
+
+  # The Username of the database
+  Username: username
+
+  # The password of the database
+  Password: password
+
+Difficulty:
+  # Set from 0 - 50 will make a chunk harder on initial load
+  baseChunkTime: 0
+
+# The lobby game world name
+lobbyWorld: lobby

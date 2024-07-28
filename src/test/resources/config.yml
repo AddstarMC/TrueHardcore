@@ -1,33 +1,39 @@
-# BungeeChat Channel used for game broadcasts (eg. death)
-broadcast-channel: "GamesBCast"
-#broadcast-channel: "NULL"
+# HardCore Configuration
 
-# Which worlds are hardcore worlds
-worlds:
-  hardcore1:
-    greeting: '&f[&cHardcore1&f] &aLWC chest protection, &cNO &dPVP and &cNO &draiding!'
-    ban-time: 10800
-    spawn-distance: 6000
-    protection-time: 120
-    rollback-delay: 0
-    death-drops: false
-    exitpos: hclobby,23,44,-31.50,180,-2
-  hardcore2:
-    greeting: '&f[&cHardcore2&f] &dPVP and raiding is &cencouraged &dhere!'
-    ban-time: 7200
-    spawn-distance: 3000
-    protection-time: 120
-    rollback-delay: 180
-    death-drops: true
-    exitpos: hclobby,23,44,-46.50,0,-2
-    whitelisted: false
-combat:
-  Anti-Log: true
-  time: 30
-# Database settings
-mysql:
-  host: testhost
-  port: 3306
-  database: truehardcore
-  username: truehardcore
-  password: truehardcore
+# Set true to enable debug mode
+debugEnabled: false
+
+# A list of worlds
+worlds: []
+
+# Set true to enable
+gameEnabled: true
+
+# The ChatControlRed channel name to broadcast messages
+broadcastChannel: GamesBCast
+
+# Boolean - set true to enable autosaving
+AutoSaveEnabled: false
+
+Database:
+  # The ip or hostname of the database
+  Host: localhost
+
+  # The port of the database
+  Port: '3306'
+
+  # The Name of the database
+  Name: hardcore
+
+  # The Username of the database
+  Username: username
+
+  # The password of the database
+  Password: password
+
+Difficulty:
+  # Set from 0 - 50 will make a chunk harder on initial load
+  baseChunkTime: 0
+
+# The lobby game world name
+lobbyWorld: lobby

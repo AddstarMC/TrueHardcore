@@ -3,7 +3,7 @@ main: au.com.addstar.truehardcore.TrueHardcore
 version: ${plugin.version}
 api-version: ${spigot.api.version}
 author: add5tar
-softdepend: [Vault, Multiverse-Core, My_Worlds, Prism, LWC, VanishNoPacket, WorldBorder, BungeeChatBukkit, Monolith]
+softdepend: [Vault, Multiverse-Core, My_Worlds, Prism, LWC, VanishNoPacket, WorldBorder, ChatControlRed, Monolith, Pandora]
 description: Multiplayer hardcore plugin to simulate true hardcore
 
 commands:
