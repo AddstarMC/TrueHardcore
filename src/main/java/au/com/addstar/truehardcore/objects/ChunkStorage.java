@@ -83,6 +83,7 @@ public final class ChunkStorage {
             for (int i = 0; i < item.size(); i++) {
                 TrueHardCoreChunk c = item.get(i);
                 if (c.getExpiry() < System.currentTimeMillis()) {
+                    TrueHardcore.debug("Chunk expired: " + c.coOrdX + " " + c.coOrdZ + " " + c.world);
                     clearRealChunk(c);
                     item.remove(c);
                 }
@@ -96,6 +97,7 @@ public final class ChunkStorage {
             if (world != null) {
                 Chunk chunk = world.getChunkAt(coreChunk.coOrdX, coreChunk.coOrdZ);
                 if (chunk.isLoaded() && chunk.isForceLoaded()) {
+                    TrueHardcore.debug("Chunk setForceLoaded(false): " + chunk.getX() + " " + chunk.getZ() + " " + chunk.getWorld().getName());
                     chunk.setForceLoaded(false);
                 }
             }

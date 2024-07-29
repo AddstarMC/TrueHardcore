@@ -76,6 +76,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+import javax.swing.border.Border;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
@@ -308,7 +309,7 @@ public final class TrueHardcore extends JavaPlugin {
             getServer().getScheduler().runTaskTimer(this, this::saveInGamePlayers,
                   300 * 20L, 300 * 20L);
         }
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, chunkStorage::expireOldChunks, 360 * 20L, 360 * 20L);
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, chunkStorage::expireOldChunks, 300 * 20L, 5 * 20L);
         log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 
@@ -425,7 +426,9 @@ public final class TrueHardcore extends JavaPlugin {
             throw new NullPointerException("World was null");
         }
         final HardcoreWorld hcw = hardcoreWorlds.get(world.getName());
-        chunkStorage.addChunk(player.getChunk(), System.currentTimeMillis() + hcw.getChunkHoldOnDeathDelay());
+        chunkStorage.addChunk(player.getChunk(), System.currentTimeMillis() + (hcw.getChunkHoldOnDeathDelay() * 1000));
+        TrueHardcore.debug("Chunk setForceLoaded(true): " + player.getChunk().getX() + " " + player.getChunk().getZ() + " "
+                + player.getChunk().getWorld().getName() + " (" + hcw.getChunkHoldOnDeathDelay() + "s)");
         player.getChunk().setForceLoaded(true);
         hcp.setState(PlayerState.DEAD);
         hcp.setInCombat(false);
@@ -804,7 +807,6 @@ public final class TrueHardcore extends JavaPlugin {
                     spawn.setYaw(0F);
                     bossbar.setVisible(false);
                     bossbar.removeAll();
-                    setPlayerJoining(player, false);
                     if (player.isOnline()) {
                         newSpawn(player, spawn);
                     } else {
@@ -813,6 +815,7 @@ public final class TrueHardcore extends JavaPlugin {
                     Bukkit.getScheduler().runTaskLater(TrueHardcore.instance, () -> {
                         // Decrement the joining count for this world
                         setPlayerJoiningCount(hcw, playerJoiningCount(hcw) - 1);
+                        setPlayerJoining(player, false);
                     }, 50L);
                 } else {
                     debug("BAD : "
@@ -1540,13 +1543,16 @@ public final class TrueHardcore extends JavaPlugin {
      * @return boolean.
      */
     public boolean insideWorldBorder(Location loc) {
-        BorderData bd;
         if (!wbHooked) {
             return true;
         }
         //noinspection ConstantConditions
-        bd = wb.getWorldBorder(loc.getWorld().getName());
-        return (bd != null) && (bd.insideBorder(loc));
+        BorderData bd = wb.getWorldBorder(loc.getWorld().getName());
+        boolean result = (bd != null) && (bd.insideBorder(loc));
+        TrueHardcore.debug("WorldBorder for " + loc.getWorld().getName() + ": " + (int)bd.getX() + "x" + (int)bd.getZ() + " radius:" + bd.getRadius());
+        TrueHardcore.debug("  Check Location: " + (int)loc.getX() + " " + (int)loc.getZ());
+        TrueHardcore.debug("  Inside Border? " + result);
+        return result;
     }
 
     /**
@@ -1598,9 +1604,11 @@ public final class TrueHardcore extends JavaPlugin {
                 // Mark the player as currently joining a world
                 // This is to prevent a player from joining again while waiting for a spawn location
                 playersJoining.add(player.getUniqueId());
+                TrueHardcore.debug("Player " + player.getName() + " marked as joining a world");
             } else {
                 // No longer mark player as joining world
                 playersJoining.remove(player.getUniqueId());
+                TrueHardcore.debug("Player " + player.getName() + " no longer joining a world");
             }
         }
     }

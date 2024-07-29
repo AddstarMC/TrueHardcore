@@ -62,8 +62,8 @@ public class HardcoreWorldConfig extends AutoConfig {
     @ConfigField(comment = "Does the player drop items on death")
     public boolean deathdrops = true;
 
-    @ConfigField(comment = "How long to keep a chunk loaded after death.")
-    public int chunkHoldOnDeath = 6000;
+    @ConfigField(comment = "How long to keep a chunk loaded after death. Default 5mins (300s)")
+    public int chunkHoldOnDeath = 300;
 
     @ConfigField(comment = "This prevents a player quiting hardcore properly while in combat")
     public boolean antiCombatLog = false;
