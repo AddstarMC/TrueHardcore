@@ -30,7 +30,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -257,10 +259,13 @@ public class Database {
             // Construct PreparedStatement by adding all supplied params to the query
             TrueHardcore.debugLog("SQL Query: " + query);
             if (params != null) {
+                List<String> values = new ArrayList<>();
                 for (int x = 0; x < params.length; x++) {
-                    TrueHardcore.debugLog("Param " + (x + 1) + ": " + params[x]);
+                    values.add((x+1) + ":" + params[x]);
                     ps.setString(x + 1, params[x]);
                 }
+                // Output all param values in a single log line, delimtered by commas
+                TrueHardcore.debug("Params: " + String.join(", ", values));
             }
             return ps.executeQuery();
         } catch (SQLException e) {
@@ -325,12 +330,14 @@ public class Database {
             if (!silent) {
                 TrueHardcore.debugLog("SQL Update: " + query);
             }
+            List<String> values = new ArrayList<>();
             for (int x = 0; x < params.length; x++) {
-                if (!silent) {
-                    TrueHardcore.debugLog("Param " + (x + 1) + ": "
-                          + params[x]);
-                }
+                values.add((x+1) + ":" + params[x]);
                 ps.setString(x + 1, params[x]);
+            }
+            if (!silent) {
+                // Output all param values in a single log line, delimtered by commas
+                TrueHardcore.debug("Params: " + String.join(", ", values));
             }
             return ps.executeUpdate();
         } catch (SQLException e) {
