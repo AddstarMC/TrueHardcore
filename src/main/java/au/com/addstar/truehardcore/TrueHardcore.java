@@ -36,6 +36,7 @@ import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
+import au.com.addstar.truehardcore.placeholder.PlaceholderAPI;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLib;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -82,6 +83,8 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class TrueHardcore extends JavaPlugin {
     private static final Logger logger = Logger.getLogger("Minecraft");
@@ -264,14 +267,23 @@ public final class TrueHardcore extends JavaPlugin {
         p = pm.getPlugin("ProtocolLib");
         if (p instanceof ProtocolLib) {
             ProtocolLibrary.getProtocolManager().addPacketListener(
-                  new PacketListener(
-                        this,
-                        ListenerPriority.NORMAL,
-                        PacketType.Play.Server.RESPAWN,
-                        PacketType.Play.Server.LOGIN));
+                    new PacketListener(
+                            this,
+                            ListenerPriority.NORMAL,
+                            PacketType.Play.Server.RESPAWN,
+                            PacketType.Play.Server.LOGIN));
             log("ProtocolLib found! Hardcore hearts will be enabled.");
         } else {
             log("ProtocolLib not found! Hardcore hearts will not work.");
+        }
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            getLogger().info("PlaceholderAPI found! Registering placeholders...");
+            new PlaceholderAPI(this).register();
+            //Bukkit.getPluginManager().registerEvents(this, this);
+            getLogger().info("Placeholders loaded!");
+        } else {
+            getLogger().warning("PlaceholderAPI not found, skipping...");
         }
 
         // Open/initialise the database
@@ -488,12 +500,22 @@ public final class TrueHardcore extends JavaPlugin {
 
         // Execute death command if one is configured
         if (!hcw.getDeathCommand().isEmpty()) {
-            String cmd = hcw.getDeathCommand()
-                  .replaceAll("<player>", ChatColor.stripColor(player.getName()))
-                  .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
-                  .replaceAll("<cause>", ChatColor.stripColor(deathMessage))
-                  .replaceAll("<score>", Integer.toString(hcp.getScore())
-                  );
+            String placeholderPattern = "%([^%]+)%";
+            String cmd = hcw.getDeathCommand();
+
+            Pattern pattern = Pattern.compile(placeholderPattern);
+            Matcher matcher = pattern.matcher(cmd);
+
+            while (matcher.find()) {
+                String placeholder = matcher.group(1);
+                String resolvedValue = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(event.getPlayer(),
+                        "%" + placeholder + "%");
+                cmd = cmd.replace("%" + placeholder + "%", resolvedValue);
+            }
+            cmd = cmd.replaceAll("<player>", ChatColor.stripColor(player.getName()))
+                    .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
+                    .replaceAll("<cause>", ChatColor.stripColor(deathMessage))
+                    .replaceAll("<score>", Integer.toString(hcp.getScore()));
             debug("Executing: " + cmd);
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
         }
