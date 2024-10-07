@@ -260,6 +260,10 @@ public class PlayerListener implements Listener {
                 TrueHardcore.debug("PlayerSpawnPos: " + hcp.getSpawnPos());
                 event.setRespawnLocation(hcp.getSpawnPos());
 
+                // Temporarily allow this player to teleport for a short time
+                // This is required sometimes when the portal teleport cause is set to UNKNOWN (we don't know why)
+                TrueHardcore.instance.addAllowedTeleport(player.getUniqueId());
+
                 // Give the player 10s invincibility after teleport to protect them
                 player.setNoDamageTicks(200);
             }
