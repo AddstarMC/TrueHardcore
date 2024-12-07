@@ -768,7 +768,7 @@ public final class TrueHardcore extends JavaPlugin {
                 attempt++;
 
                 // Set progress on bossbar
-                double progress = (((double) attempt / (double) maxattempts) * 100.0) / 100.0;
+                float progress = ((float) attempt / (float) maxattempts);
                 bossbar.setProgress(progress);
 
                 TrueHardcore.debug("Attempt #" + attempt + " to find location...");
