@@ -119,6 +119,32 @@ public class PlayerListener implements Listener {
     }
 
     /*
+     * When a player is saved from death by using a totem of undying
+     * announce the near-death event to the server
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerUseTotem(EntityResurrectEvent event) {
+        // We only care about players
+        if (!(event.getEntity() instanceof Player)) return;
+
+        // Ignore if the player isn't holding a totem of undying
+        if (event.getHand() == null)  return;
+
+        // Check if the player is in hardcore and then announce the event
+        Player player = (Player) event.getEntity();
+        if (plugin.isHardcoreWorld(player.getWorld())) {
+            HardcorePlayer hcp = hardcorePlayers.get(player);
+            if (hcp == null) {
+                return;
+            }
+            if (hcp.getState() == PlayerState.IN_GAME) {
+                plugin.broadcastToAllServers(plugin.header + ChatColor.AQUA + player.getDisplayName()
+                    + ChatColor.RED + " has just escaped death using a Totem of Undying in " + hcp.getWorld());
+            }
+        }
+    }
+
+    /*
      * Handle player is kicked inside the hardcore world
      * Change their player state if they were "in-game"
      */
