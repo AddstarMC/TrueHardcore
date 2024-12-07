@@ -743,7 +743,7 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                if (args.length < 4) {
+                if (args.length < 3) {
                     sender.sendMessage(ChatColor.RED + "Usage: /th tp <player> <player>");
                     return true;
                 }
