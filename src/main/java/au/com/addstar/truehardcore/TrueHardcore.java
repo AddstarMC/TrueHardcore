@@ -941,9 +941,13 @@ public final class TrueHardcore extends JavaPlugin {
                 // Reset all player stats
                 for (Statistic stat : Statistic.values()) {
                     try {
-                        player.setStatistic(stat, 0);
+                        if (stat.getType() == Statistic.Type.UNTYPED) {
+                            // This only resets basic/untyped stats
+                            // We will not reset BLOCK/ITEM/ENTITY stats for now, maybe in the future
+                            player.setStatistic(stat, 0);
+                        }
                     } catch (Exception e) {
-                        Bukkit.getLogger().warning("Unable to reset " + stat.name() + " for player " + player.getName());
+                        Bukkit.getLogger().warning("Unable to reset " + stat.name() + " for player " + player.getName() + "(Cause: " + e.getMessage() + ")");
                     }
                 }
             }
