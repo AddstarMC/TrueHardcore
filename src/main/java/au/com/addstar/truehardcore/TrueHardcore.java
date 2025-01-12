@@ -776,7 +776,7 @@ public final class TrueHardcore extends JavaPlugin {
                 String reason = "Unable to find valid block";
 
                 // Lets do some trig!!
-                int dist = hcDist + (int) (Math.random() * 100);// Random radius padding
+                int dist = hcDist - (int) (Math.random() * 500); // Reduce distance by random amount for variation
                 int deg = (int) (Math.random() * 360); // Random degrees
                 double x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();
                 double z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
@@ -1576,8 +1576,7 @@ public final class TrueHardcore extends JavaPlugin {
         BorderData bd = wb.getWorldBorder(loc.getWorld().getName());
         boolean result = (bd != null) && (bd.insideBorder(loc));
         TrueHardcore.debug("WorldBorder for " + loc.getWorld().getName() + ": " + (int)bd.getX() + "x" + (int)bd.getZ() + " radius:" + bd.getRadius());
-        TrueHardcore.debug("  Check Location: " + (int)loc.getX() + " " + (int)loc.getZ());
-        TrueHardcore.debug("  Inside Border? " + result);
+        TrueHardcore.debug("  Location " + (int)loc.getX() + " " + (int)loc.getZ() + ": Inside Border = " + result);
         return result;
     }
 
