@@ -27,7 +27,7 @@ import au.com.addstar.truehardcore.objects.ChunkStorage;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;

@@ -41,6 +41,7 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLib;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
+import com.destroystokyo.paper.MaterialTags;
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
@@ -77,7 +78,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-import javax.swing.border.Border;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
@@ -104,46 +104,15 @@ public final class TrueHardcore extends JavaPlugin {
 
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
-    private final List<Material> spawnBlocks = Arrays.asList(
-          Material.COARSE_DIRT,
-          Material.DIRT,
-          Material.PODZOL,
-          Material.GRASS_BLOCK,
-          Material.DIRT_PATH,
-          Material.SAND,
-          Material.SANDSTONE,
-          Material.SMOOTH_SANDSTONE,
-          Material.SMOOTH_RED_SANDSTONE,
-          Material.SMOOTH_STONE,
-          Material.STONE,
-          Material.DIORITE,
-          Material.COBBLESTONE,
-          Material.SMOOTH_STONE,
-          Material.BEDROCK,
-          Material.SNOW,
-          Material.SNOW_BLOCK,
-          Material.CLAY,
-          Material.TERRACOTTA,
-          Material.ICE,
-          Material.PACKED_ICE,
-          Material.BLUE_ICE,
-          Material.RED_SAND,
-          Material.RED_SANDSTONE,
-          Material.CUT_SANDSTONE,
-          Material.OAK_LEAVES,
-          Material.BIRCH_LEAVES,
-          Material.ACACIA_LEAVES,
-          Material.DARK_OAK_LEAVES,
-          Material.JUNGLE_LEAVES,
-          Material.SPRUCE_LEAVES,
-          Material.MYCELIUM,
-          Material.BROWN_MUSHROOM_BLOCK,
-          Material.RED_MUSHROOM_BLOCK,
-          Material.ORANGE_TERRACOTTA,
-          Material.BROWN_TERRACOTTA,
-          Material.WHITE_TERRACOTTA,
-          Material.YELLOW_TERRACOTTA
-    );
+
+    private final List<Material> spawnBlocks = new ArrayList<>(Arrays.asList(
+            Material.DIORITE,
+            Material.GRANITE,
+            Material.ANDESITE,
+            Material.TUFF,
+            Material.BEDROCK,
+            Material.CLAY
+    ));
 
     public CombatTracker combatTracker;
     public WorldRollback rollbackHandler;
@@ -311,6 +280,22 @@ public final class TrueHardcore extends JavaPlugin {
         if (baseChunkTime > 0) {
             pm.registerEvents(new ChunkListener(baseChunkTime), this);
         }
+
+        // Dynamically load the spawnBlocks list from Tags/MaterialTags
+        spawnBlocks.addAll(Tag.LEAVES.getValues());
+        spawnBlocks.addAll(Tag.DIRT.getValues());
+        spawnBlocks.addAll(Tag.ICE.getValues());
+        spawnBlocks.addAll(Tag.TERRACOTTA.getValues());
+        spawnBlocks.addAll(Tag.SAND.getValues());
+        spawnBlocks.addAll(MaterialTags.SANDSTONES.getValues());
+        spawnBlocks.addAll(MaterialTags.COBBLESTONES.getValues());
+        spawnBlocks.addAll(MaterialTags.CONCRETES.getValues());
+        spawnBlocks.addAll(MaterialTags.CONCRETE_POWDER.getValues());
+        spawnBlocks.addAll(MaterialTags.MUSHROOM_BLOCKS.getValues());
+        spawnBlocks.addAll(MaterialTags.ORES.getValues());
+
+        // Dump out all the spawnBlocks to log for debugging
+        debug("SpawnBlocks: " + spawnBlocks.toString());
 
         // Enable combat log tracker
         combatTracker = new CombatTracker(this);
@@ -771,9 +756,9 @@ public final class TrueHardcore extends JavaPlugin {
                 float progress = ((float) attempt / (float) maxattempts);
                 bossbar.setProgress(progress);
 
-                TrueHardcore.debug("Attempt #" + attempt + " to find location...");
+                //TrueHardcore.debug("Attempt #" + attempt + " to find location...");
                 boolean goodSpawn = false;
-                String reason = "Unable to find valid block";
+                String reason = "Unable to find valid block (unknown)";
 
                 // Lets do some trig!!
                 int dist = hcDist - (int) (Math.random() * 500); // Reduce distance by random amount for variation
@@ -782,16 +767,24 @@ public final class TrueHardcore extends JavaPlugin {
                 double z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
 
                 // Get the highest block at the selected location
-                int startY = 200;
-                Location nl = new Location(hcw.getWorld(), x, startY, z);
-                Block b = nl.getBlock();
+                int startY = hcw.getWorld().getMaxHeight();
+                Block b = new Location(hcw.getWorld(), x, startY, z).getBlock();
                 for (int y = startY; y > 10; y--) {
-                    if (b.isLiquid()) {
+                    b = b.getRelative(BlockFace.DOWN);
+                    reason = "Unable to find valid block (" + b.getType() + ")";
+
+                    if (b.isEmpty()) {
+                        // Move down to the next block if this one is empty
+                        continue;
+                    }
+                    else if (b.isLiquid()) {
                         // We never want lava or water, so just skip this location
                         reason = "BAD: Found liquid (" + b.getType() + ")";
                         break;
-                    } else if (b.getType().isBlock() && b.getType().isSolid()) {
+                    }
+                    else if (b.isSolid() && b.getType().isBlock()) {
                         // We've found a real block so lets check it
+                        Tag.LEAVES.isTagged(b.getType());
                         if (spawnBlocks.contains(b.getType())) {
                             // Make sure it's inside the world border (if one exists)
                             if (insideWorldBorder(b.getLocation())) {
@@ -800,24 +793,22 @@ public final class TrueHardcore extends JavaPlugin {
                             } else {
                                 reason = "Outside world border";
                             }
-                            break;
                         } else {
                             reason = "Wrong block type (" + b.getType() + ")";
                         }
+                        break;
                     }
-                    b = b.getRelative(BlockFace.DOWN);
                 }
 
                 Location spawn = b.getLocation().add(0, 1, 0);
                 if (goodSpawn) {
                     this.cancel();
-                    debug("Block: " + spawn.getBlockX() + " " + spawn.getBlockY() + " " + spawn.getBlockZ());
 
                     // Center player on block for safety
                     spawn.add(0.5, 0, 0);
                     spawn.add(0, 0, 0.5);
 
-                    debug("GOOD: "
+                    debug("[Attempt #" + attempt + "] GOOD: "
                           + Util.padLeft(String.valueOf(spawn.getX()), 9)
                           + Util.padLeft(String.valueOf(spawn.getY()), 7)
                           + Util.padLeft(String.valueOf(spawn.getZ()), 9)
@@ -840,7 +831,7 @@ public final class TrueHardcore extends JavaPlugin {
                         setPlayerJoining(player, false);
                     }, 50L);
                 } else {
-                    debug("BAD : "
+                    debug("[Attempt #" + attempt + "] BAD : "
                           + Util.padLeft(String.valueOf(spawn.getX()), 9)
                           + Util.padLeft(String.valueOf(spawn.getY()), 7)
                           + Util.padLeft(String.valueOf(spawn.getZ()), 9)
@@ -1575,8 +1566,8 @@ public final class TrueHardcore extends JavaPlugin {
         //noinspection ConstantConditions
         BorderData bd = wb.getWorldBorder(loc.getWorld().getName());
         boolean result = (bd != null) && (bd.insideBorder(loc));
-        TrueHardcore.debug("WorldBorder for " + loc.getWorld().getName() + ": " + (int)bd.getX() + "x" + (int)bd.getZ() + " radius:" + bd.getRadius());
-        TrueHardcore.debug("  Location " + (int)loc.getX() + " " + (int)loc.getZ() + ": Inside Border = " + result);
+        TrueHardcore.debug("  WorldBorder radius for " + loc.getWorld().getName() + ": " + bd.getRadius()
+                + " => Location " + (int)loc.getX() + " " + (int)loc.getZ() + " inside border = " + result);
         return result;
     }
 

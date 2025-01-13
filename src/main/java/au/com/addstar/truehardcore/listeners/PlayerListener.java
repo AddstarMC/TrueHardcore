@@ -575,7 +575,7 @@ public class PlayerListener implements Listener {
                         case SLIME:
                             hcp.setSlimeKills(hcp.getSlimeKills() + 1);
                             break;
-                        case MUSHROOM_COW:
+                        case MOOSHROOM:
                             hcp.setMooshKills(hcp.getMooshKills() + 1);
                             break;
                         case PLAYER:
@@ -668,7 +668,7 @@ public class PlayerListener implements Listener {
 
     private void giveSkullOnline(OfflinePlayer killedName, String killedDN, Player killer) {
         killer.getWorld().strikeLightningEffect(killer.getLocation());
-        PotionEffect effect = new PotionEffect(PotionEffectType.CONFUSION, 5 * 20, 0, false, true);
+        PotionEffect effect = new PotionEffect(PotionEffectType.NAUSEA, 5 * 20, 0, false, true);
         killer.addPotionEffect(effect);
         giveSkull(killedName, killedDN, killer, true);
     }
@@ -683,7 +683,7 @@ public class PlayerListener implements Listener {
             skullMeta.setOwningPlayer(killed);
             skullMeta.setDisplayName(killedDN);
             skullMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            skullMeta.addEnchant(Enchantment.LUCK, 1, true);
+            skullMeta.addEnchant(Enchantment.LOOTING, 1, true);
             List<String> loreList = new ArrayList<>();
             loreList.add("The Head of " + killedDN);
             Date date = new Date(System.currentTimeMillis());

@@ -20,7 +20,8 @@
 package au.com.addstar.truehardcore.objects;
 
 import au.com.addstar.truehardcore.config.HardcoreWorldConfig;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.World;

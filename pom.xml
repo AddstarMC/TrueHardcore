@@ -3,12 +3,12 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>TrueHardcore</groupId>
   <artifactId>TrueHardcore</artifactId>
-  <version>1.20-SNAPSHOT</version>
+  <version>1.21-SNAPSHOT</version>
   <name>TrueHardcore</name>
   <properties>
     <build.number/>
-      <spigot.api.version>1.20</spigot.api.version>
-      <spigot.version>1.20.4-R0.1-SNAPSHOT</spigot.version>
+      <paper.api.version>1.21</paper.api.version>
+      <paper.version>1.21.4-R0.1-SNAPSHOT</paper.version>
     <plugin.version>${project.version}-${build.number}</plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -43,17 +43,6 @@
     </snapshotRepository>
   </distributionManagement>
   <repositories>
-      <!-- For spigot -->
-      <repository>
-          <id>spigot-repo</id>
-          <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-          <releases>
-              <enabled>true</enabled>
-          </releases>
-          <snapshots>
-              <enabled>true</enabled>
-          </snapshots>
-      </repository>
       <repository>
           <id>papermc</id>
           <url>https://repo.papermc.io/repository/maven-public/</url>
@@ -87,7 +76,7 @@
           <url>https://maven.enginehub.org/repo/</url>
       </repository>
 
-      <!-- BStats -->
+      <!-- BStats and ModernLWC -->
       <repository>
           <id>CodeMC</id>
           <url>https://repo.codemc.org/repository/maven-public</url>
@@ -131,11 +120,11 @@
   </repositories>
 
   <dependencies>
-        <!-- Spigot -->
+        <!-- Paper -->
         <dependency>
           <groupId>io.papermc.paper</groupId>
           <artifactId>paper-api</artifactId>
-          <version>${spigot.version}</version>
+          <version>${paper.version}</version>
           <scope>provided</scope>
         </dependency>
         <dependency>
@@ -150,6 +139,16 @@
           <artifactId>worldguard-bukkit</artifactId>
           <version>7.0.6-SNAPSHOT</version>
           <scope>provided</scope>
+          <exclusions>
+              <exclusion>
+                  <groupId>org.bukkit</groupId>
+                  <artifactId>bukkit</artifactId>
+              </exclusion>
+              <exclusion>
+                  <groupId>org.spigotmc</groupId>
+                  <artifactId>spigot-api</artifactId>
+              </exclusion>
+          </exclusions>
         </dependency>
 
         <!-- Used for Economy interop -->
@@ -167,12 +166,12 @@
         </dependency>
 
         <!-- Used for LWC stuff -->
-        <dependency>
-            <groupId>com.griefcraft</groupId>
-            <artifactId>lwc</artifactId>
-            <version>4.7.0-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
+      <dependency>
+          <groupId>com.griefcraft</groupId>
+          <artifactId>lwc</artifactId>
+          <version>2.4.0</version>
+          <scope>provided</scope>
+      </dependency>
 
         <!--Used for Prism stuff -->
         <dependency>
@@ -201,6 +200,10 @@
                     <groupId>org.bukkit</groupId>
                     <artifactId>bukkit</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.spigotmc</groupId>
+                    <artifactId>spigot-api</artifactId>
+                </exclusion>
             </exclusions>
             <scope>provided</scope>
         </dependency>
@@ -210,6 +213,12 @@
           <groupId>au.com.addstar</groupId>
           <artifactId>Pandora</artifactId>
           <version>1.16.5-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.kitteh</groupId>
+                    <artifactId>VanishNoPacket</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- PremiumVanishAPI -->
