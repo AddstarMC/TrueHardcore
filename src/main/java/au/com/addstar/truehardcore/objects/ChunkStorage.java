@@ -58,7 +58,7 @@ public final class ChunkStorage {
             while (i.hasNext()) {
                 TrueHardCoreChunk coreChunk = i.next();
                 World world = Bukkit.getWorld(uuid);
-                if (world != null && world.getUID() == coreChunk.world) {
+                if (world != null && world.getUID().equals(coreChunk.world)) {
                     Chunk chunk = world.getChunkAt(coreChunk.coOrdX, coreChunk.coOrdZ);
                     chunk.setForceLoaded(false);
                     i.remove();
@@ -79,13 +79,15 @@ public final class ChunkStorage {
     }
 
     public void expireOldChunks() {
+        long now = System.currentTimeMillis();
         for (List<TrueHardCoreChunk> item : heldChunks.values()) {
-            for (int i = 0; i < item.size(); i++) {
-                TrueHardCoreChunk c = item.get(i);
-                if (c.getExpiry() < System.currentTimeMillis()) {
+            Iterator<TrueHardCoreChunk> it = item.iterator();
+            while (it.hasNext()) {
+                TrueHardCoreChunk c = it.next();
+                if (c.getExpiry() < now) {
                     TrueHardcore.debug("Chunk expired: " + c.coOrdX + " " + c.coOrdZ + " " + c.world);
                     clearRealChunk(c);
-                    item.remove(c);
+                    it.remove();
                 }
             }
         }
@@ -128,6 +130,9 @@ public final class ChunkStorage {
         TrueHardCoreChunk c = new TrueHardCoreChunk(chunk);
         List<TrueHardCoreChunk> chunks = heldChunks.get(c.world);
         chunk.setForceLoaded(false);
+        if (chunks == null) {
+            return false;
+        }
         return chunks.remove(c);
     }
 
@@ -140,7 +145,7 @@ public final class ChunkStorage {
     public boolean checkChunkState(Chunk chunk) {
         UUID uuid = chunk.getWorld().getUID();
         List<TrueHardCoreChunk> chunksHeld = heldChunks.get(uuid);
-        if (chunksHeld.size() == 0) {
+        if (chunksHeld == null || chunksHeld.isEmpty()) {
             return false;
         }
         TrueHardCoreChunk test = new TrueHardCoreChunk(chunk);

@@ -106,10 +106,11 @@ public class HardcorePlayers {
      */
     @Nullable
     public HardcorePlayer get(String key) {
-        if (players.containsKey(key)) {
+        if (key == null) {
             return null;
         }
-        return players.get(key.replaceAll("_nether|_the_end", ""));
+        String cleanKey = key.replaceAll("_nether|_the_end", "");
+        return players.get(cleanKey);
     }
 
     /**
@@ -120,7 +121,10 @@ public class HardcorePlayers {
      * @return boolean
      */
     private boolean addPlayer(String world, UUID id, HardcorePlayer hcp) {
-        String key = world + "/" + id.toString();
+        if (world == null || id == null || hcp == null) {
+            return false;
+        }
+        String key = world.replaceAll("_nether|_the_end", "") + "/" + id.toString();
         players.put(key, hcp);
         return true;
     }
