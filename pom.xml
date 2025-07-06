@@ -1,194 +1,195 @@
 <!--suppress MavenModelInspection -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>TrueHardcore</groupId>
-  <artifactId>TrueHardcore</artifactId>
-  <version>1.21-SNAPSHOT</version>
-  <name>TrueHardcore</name>
-  <properties>
-    <build.number/>
-      <paper.api.version>1.21</paper.api.version>
-      <paper.version>1.21.4-R0.1-SNAPSHOT</paper.version>
-    <plugin.version>${project.version}-${build.number}</plugin.version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  <scm>
-    <connection>scm:git:git@github.com:AddstarMC/TrueHardcore.git</connection>
-    <developerConnection>scm:git:git@github.com:AddstarMC/TrueHardcore.git</developerConnection>
-    <url>https://github.com/AddstarMC/TrueHardcore</url>
-    <tag>HEAD</tag>
-  </scm>
-  <developers>
-    <developer>
-      <id>AddstarMC</id>
-      <name>AddstarMC</name>
-      <url>https://github.com/AddstarMC</url>
-      <roles>
-        <role>developer</role>
-        <role>maintainer</role>
-      </roles>
-      <timezone>10</timezone>
-    </developer>
-  </developers>
-  <distributionManagement>
-    <repository>
-      <id>maven.addstar.com.au</id>
-      <name>maven.addstar.com.au-releases</name>
-      <url>https://maven.addstar.com.au/artifactory/ext-release-local</url>
-    </repository>
-    <snapshotRepository>
-      <id>maven.addstar.com.au</id>
-      <name>maven.addstar.com.au-snapshots</name>
-      <url>https://maven.addstar.com.au/artifactory/ext-snapshot-local</url>
-    </snapshotRepository>
-  </distributionManagement>
-  <repositories>
-      <repository>
-          <id>papermc</id>
-          <url>https://repo.papermc.io/repository/maven-public/</url>
-      </repository>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>TrueHardcore</groupId>
+    <artifactId>TrueHardcore</artifactId>
+    <version>1.21-SNAPSHOT</version>
+    <name>TrueHardcore</name>
+    <properties>
+        <build.number/>
+        <paper.api.version>1.21</paper.api.version>
+        <paper.version>1.21.4-R0.1-SNAPSHOT</paper.version>
+        <plugin.version>${project.version}-${build.number}</plugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <scm>
+        <connection>scm:git:git@github.com:AddstarMC/TrueHardcore.git</connection>
+        <developerConnection>scm:git:git@github.com:AddstarMC/TrueHardcore.git</developerConnection>
+        <url>https://github.com/AddstarMC/TrueHardcore</url>
+        <tag>HEAD</tag>
+    </scm>
+    <developers>
+        <developer>
+            <id>AddstarMC</id>
+            <name>AddstarMC</name>
+            <url>https://github.com/AddstarMC</url>
+            <roles>
+                <role>developer</role>
+                <role>maintainer</role>
+            </roles>
+            <timezone>10</timezone>
+        </developer>
+    </developers>
+    <distributionManagement>
+        <repository>
+            <id>maven.addstar.com.au</id>
+            <name>maven.addstar.com.au-releases</name>
+            <url>https://maven.addstar.com.au/artifactory/ext-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>maven.addstar.com.au</id>
+            <name>maven.addstar.com.au-snapshots</name>
+            <url>https://maven.addstar.com.au/artifactory/ext-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+    <repositories>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
 
-      <!-- Addstar repos -->
-      <repository>
-          <id>addstar-release-repo</id>
-          <url>https://maven.addstar.com.au/artifactory/all-release</url>
-          <snapshots>
-              <enabled>false</enabled>
-          </snapshots>
-          <releases>
-              <enabled>true</enabled>
-          </releases>
-      </repository>
-      <repository>
-          <id>addstar-snapshot-repo</id>
-          <url>https://maven.addstar.com.au/artifactory/all-snapshot</url>
-          <snapshots>
-              <enabled>true</enabled>
-          </snapshots>
-          <releases>
-              <enabled>false</enabled>
-          </releases>
-      </repository>
+        <!-- Addstar repos -->
+        <repository>
+            <id>addstar-release-repo</id>
+            <url>https://maven.addstar.com.au/artifactory/all-release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>addstar-snapshot-repo</id>
+            <url>https://maven.addstar.com.au/artifactory/all-snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
 
-      <!-- Repository for other dependencies of SK's -->
-      <repository>
-          <id>sk89q-repo</id>
-          <url>https://maven.enginehub.org/repo/</url>
-      </repository>
+        <!-- Repository for other dependencies of SK's -->
+        <repository>
+            <id>sk89q-repo</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
 
-      <!-- BStats and ModernLWC -->
-      <repository>
-          <id>CodeMC</id>
-          <url>https://repo.codemc.org/repository/maven-public</url>
-      </repository>
+        <!-- BStats and ModernLWC -->
+        <repository>
+            <id>CodeMC</id>
+            <url>https://repo.codemc.org/repository/maven-public</url>
+        </repository>
 
-      <!-- Dynmap -->
-      <repository>
-          <id>mikeprimm</id>
-          <url>https://repo.mikeprimm.com/</url>
-      </repository>
+        <!-- Dynmap -->
+        <repository>
+            <id>mikeprimm</id>
+            <url>https://repo.mikeprimm.com/</url>
+        </repository>
 
-      <!-- Other repositories -->
-      <repository>
-          <id>maven-central</id>
-          <url>https://repo1.maven.org/maven2/</url>
-      </repository>
+        <!-- Other repositories -->
+        <repository>
+            <id>maven-central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
 
-      <!-- ProtocolLib -->
-      <repository>
-          <id>dmulloy2-repo</id>
-          <url>https://repo.dmulloy2.net/nexus/repository/public/</url>
-      </repository>
+        <!-- ProtocolLib -->
+        <repository>
+            <id>dmulloy2-repo</id>
+            <url>https://repo.dmulloy2.net/nexus/repository/public/</url>
+        </repository>
 
-      <!-- Vault, PremiumVanish and others -->
-      <repository>
-          <id>jitpack.io</id>
-          <url>https://jitpack.io</url>
-      </repository>
+        <!-- Vault, PremiumVanish and others -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
 
-      <!-- PlaceholderAPI -->
-      <repository>
-          <id>placeholderapi</id>
-          <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
-      </repository>
-  </repositories>
+        <!-- PlaceholderAPI -->
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+    </repositories>
 
-  <dependencies>
+    <dependencies>
         <!-- Paper -->
         <dependency>
-          <groupId>io.papermc.paper</groupId>
-          <artifactId>paper-api</artifactId>
-          <version>${paper.version}</version>
-          <scope>provided</scope>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <version>${paper.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>io.papermc</groupId>
-          <artifactId>paperlib</artifactId>
-          <version>1.0.8</version>
+            <groupId>io.papermc</groupId>
+            <artifactId>paperlib</artifactId>
+            <version>1.0.8</version>
         </dependency>
 
         <!-- Full Adventure platform (optional, needed for full boss bar support) -->
-      <dependency>
-          <groupId>net.kyori</groupId>
-          <artifactId>adventure-platform-bukkit</artifactId>
-          <version>4.4.0</version>
-      </dependency>
-      <dependency>
-          <groupId>net.kyori</groupId>
-          <artifactId>adventure-text-minimessage</artifactId>
-          <version>4.20.0</version>
-      </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-platform-bukkit</artifactId>
+            <version>4.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>4.20.0</version>
+        </dependency>
 
         <!-- WorldGuard for some of the sk functions -->
         <dependency>
-          <groupId>com.sk89q.worldguard</groupId>
-          <artifactId>worldguard-bukkit</artifactId>
-          <version>7.0.6-SNAPSHOT</version>
-          <scope>provided</scope>
-          <exclusions>
-              <exclusion>
-                  <groupId>org.bukkit</groupId>
-                  <artifactId>bukkit</artifactId>
-              </exclusion>
-              <exclusion>
-                  <groupId>org.spigotmc</groupId>
-                  <artifactId>spigot-api</artifactId>
-              </exclusion>
-          </exclusions>
+            <groupId>com.sk89q.worldguard</groupId>
+            <artifactId>worldguard-bukkit</artifactId>
+            <version>7.0.6-SNAPSHOT</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.spigotmc</groupId>
+                    <artifactId>spigot-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Used for Economy interop -->
         <dependency>
-          <groupId>net.milkbowl.vault</groupId>
-          <artifactId>VaultAPI</artifactId>
-          <version>1.7</version>
-          <exclusions>
-              <exclusion>
-                  <groupId>org.bukkit</groupId>
-                  <artifactId>bukkit</artifactId>
-              </exclusion>
-          </exclusions>
-          <scope>provided</scope>
+            <groupId>net.milkbowl.vault</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.bukkit</groupId>
+                    <artifactId>bukkit</artifactId>
+                </exclusion>
+            </exclusions>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Used for LWC stuff -->
-      <dependency>
-          <groupId>com.griefcraft</groupId>
-          <artifactId>lwc</artifactId>
-          <version>2.4.0</version>
-          <scope>provided</scope>
-      </dependency>
+        <dependency>
+            <groupId>com.griefcraft</groupId>
+            <artifactId>lwc</artifactId>
+            <version>2.4.0</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!--Used for Prism stuff -->
         <dependency>
-          <groupId>network.darkhelmet.prism</groupId>
-          <artifactId>Prism-Api</artifactId>
-          <version>1.0.0</version>
+            <groupId>network.darkhelmet.prism</groupId>
+            <artifactId>Prism-Api</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
-          <groupId>network.darkhelmet</groupId>
-          <artifactId>prism</artifactId>
-          <version>3.9.0</version>
+            <groupId>network.darkhelmet</groupId>
+            <artifactId>prism</artifactId>
+            <version>3.9.0</version>
         </dependency>
 
         <dependency>
@@ -216,9 +217,9 @@
 
         <!-- Used for Proxy-wide broadcast -->
         <dependency>
-          <groupId>au.com.addstar</groupId>
-          <artifactId>Pandora</artifactId>
-          <version>1.16.5-SNAPSHOT</version>
+            <groupId>au.com.addstar</groupId>
+            <artifactId>Pandora</artifactId>
+            <version>1.16.5-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.kitteh</groupId>
@@ -229,16 +230,16 @@
 
         <!-- PremiumVanishAPI -->
         <dependency>
-          <groupId>com.github.LeonMangler</groupId>
-          <artifactId>PremiumVanishAPI</artifactId>
-          <version>2.7.3</version>
+            <groupId>com.github.LeonMangler</groupId>
+            <artifactId>PremiumVanishAPI</artifactId>
+            <version>2.7.3</version>
         </dependency>
 
         <!--ProtocolLib-->
         <dependency>
-          <groupId>com.comphenix.protocol</groupId>
-          <artifactId>ProtocolLib</artifactId>
-          <version>4.7.0</version>
+            <groupId>com.comphenix.protocol</groupId>
+            <artifactId>ProtocolLib</artifactId>
+            <version>4.7.0</version>
         </dependency>
 
         <!-- Used for uuid resolution for unknown players -->
@@ -260,32 +261,32 @@
         </dependency>
 
         <dependency>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-          <version>4.13.2</version>
-          <scope>test</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
-          <groupId>com.github.seeseemelk</groupId>
-          <artifactId>MockBukkit-v1.18</artifactId>
-          <version>1.15.0</version>
-          <scope>test</scope>
+            <groupId>com.github.seeseemelk</groupId>
+            <artifactId>MockBukkit-v1.18</artifactId>
+            <version>1.15.0</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
-          <groupId>me.clip</groupId>
-          <artifactId>placeholderapi</artifactId>
-          <version>2.11.5</version>
-          <scope>provided</scope>
-          <exclusions>
-            <exclusion>
-              <groupId>net.kyori</groupId>
-              <artifactId>adventure-platform-bukkit</artifactId>
-            </exclusion>
-          </exclusions>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.11.5</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-platform-bukkit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-  </dependencies>
+    </dependencies>
 
     <build>
         <resources>
