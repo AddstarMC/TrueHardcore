@@ -111,12 +111,6 @@
           <id>placeholderapi</id>
           <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
       </repository>
-
-      <!-- Prism: Disabled temporarily because host is down -->
-      <!--<repository>
-          <id>darkhelmet</id>
-          <url>https://nexus.darkhelmet.network/repository/maven-releases/</url>
-      </repository>-->
   </repositories>
 
   <dependencies>
@@ -132,6 +126,18 @@
           <artifactId>paperlib</artifactId>
           <version>1.0.8</version>
         </dependency>
+
+        <!-- Full Adventure platform (optional, needed for full boss bar support) -->
+      <dependency>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-platform-bukkit</artifactId>
+          <version>4.4.0</version>
+      </dependency>
+      <dependency>
+          <groupId>net.kyori</groupId>
+          <artifactId>adventure-text-minimessage</artifactId>
+          <version>4.20.0</version>
+      </dependency>
 
         <!-- WorldGuard for some of the sk functions -->
         <dependency>
@@ -241,24 +247,43 @@
             <artifactId>Monolith</artifactId>
             <version>1.16.5-SNAPSHOT</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>net.kyori</groupId>
+                    <artifactId>adventure-platform-bukkit</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
+
         <dependency>
           <groupId>junit</groupId>
           <artifactId>junit</artifactId>
           <version>4.13.2</version>
           <scope>test</scope>
         </dependency>
+
         <dependency>
           <groupId>com.github.seeseemelk</groupId>
           <artifactId>MockBukkit-v1.18</artifactId>
           <version>1.15.0</version>
           <scope>test</scope>
         </dependency>
+
         <dependency>
           <groupId>me.clip</groupId>
           <artifactId>placeholderapi</artifactId>
           <version>2.11.5</version>
           <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>net.kyori</groupId>
+              <artifactId>adventure-platform-bukkit</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
   </dependencies>
 

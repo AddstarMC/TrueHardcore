@@ -49,6 +49,9 @@ import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 import de.myzelyam.api.vanish.VanishAPI;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.*;
+import net.kyori.adventure.title.Title;
 import network.darkhelmet.prism.Prism;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -77,9 +80,11 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.time.Duration;
 import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -1471,13 +1476,25 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setGodMode(true);
             Objects.requireNonNull(player).sendMessage(ChatColor.YELLOW
                   + "You are now invincible for " + seconds + " seconds...");
+            player.showTitle(getTitle(
+                    "New life invincibility!",
+                    "You are now invincible for " + seconds + " seconds...",
+                    NamedTextColor.GREEN,
+                    NamedTextColor.GRAY
+            ));
+
             getServer().getScheduler().scheduleSyncDelayedTask(this, () -> {
                 HardcorePlayer hcp1 = hcPlayers.get(world, id);
                 if (hcp1 != null) {
                     hcp1.setGodMode(false);
                     if (hcp1.getState() == PlayerState.IN_GAME) {
-                        player.sendMessage(ChatColor.RED
-                              + "Your invincibility has now worn off... Good luck!");
+                        player.sendMessage(ChatColor.RED + "Your invincibility has now worn off... Good luck!");
+                        player.showTitle(getTitle(
+                            "Your invincibility ended!",
+                            "You are no longer protected from all damage",
+                            NamedTextColor.RED,
+                            NamedTextColor.GRAY
+                        ));
                     } else {
                         debug("Disable protection: Player " + id + " is no longer in game");
                     }
@@ -1488,6 +1505,18 @@ public final class TrueHardcore extends JavaPlugin {
 
         }
         return false;
+    }
+
+    private static @NotNull Title getTitle(String titletxt, String subtitletxt, NamedTextColor titleColor, NamedTextColor subtitleColor) {
+        final Component mainTitle = Component.text(titletxt, titleColor);
+        final Component subtitle = Component.text(subtitletxt, subtitleColor);
+        final Title.Times times = Title.Times.times(
+                Duration.ofMillis(500),   // fade in
+                Duration.ofMillis(6000),  // duration
+                Duration.ofMillis(1000)   // fade out
+        );
+        final Title title = Title.title(mainTitle, subtitle, times);
+        return title;
     }
 
     /**
