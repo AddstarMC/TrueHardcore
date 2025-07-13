@@ -43,6 +43,8 @@ public class PlaceholderAPI extends PlaceholderExpansion {
             long now = System.currentTimeMillis();
             long remaining = 0;
 
+            // Get the highest cooldown across all hardcore worlds for the player
+            // Returns 0 if the player is not dead in any hardcore world
             for (Map.Entry<String, HardcoreWorld> entry : plugin.hardcoreWorlds.allRecords().entrySet()) {
                 HardcorePlayer hcp = plugin.hcPlayers.get(entry.getKey(), player.getUniqueId());
                 HardcoreWorld hcw = entry.getValue();
