@@ -20,6 +20,10 @@
 package au.com.addstar.truehardcore.placeholder;
 
 import au.com.addstar.truehardcore.TrueHardcore;
+import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
+import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
+import java.util.Map;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 
@@ -34,6 +38,30 @@ public class PlaceholderAPI extends PlaceholderExpansion {
         }
         else if (identifier.equals("world")) {
             return plugin.hardcoreWorlds.getNames();
+        }
+        else if (identifier.equals("cooldown_mins")) {
+            long now = System.currentTimeMillis();
+            long remaining = 0;
+
+            for (Map.Entry<String, HardcoreWorld> entry : plugin.hardcoreWorlds.allRecords().entrySet()) {
+                HardcorePlayer hcp = plugin.hcPlayers.get(entry.getKey(), player.getUniqueId());
+                HardcoreWorld hcw = entry.getValue();
+
+                if (hcp != null && hcp.getState() == PlayerState.DEAD && hcp.getGameEnd() != null) {
+                    long diff = (now - hcp.getGameEnd().getTime()) / 1000;
+                    long wait = hcw.getBantime() - diff;
+                    if (wait > remaining) {
+                        remaining = wait;
+                    }
+                }
+            }
+
+            if (remaining < 0) {
+                remaining = 0;
+            }
+
+            long minutes = (remaining + 59) / 60;
+            return String.valueOf(minutes);
         }
         return null;
     }
