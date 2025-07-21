@@ -608,6 +608,10 @@ public class CommandTH implements CommandExecutor {
                         // Ensure we always have an up-to-date record
                         plugin.loadPlayer(hcw.getWorld().getName(), p.getUniqueId());
                         hcp = plugin.hcPlayers.get(hcw.getWorld().getName(), p.getUniqueId());
+                        if (hcp == null) {
+                            // Player has no record for this world, skip it
+                            continue;
+                        }
 
                         // Ensure their name is updated
                         hcp.setPlayerName(p.getName());
