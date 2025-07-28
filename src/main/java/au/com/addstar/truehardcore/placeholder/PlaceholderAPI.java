@@ -39,27 +39,22 @@ public class PlaceholderAPI extends PlaceholderExpansion {
         else if (identifier.equals("world")) {
             return plugin.hardcoreWorlds.getNames();
         }
-        else if (identifier.equals("cooldown_mins")) {
+        else if (identifier.startsWith("cooldown_mins_")) {
             long now = System.currentTimeMillis();
             long remaining = 0;
-
-            // Get the highest cooldown across all hardcore worlds for the player
-            // Returns 0 if the player is not dead in any hardcore world
-            for (Map.Entry<String, HardcoreWorld> entry : plugin.hardcoreWorlds.allRecords().entrySet()) {
-                HardcorePlayer hcp = plugin.hcPlayers.get(entry.getKey(), player.getUniqueId());
-                HardcoreWorld hcw = entry.getValue();
-
-                if (hcp != null && hcp.getState() == PlayerState.DEAD && hcp.getGameEnd() != null) {
-                    long diff = (now - hcp.getGameEnd().getTime()) / 1000;
-                    long wait = hcw.getBantime() - diff;
-                    if (wait > remaining) {
-                        remaining = wait;
-                    }
-                }
+            String worldName = identifier.substring("cooldown_mins_".length());
+            HardcoreWorld hcw = plugin.hardcoreWorlds.get(worldName);
+            if (hcw == null) {
+                return String.valueOf(0); // No such world
             }
 
-            if (remaining < 0) {
-                remaining = 0;
+            HardcorePlayer hcp = plugin.hcPlayers.get(worldName, player.getUniqueId());
+            if (hcp != null && hcp.getState() == PlayerState.DEAD && hcp.getGameEnd() != null) {
+                long diff = (now - hcp.getGameEnd().getTime()) / 1000;
+                long wait = hcw.getBantime() - diff;
+                if (wait > remaining) {
+                    remaining = wait;
+                }
             }
 
             long minutes = (remaining + 59) / 60;
