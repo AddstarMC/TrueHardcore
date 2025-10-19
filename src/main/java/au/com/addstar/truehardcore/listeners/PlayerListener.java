@@ -25,6 +25,7 @@ import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
+import com.destroystokyo.paper.event.player.PlayerTeleportEndGatewayEvent;
 import network.darkhelmet.prism.actionlibs.ActionsQuery;
 import network.darkhelmet.prism.api.actions.MatchRule;
 import network.darkhelmet.prism.actionlibs.QueryParameters;
@@ -77,11 +78,35 @@ public class PlayerListener implements Listener {
     }
 
     private static String eventToString(PlayerEvent event) {
-        StringBuilder out = new StringBuilder(event.getClass().getSimpleName() + " player:" + event.getPlayer());
+        StringBuilder out = new StringBuilder(event.getClass().getSimpleName() + " player:"
+                + event.getPlayer() + "(" + event.getPlayer().getUniqueId() + ")");
+
+        // For teleport events, log from/to locations
+        if (event instanceof PlayerTeleportEvent tpEvent) {
+            out.append(", From: ").append(tpEvent.getFrom());
+            out.append(", To: ").append(tpEvent.getTo());
+        }
+
+        // For PlayerPortalEvent, log cause and from/to locations
+        if (event instanceof PlayerPortalEvent ppEvent) {
+            out.append(", Cause: ").append(ppEvent.getCause());
+            out.append(", From: ").append(ppEvent.getFrom());
+            out.append(", To: ").append(ppEvent.getTo());
+        }
+
+        // For PlayerTeleportEndGatewayEvent log from/to locations
+        if (event instanceof PlayerTeleportEndGatewayEvent ptegEvent) {
+            out.append(", From: ").append(ptegEvent.getFrom());
+            out.append(", To: ").append(ptegEvent.getTo());
+        }
         try {
             Field[] fields = event.getClass().getDeclaredFields();
             for (Field field : fields) {
                 try {
+                    if (field.getName().equalsIgnoreCase("HANDLER_LIST")) {
+                        // Skip this field
+                        continue;
+                    }
                     field.setAccessible(true);
                     out.append(", ").append(field.getName()).append(": ");
                     Object ob = field.get(event);
@@ -160,8 +185,7 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        TrueHardcore.debug("EVENT: " + event.getEventName());
-        TrueHardcore.debug("LOCATION: " + player.getLocation().toString());
+        TrueHardcore.debug("EVENT: " + event.getEventName() + " / " + "LOCATION: " + player.getLocation());
         // We only care about existing hardcore players
         HardcorePlayer hcp = hardcorePlayers.get(player);
         if (hcp == null) {
@@ -198,9 +222,7 @@ public class PlayerListener implements Listener {
         if (!plugin.isHardcoreWorld(player.getWorld())) {
             return;
         }
-
-        TrueHardcore.debug("EVENT: " + event.getEventName());
-        TrueHardcore.debug("LOCATION: " + player.getLocation().toString());
+        TrueHardcore.debug("EVENT: " + event.getEventName() + " / " + "LOCATION: " + player.getLocation());
 
         if (player.isDead()) {
             TrueHardcore.debug(player.getName() + " joined " + player.getWorld()
@@ -219,6 +241,9 @@ public class PlayerListener implements Listener {
             // Send player to game lobby
             TrueHardcore.debug(player.getName() + " joined in " + player.getWorld().getName()
                     + "! Returning player to lobby...");
+
+            // Ensure their actual location is saved properly
+            hcp.setLastPos(event.getPlayer().getLocation());
             loc = plugin.getLobbyLocation(player, hcp.getWorld());
             hcp.setState(PlayerState.ALIVE);
         } else {
@@ -242,7 +267,9 @@ public class PlayerListener implements Listener {
 
         // Send the player to the lobby
         Util.teleport(player,loc).thenAccept(result -> {
-            if(!result){
+            if (result) {
+                TrueHardcore.debug("Player " + player.getName() + " was successfully teleported to lobby at " + loc);
+            } else {
                 if (hcp != null) {
                     // Mark the player as in game (don't do this by default! causes teleport problems
                     // and interop issues with NCP)
@@ -335,20 +362,20 @@ public class PlayerListener implements Listener {
                 return;
             }
             TeleportCause cause = event.getCause();
-            TrueHardcore.debugLog(eventToString(event));
 
             // Some teleport methods are fine.. let them go
             if ((cause == TeleportCause.ENDER_PEARL) || (cause == TeleportCause.END_PORTAL)
                   || (cause == TeleportCause.NETHER_PORTAL) || (cause == TeleportCause.END_GATEWAY)) {
+                TrueHardcore.debug("Player teleport cause " + cause + " for " + player.getName() + " is automatically allowed.");
                 return;
             }
 
             if (TrueHardcore.instance.isTeleportAllowed(player.getUniqueId())) {
-                TrueHardcore.debug("Player teleport is temporarily allowed.");
+                TrueHardcore.debug("Player teleport for " + player.getName() + " is temporarily allowed.");
                 return;
             }
 
-            // Ignore block/chunk loading teleport glitches within the same world (or NoCheatPlus)
+            // Ignore block/chunk loading teleport glitches within the same world (or anti cheat corrections)
             if (worldFrom.equals(worldTo) && (from.distance(to) <= 30)) {
                 return;
             }

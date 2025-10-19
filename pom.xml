@@ -9,7 +9,7 @@
     <properties>
         <build.number/>
         <paper.api.version>1.21</paper.api.version>
-        <paper.version>1.21.4-R0.1-SNAPSHOT</paper.version>
+        <paper.version>1.21.8-R0.1-SNAPSHOT</paper.version>
         <plugin.version>${project.version}-${build.number}</plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>

@@ -674,13 +674,15 @@ public final class TrueHardcore extends JavaPlugin {
         }
 
         if ((hcp == null) || (hcp.getState() == PlayerState.DEAD)) {
-            World w = getServer().getWorld(world);
+            log("Player " + player.getName() + " is attempting to start a new hardcore life in world " + world);
             findNewSpawn(player, world, hcp);
         } else if (hcp.getState() == PlayerState.IN_GAME) {
             player.sendMessage(ChatColor.RED + "You are already playing hardcore!");
+            player.sendMessage(ChatColor.RED + "This should not happen, please report it to an admin!");
             return false;
         } else {
             // Resume existing game
+            log("Player " + player.getName() + " is resuming hardcore in world " + world);
             player.sendMessage(ChatColor.GREEN
                   + "Returning to your last hardcore location... good luck!");
             debug(player.getName() + " is returning to " + hcw.getWorld().getName());
@@ -847,7 +849,8 @@ public final class TrueHardcore extends JavaPlugin {
                 // Abort if we tried too many times
                 if (attempt >= maxattempts) {
                     this.cancel();
-                    debug("Unable to find a good spawn point after " + attempt + " attempts!");
+                    log("Unable to find a good spawn point for " + player.getName()
+                            + " in " + world + " after " + attempt + " attempts!");
                     setPlayerJoining(player, false);
                     if ((player != null) && (player.isOnline())) {
                         player.sendMessage(ChatColor.RED + "Unable to find a suitable starting location. Try again soon.");
@@ -992,6 +995,21 @@ public final class TrueHardcore extends JavaPlugin {
             }
         } else {
             player.sendMessage(ChatColor.RED + "You are not currently in a hardcore game.");
+            // If player is in a hardcore world, send them to the lobby
+            World world = player.getWorld();
+            if (isHardcoreWorld(world)) {
+                warn("Player " + player.getName()
+                        + " was in hardcore world " + world.getName()
+                        + " but not marked as IN_GAME, returning player to lobby.");
+                player.sendMessage(ChatColor.RED + "This should not happen, please report it to an admin!");
+                Util.teleport(player, getLobbyLocation(player, world.getName())).thenAccept(result -> {
+                    if (result) {
+                        player.sendMessage(ChatColor.GREEN + "You have been returned to the lobby.");
+                    } else {
+                        player.sendMessage(ChatColor.RED + "Teleportation to lobby failed. Please re-log.");
+                    }
+                });
+            }
         }
     }
 

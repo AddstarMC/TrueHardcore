@@ -216,7 +216,6 @@ public class Util {
      * @return CompletableFuture
      */
     public static CompletableFuture<Boolean> teleport(Player player, Location loc) {
-
         if ((loc == null) || (player == null)) {
             TrueHardcore.debugLog("Teleport location or player null!");
             return CompletableFuture.completedFuture(false);
