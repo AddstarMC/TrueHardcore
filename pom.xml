@@ -208,6 +208,7 @@
                     <artifactId>VanishNoPacket</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>provided</scope>
         </dependency>
 
         <!-- PremiumVanishAPI -->
