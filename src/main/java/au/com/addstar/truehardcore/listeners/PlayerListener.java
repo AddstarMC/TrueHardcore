@@ -266,29 +266,34 @@ public class PlayerListener implements Listener {
         }
 
         // Send the player to the lobby
-        Util.teleport(player,loc).thenAccept(result -> {
-            if (result) {
-                TrueHardcore.debug("Player " + player.getName() + " was successfully teleported to lobby at " + loc);
-            } else {
-                if (hcp != null) {
-                    // Mark the player as in game (don't do this by default! causes teleport problems
-                    // and interop issues with NCP)
-                    TrueHardcore.warn("Unable to send " + player.getName()
-                            + " to lobby! Resuming game play...");
-                    hcp.setState(PlayerState.IN_GAME);
-                    plugin.savePlayer(hcp);
-                    if (plugin.isPlayerVanished(player)) {
-                        plugin.unVanishPlayer(player);
-                    }
-                    plugin.broadCastToHardcore(plugin.header + ChatColor.GREEN
-                            + player.getDisplayName() + " has entered "
-                            + hcp.getWorld(), player.getName());
+        // We delay this a little to allow other plugins to finish teleporting (like geSuitTeleports "/back")
+        // Our teleport back to lobby is the last one applied
+        Bukkit.getScheduler().runTaskLater(TrueHardcore.instance, () -> {
+            TrueHardcore.debug("Executing delayed teleport of " + player.getName() + " to lobby at " + loc);
+            Util.teleport(player,loc).thenAccept(result -> {
+                if (result) {
+                    TrueHardcore.debug("Player " + player.getName() + " was successfully teleported to lobby at " + loc);
                 } else {
-                    TrueHardcore.warn("Unable to send " + player.getName()
-                            + " to lobby and no player record!! THAT IS BAD!");
+                    if (hcp != null) {
+                        // Mark the player as in game (don't do this by default! causes teleport problems
+                        // and interop issues with NCP)
+                        TrueHardcore.warn("Unable to send " + player.getName()
+                                + " to lobby! Resuming game play...");
+                        hcp.setState(PlayerState.IN_GAME);
+                        plugin.savePlayer(hcp);
+                        if (plugin.isPlayerVanished(player)) {
+                            plugin.unVanishPlayer(player);
+                        }
+                        plugin.broadCastToHardcore(plugin.header + ChatColor.GREEN
+                                + player.getDisplayName() + " has entered "
+                                + hcp.getWorld(), player.getName());
+                    } else {
+                        TrueHardcore.warn("Unable to send " + player.getName()
+                                + " to lobby and no player record!! THAT IS BAD!");
+                    }
                 }
-            }
-        });
+            });
+        }, 10L);
     }
 
     /**
@@ -371,6 +376,9 @@ public class PlayerListener implements Listener {
             }
 
             if (TrueHardcore.instance.isTeleportAllowed(player.getUniqueId())) {
+                // Remove the temporary teleport allowance so it can't be reused
+                // This avoids issues with other plugins that teleport like /back (geSuitTeleports)
+                TrueHardcore.instance.removeAllowedTeleport(player.getUniqueId());
                 TrueHardcore.debug("Player teleport for " + player.getName() + " is temporarily allowed.");
                 return;
             }

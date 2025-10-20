@@ -1634,9 +1634,12 @@ public final class TrueHardcore extends JavaPlugin {
 
     public void addAllowedTeleport(UUID uuid) {
         allowedTeleport.add(uuid);
+        debug("Allowing player " + uuid + " to teleport temporarily");
     }
 
     public void removeAllowedTeleport(UUID uuid) {
+        if (isTeleportAllowed(uuid))
+            debug("Removing player " + uuid + " from allowed teleport list");
         allowedTeleport.remove(uuid);
     }
 
