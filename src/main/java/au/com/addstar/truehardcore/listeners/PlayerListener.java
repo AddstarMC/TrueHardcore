@@ -42,6 +42,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -163,8 +164,37 @@ public class PlayerListener implements Listener {
                 return;
             }
             if (hcp.getState() == PlayerState.IN_GAME) {
+                // Get the type of entity that last hurt the player
+                String damagecause = "UNKNOWN";
+
+                // Check if the damage was by entity or block
+                EntityDamageEvent lastDamage = player.getLastDamageCause();
+                if (lastDamage instanceof EntityDamageByEntityEvent edbee) {
+                    TrueHardcore.debug("Player " + player.getName()
+                        + " was saved by Totem when damaged by entity event: " + edbee.getDamager().getType());
+                    Entity damager = edbee.getDamager();
+                    damagecause = damager.getType().toString();
+                } else if (lastDamage instanceof EntityDamageByBlockEvent edbbe) {
+                    TrueHardcore.debug("Player " + player.getName()
+                        + " was saved by Totem when damaged by block event: " + edbbe.getCause());
+                    if (edbbe.getDamager() != null) {
+                        damagecause = edbbe.getCause().toString();
+                    }
+                } else {
+                    if (lastDamage != null) {
+                        TrueHardcore.debug("Player " + player.getName()
+                            + " was saved by Totem when damaged by event: " + lastDamage.getCause());
+                        damagecause = lastDamage.getCause().toString();
+                    } else {
+                        TrueHardcore.debug("Player " + player.getName()
+                            + " was saved by Totem but last damage cause is NULL!");
+                    }
+                }
+
                 plugin.broadcastToAllServers(plugin.header + ChatColor.AQUA + player.getDisplayName()
-                    + ChatColor.RED + " has just escaped death using a Totem of Undying in " + hcp.getWorld());
+                    + ChatColor.RED + " just escaped a death from "
+                    + ChatColor.YELLOW + damagecause
+                    + ChatColor.RED + " by using a Totem of Undying in " + hcp.getWorld());
             }
         }
     }
