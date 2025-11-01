@@ -49,6 +49,8 @@ import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 import de.myzelyam.api.vanish.VanishAPI;
+import dev.esophose.playerparticles.api.PlayerParticlesAPI;
+import dev.esophose.playerparticles.particles.FixedParticleEffect;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.*;
 import net.kyori.adventure.title.Title;
@@ -132,9 +134,11 @@ public final class TrueHardcore extends JavaPlugin {
     private Boolean lwcHooked = false;
     private Boolean wbHooked = false;
     private Boolean pvHooked = false;
+    private Boolean ppHooked = false;
     private LWC lwc;
     private WorldBorder wb;
     private VanishAPI pv;
+    private PlayerParticlesAPI ppapi;
 
     public TrueHardcore() {
         super();
@@ -232,8 +236,18 @@ public final class TrueHardcore extends JavaPlugin {
             pvHooked = true;
             log("PremiumVanish found, will use it.");
         } else {
-            wbHooked = false;
+            pvHooked = false;
             log("PremiumVanish not found! Vanished players will not be unvanished.");
+        }
+
+        p = pm.getPlugin("PlayerParticles");
+        if (p != null && p.isEnabled()) {
+            ppHooked = true;
+            ppapi = PlayerParticlesAPI.getInstance();
+            log("PlayerParticles found, will use it.");
+        } else {
+            ppHooked = false;
+            log("PlayerParticles not found! Particle effects will not be removed on death.");
         }
 
         oiHooked = checkOpenInventory();
@@ -578,6 +592,21 @@ public final class TrueHardcore extends JavaPlugin {
                     if (endworld != null) {
                         rollbackHandler.queueRollback("ROLLBACK", player, endworld, hcw.getRollbackDelay());
                     }
+                }
+
+                if (ppHooked) {
+                    int ppremoved = 0;
+                    debug("Removing all fixed PlayerParticles effects for player " + player.getName());
+                    // Remove all fixed particle effects that the player has placed in this HC world
+                    for (FixedParticleEffect effect : ppapi.getFixedParticleEffects(player)) {
+                        // Ensure it is for the correct hardcore world
+                        if (hcw == hardcoreWorlds.get(effect.getLocation().getWorld().getName())) {
+                            ppapi.removeFixedEffect(player, effect.getId());
+                            ppremoved++;
+                        }
+                    }
+                    debug("Removed " + ppremoved + " PlayerParticles effects for player " + player.getName()
+                            + " in " + hcw.getWorld().getName());
                 }
             } catch (Exception e) {
                 // Do nothing or throw an error if you want
