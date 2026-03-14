@@ -189,6 +189,20 @@ public class HardcoreWorlds {
         public void setDeathCommand(String command) {
             this.config.deathcommand = command;
         }
+
+        public String getDragonKillCommand() {
+            return config.dragonkillcommand;
+        }
+        public void setDragonKillCommand(String command) {
+            this.config.dragonkillcommand = command;
+        }
+
+        public String getDragonRespawnCommand() {
+            return config.dragonrespawncommand;
+        }
+        public void setDragonRespawnCommand(String command) {
+            this.config.dragonrespawncommand = command;
+        }
     }
 
 }

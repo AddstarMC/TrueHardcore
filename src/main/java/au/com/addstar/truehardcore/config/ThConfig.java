@@ -122,8 +122,16 @@ public class ThConfig extends AutoConfig {
     public String difficulty = "HARD";
 
     @ConfigField(category = "world-settings",
-          comment = "Command to be run on death. Can use <player> <displayname> <score> <cause> %place_holders%")
+          comment = "Command to be run on death. Can use <player> <displayname> <world> <score> <cause> %place_holders%")
     public String deathcommand = "";
+
+    @ConfigField(category = "world-settings",
+          comment = "Command to be run when a player kills the Ender Dragon. Can use <player> <displayname> <world> <score> <cause> %place_holders%")
+    public String dragonkillcommand = "";
+
+    @ConfigField(category = "world-settings",
+          comment = "Command to be run when a player respawns the Ender Dragon. Can use <player> <displayname> <world> <score> <cause> %place_holders%")
+    public String dragonrespawncommand = "";
 
     @ConfigField(category = "world-settings", comment = "Message to be sent to all players in the world when someone dies")
     public String rollbackBroadcast = "&eYou now have %time% to raid &b%player%'s &estuff before it all disappears!";

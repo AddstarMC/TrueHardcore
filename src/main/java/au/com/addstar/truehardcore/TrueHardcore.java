@@ -426,6 +426,39 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     /**
+     * Execute a configured command with placeholder replacement, dispatched on the next tick.
+     *
+     * @param command the raw command string with placeholders.
+     * @param player  the relevant player.
+     * @param hcp     the hardcore player record.
+     * @param hcw     the hardcore world (used for the world placeholder).
+     * @param cause   the cause string (death message, entity name, etc).
+     */
+    public void executeConfigCommand(String command, Player player, HardcorePlayer hcp,
+                                     HardcoreWorld hcw, String cause) {
+        String placeholderPattern = "%([^%]+)%";
+        String cmd = command;
+
+        Pattern pattern = Pattern.compile(placeholderPattern);
+        Matcher matcher = pattern.matcher(cmd);
+        while (matcher.find()) {
+            String placeholder = matcher.group(1);
+            String resolvedValue = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player,
+                    "%" + placeholder + "%");
+            cmd = cmd.replace("%" + placeholder + "%", resolvedValue);
+        }
+        cmd = cmd.replaceAll("<player>", ChatColor.stripColor(player.getName()))
+                .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
+                .replaceAll("<world>", hcw.getWorld().getName())
+                .replaceAll("<cause>", ChatColor.stripColor(cause))
+                .replaceAll("<score>", Integer.toString(hcp.getScore()));
+        debug("Executing (next tick): " + cmd);
+        final String finalCmd = cmd;
+        Bukkit.getScheduler().runTask(this, () ->
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCmd));
+    }
+
+    /**
      * Handle player death.
      *
      * @param player player.
@@ -507,24 +540,7 @@ public final class TrueHardcore extends JavaPlugin {
 
         // Execute death command if one is configured
         if (!hcw.getDeathCommand().isEmpty()) {
-            String placeholderPattern = "%([^%]+)%";
-            String cmd = hcw.getDeathCommand();
-
-            Pattern pattern = Pattern.compile(placeholderPattern);
-            Matcher matcher = pattern.matcher(cmd);
-
-            while (matcher.find()) {
-                String placeholder = matcher.group(1);
-                String resolvedValue = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(event.getPlayer(),
-                        "%" + placeholder + "%");
-                cmd = cmd.replace("%" + placeholder + "%", resolvedValue);
-            }
-            cmd = cmd.replaceAll("<player>", ChatColor.stripColor(player.getName()))
-                    .replaceAll("<displayname>", ChatColor.stripColor(player.getDisplayName()))
-                    .replaceAll("<cause>", ChatColor.stripColor(deathMessage))
-                    .replaceAll("<score>", Integer.toString(hcp.getScore()));
-            debug("Executing: " + cmd);
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            executeConfigCommand(hcw.getDeathCommand(), player, hcp, hcw, deathMessage);
         }
 
         savePlayer(hcp);

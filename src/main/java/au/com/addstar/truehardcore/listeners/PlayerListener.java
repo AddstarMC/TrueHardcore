@@ -65,13 +65,16 @@ import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class PlayerListener implements Listener {
 
     private final TrueHardcore plugin;
     private final HardcorePlayers hardcorePlayers;
+    private final Map<String, Player> lastCrystalPlacer = new HashMap<>();
 
     public PlayerListener(TrueHardcore instance) {
         plugin = instance;
@@ -647,6 +650,13 @@ public class PlayerListener implements Listener {
                         case PLAYER:
                             hcp.setPlayerKills(hcp.getPlayerKills() + 1);
                             break;
+                        case ENDER_DRAGON:
+                            hcp.setOtherKills(hcp.getOtherKills() + 1);
+                            HardcoreWorld hcw = plugin.hardcoreWorlds.get(ent.getWorld().getName());
+                            if (hcw != null && !hcw.getDragonKillCommand().isEmpty()) {
+                                plugin.executeConfigCommand(hcw.getDragonKillCommand(), killer, hcp, hcw, "Ender Dragon");
+                            }
+                            break;
                         default:
                             hcp.setOtherKills(hcp.getOtherKills() + 1);
                             break;
@@ -656,6 +666,31 @@ public class PlayerListener implements Listener {
                 TrueHardcore.debug("Ignoring hardcore death: " + killer.getName()
                         + " killed " + ent.getType());
             }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityPlace(EntityPlaceEvent event) {
+        if (event.getEntity().getType() != EntityType.END_CRYSTAL) return;
+        if (!plugin.isHardcoreWorld(event.getEntity().getWorld())) return;
+        if (event.getPlayer() == null) return;
+        lastCrystalPlacer.put(event.getEntity().getWorld().getName(), event.getPlayer());
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (event.getEntityType() != EntityType.ENDER_DRAGON) return;
+        if (!plugin.isHardcoreWorld(event.getEntity().getWorld())) return;
+
+        String worldName = event.getEntity().getWorld().getName();
+        Player player = lastCrystalPlacer.remove(worldName);
+        if (player == null || !player.isOnline()) return;
+
+        HardcoreWorld hcw = plugin.hardcoreWorlds.get(worldName);
+        HardcorePlayer hcp = hardcorePlayers.get(player);
+        if (hcw == null || hcp == null) return;
+        if (!hcw.getDragonRespawnCommand().isEmpty()) {
+            plugin.executeConfigCommand(hcw.getDragonRespawnCommand(), player, hcp, hcw, "Ender Dragon Respawn");
         }
     }
 
