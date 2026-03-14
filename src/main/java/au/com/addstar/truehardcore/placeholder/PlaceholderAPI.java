@@ -23,7 +23,6 @@ import au.com.addstar.truehardcore.TrueHardcore;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
-import java.util.Map;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.OfflinePlayer;
 
@@ -37,7 +36,7 @@ public class PlaceholderAPI extends PlaceholderExpansion {
             return plugin.getConfig().getString("gameEnabled");
         }
         else if (identifier.equals("world")) {
-            return plugin.hardcoreWorlds.getNames();
+            return TrueHardcore.getCfg().world;
         }
         else if (identifier.startsWith("cooldown_mins_")) {
             long now = System.currentTimeMillis();

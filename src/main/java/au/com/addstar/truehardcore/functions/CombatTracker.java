@@ -171,7 +171,7 @@ public class CombatTracker implements Listener {
 
         // time when combat should expire
         long combatExpiry = System.currentTimeMillis()
-                + (TrueHardcore.getCfg().getWorldConfig(defender.getWorld()).combatTime * 1000L);
+                + (TrueHardcore.getCfg().combatTime * 1000L);
 
         // If either player is not already in combat, log to console about it
         if (!attacker.isInCombat() || !defender.isInCombat()) {

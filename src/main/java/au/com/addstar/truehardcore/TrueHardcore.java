@@ -336,6 +336,9 @@ public final class TrueHardcore extends JavaPlugin {
         rollbackHandler.onDisable();
         getServer().getScheduler().cancelTasks(this);
         saveAllPlayers();
+        if (dbConnection != null) {
+            dbConnection.closeDatabase();
+        }
         log(pdfFile.getName() + " has been disabled!");
         debugFileHandler.close();
     }
@@ -634,7 +637,7 @@ public final class TrueHardcore extends JavaPlugin {
         // Only check whitelist if world is whitelisted
         HardcoreWorld hcw = hardcoreWorlds.get(world);
         if (hcw.isWhitelisted()) {
-            if (!isOnWhiteList(world, player.getUniqueId())) {
+            if (!isOnWhiteList(player.getUniqueId())) {
                 player.sendMessage(ChatColor.RED
                       + "Sorry, you are not allowed to play this world.");
                 return false;
@@ -1229,10 +1232,10 @@ public final class TrueHardcore extends JavaPlugin {
      */
     @SuppressWarnings("UnusedReturnValue")
     private boolean loadAllPlayers() {
-        String query = "SELECT * FROM `players` ORDER BY world,id";
+        String query = "SELECT * FROM `players` WHERE `world`=? ORDER BY id";
         try {
             hcPlayers.clear();
-            ResultSet res = dbConnection.preparedQuery(query, null);
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{cfg.world});
             if (res != null) {
                 while (res.next()) {
                     UUID id = UUID.fromString(res.getString("id"));
@@ -1244,7 +1247,7 @@ public final class TrueHardcore extends JavaPlugin {
                 }
             }
         } catch (Exception e) {
-            debug("Unable to load player record to database!");
+            debug("Unable to load player records from database!");
             e.printStackTrace();
             return false;
         }
@@ -1381,19 +1384,12 @@ public final class TrueHardcore extends JavaPlugin {
         return loc;
     }
 
-    private boolean isOnWhiteList(String world, UUID player) {
-        String query = "SELECT worlds FROM `whitelist` WHERE id=?";
+    private boolean isOnWhiteList(UUID player) {
+        String query = "SELECT 1 FROM `whitelist` WHERE id=?";
         try {
             ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()});
-            if (res != null) {
-                if (res.next()) {
-                    String[] worlds = res.getString("worlds").split(",");
-                    for (String w : worlds) {
-                        if ((w.equals(world)) || (w.equals("*"))) {
-                            return true;
-                        }
-                    }
-                }
+            if (res != null && res.next()) {
+                return true;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1408,18 +1404,16 @@ public final class TrueHardcore extends JavaPlugin {
      * @return true on success
      */
     public boolean addToWhitelist(UUID player) {
-        String query = "INSERT INTO `whitelist` (id, worlds) VALUES (?, ?)";
-        String worlds = hardcoreWorlds.getNames();
+        String query = "INSERT IGNORE INTO `whitelist` (id) VALUES (?)";
         try {
             debugLog("Add player to whitelist: " + player);
-            int result = dbConnection.preparedUpdate(query, new String[]{player.toString(),
-                  worlds});
+            int result = dbConnection.preparedUpdate(query, new String[]{player.toString()});
             if (result < 0) {
                 debug("Whitelist update failed!");
                 return false;
             }
         } catch (Exception e) {
-            debug("Unable to load player record to database!");
+            debug("Unable to update whitelist!");
             e.printStackTrace();
             return false;
         }

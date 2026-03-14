@@ -534,7 +534,8 @@ public class PlayerListener implements Listener {
         HardcorePlayer hcp = hardcorePlayers.get(player);
 
         if ((hcp != null) && (hcp.isGodMode())) {
-            if (event.getNewEffect().getType().getEffectCategory() == PotionEffectType.Category.HARMFUL) {
+            if (event.getNewEffect() != null
+                    && event.getNewEffect().getType().getEffectCategory() == PotionEffectType.Category.HARMFUL) {
                 event.setCancelled(true);
             }
         }

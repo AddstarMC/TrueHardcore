@@ -44,7 +44,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 public class CommandTH implements CommandExecutor {
@@ -72,36 +71,25 @@ public class CommandTH implements CommandExecutor {
         Player player;
         switch (action) {
             case "PLAY":
-                if (sender instanceof Player) {
-                    if (!Util.requirePermission((Player) sender, "truehardcore.use")) {
-                        return true;
-                    }
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(ChatColor.RED + "Error: Must be an in game player.");
+                    break;
                 }
-                if (args.length > 1) {
-                    World world = plugin.getServer().getWorld(args[1]);
-                    if (world == null) {
-                        sender.sendMessage(ChatColor.RED + "Error: Unknown world!");
-                        return true;
-                    }
-
-                    if (plugin.isHardcoreWorld(world)) {
-                        if (sender instanceof Player) {
-                            player = (Player) sender;
-                            if (!plugin.isHardcoreWorld(player.getWorld())) {
-                                plugin.playGame(world.getName(), player);
-                            } else {
-                                sender.sendMessage(ChatColor.RED
-                                      + "Error: You are already in a hardcore world!");
-                            }
-                        } else {
-                            sender.sendMessage(ChatColor.RED + "Error: Must be an in game player.");
-
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Error: That is not a hardcore world!");
-                    }
+                if (!Util.requirePermission((Player) sender, "truehardcore.use")) {
+                    return true;
+                }
+                player = (Player) sender;
+                if (plugin.isHardcoreWorld(player.getWorld())) {
+                    sender.sendMessage(ChatColor.RED
+                          + "Error: You are already in a hardcore world!");
                 } else {
-                    sender.sendMessage(ChatColor.YELLOW + "Usage: /th play <world>");
+                    String worldName = TrueHardcore.getCfg().world;
+                    World world = plugin.getServer().getWorld(worldName);
+                    if (world == null || !plugin.isHardcoreWorld(world)) {
+                        sender.sendMessage(ChatColor.RED + "Error: Hardcore world not available!");
+                    } else {
+                        plugin.playGame(worldName, player);
+                    }
                 }
                 break;
             case "LEAVE":
@@ -138,63 +126,37 @@ public class CommandTH implements CommandExecutor {
                 break;
             case "INFO":
                 HardcorePlayer hcp = null;
+                String cfgWorld = TrueHardcore.getCfg().world;
                 if (args.length == 1) {
-                    if (sender instanceof Player) {
-                        if (!Util.requirePermission((Player) sender, "truehardcore.info")) {
-                            return true;
-                        }
-
-                        player = (Player) sender;
-                        hcp = plugin.hcPlayers.get(player);
-                        if (hcp != null) {
-                            hcp.updatePlayer(player);
-                        } else {
-                            sender.sendMessage(ChatColor.RED
-                                  + "You must be in the hardcore world to use this command");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /th info <player> [world]");
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(ChatColor.RED + "Usage: /th info <player>");
+                        break;
                     }
-                } else if (args.length == 2) {
-                    if (sender instanceof Player) {
-                        if (!Util.requirePermission((Player) sender, "truehardcore.info.other")) {
-                            return true;
-                        }
+                    if (!Util.requirePermission((Player) sender, "truehardcore.info")) {
+                        return true;
                     }
-                    player = plugin.getServer().getPlayer(args[1]);
-                    if (player != null) {
-                        hcp = plugin.hcPlayers.get(player);
-                        if (plugin.isHardcoreWorld(player.getWorld())) {
-                            hcp.updatePlayer(player);
-                        } else {
-                            sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Unknown player");
+                    player = (Player) sender;
+                    hcp = plugin.hcPlayers.get(cfgWorld, player.getUniqueId());
+                    if (hcp != null && plugin.isHardcoreWorld(player.getWorld())) {
+                        hcp.updatePlayer(player);
                     }
-                } else if (args.length == 3) {
+                } else {
                     if (sender instanceof Player) {
                         if (!Util.requirePermission((Player) sender, "truehardcore.info.other")) {
                             return true;
                         }
                     }
                     //noinspection deprecation
-                    OfflinePlayer lookup = Bukkit.getOfflinePlayer(args[2]);
-                    if (!lookup.hasPlayedBefore()) {
+                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+                    if (!target.hasPlayedBefore()) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
-                    } else {
-                        hcp = plugin.hcPlayers.get(args[1], lookup.getUniqueId());
-                        if (hcp != null) {
-                            player = plugin.getServer().getPlayer(args[2]);
-                            if (player != null) {
-                                if (plugin.isHardcoreWorld(player.getWorld())) {
-                                    if (Objects.equals(args[1], player.getWorld().getName())) {
-                                        hcp.updatePlayer(player);
-                                    }
-                                }
-                            }
-                        } else {
-                            sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
+                        break;
+                    }
+                    hcp = plugin.hcPlayers.get(cfgWorld, target.getUniqueId());
+                    if (hcp != null) {
+                        Player onlineTarget = target.getPlayer();
+                        if (onlineTarget != null && plugin.isHardcoreWorld(onlineTarget.getWorld())) {
+                            hcp.updatePlayer(onlineTarget);
                         }
                     }
                 }
@@ -225,6 +187,8 @@ public class CommandTH implements CommandExecutor {
                           + hcp.getDeaths());
                     sender.sendMessage(ChatColor.YELLOW + "Top Score: " + ChatColor.AQUA
                           + hcp.getTopScore());
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Error: No hardcore record found!");
                 }
                 break;
             case "DUMP":
@@ -233,6 +197,7 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
+                cfgWorld = TrueHardcore.getCfg().world;
                 if (args.length == 1) {
                     for (Map.Entry<String, HardcorePlayer> entry : plugin.hcPlayers
                           .allRecords().entrySet()) {
@@ -248,11 +213,11 @@ public class CommandTH implements CommandExecutor {
                                   + "\" not found! This should not happen!");
                         }
                     }
-                } else if (args.length == 3) {
+                } else if (args.length == 2) {
                     //noinspection deprecation
                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
 
-                    hcp = plugin.hcPlayers.get(args[2], offlinePlayer.getUniqueId());
+                    hcp = plugin.hcPlayers.get(cfgWorld, offlinePlayer.getUniqueId());
                     if (hcp != null) {
                         String sincedeath = "";
                         if (hcp.getGameEnd() != null) {
@@ -305,7 +270,8 @@ public class CommandTH implements CommandExecutor {
                         sender.sendMessage(ChatColor.YELLOW + "In Combat?     : "
                               + ChatColor.AQUA + hcp.isInCombat() + " : "
                               + Util.long2Time(hcp.getCombatExpiry()));
-
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Error: No hardcore record found!");
                     }
                 }
                 break;
@@ -361,28 +327,28 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                if (args.length == 3) {
+                if (args.length == 2) {
                     switch (args[1].toUpperCase()) {
                         case "EXIT":
-                            if (sender instanceof Player) {
-                                World world = plugin.getServer().getWorld(args[2]);
-                                if ((plugin.isHardcoreWorld(world))) {
-                                    HardcoreWorld hcw = plugin.hardcoreWorlds.get(world.getName());
-                                    TrueHardcore.debug("Setting ExitPos for "
-                                          + hcw.getWorld().getName());
-                                    player = (Player) sender;
-                                    hcw.setExitPos(player.getLocation());
-                                    plugin.config().set("worlds." + world.getName()
-                                          + ".exitpos", Util.loc2Str(player.getLocation()));
-                                    plugin.saveConfig();
-                                } else {
-                                    sender.sendMessage(ChatColor.RED
-                                          + "Not a valid hardcore world");
-                                }
-                            } else {
+                            if (!(sender instanceof Player)) {
                                 sender.sendMessage(ChatColor.RED
                                       + "Error: Must be an in game player.");
+                                break;
                             }
+                            cfgWorld = TrueHardcore.getCfg().world;
+                            HardcoreWorld hcw = plugin.hardcoreWorlds.get(cfgWorld);
+                            if (hcw == null) {
+                                sender.sendMessage(ChatColor.RED
+                                      + "Hardcore world not configured!");
+                                break;
+                            }
+                            TrueHardcore.debug("Setting ExitPos for "
+                                  + hcw.getWorld().getName());
+                            player = (Player) sender;
+                            hcw.setExitPos(player.getLocation());
+                            plugin.config().set("worlds." + cfgWorld
+                                  + ".exitpos", Util.loc2Str(player.getLocation()));
+                            plugin.saveConfig();
                             break;
                         default:
                             sender.sendMessage(ChatColor.RED + "Invalid option \""
@@ -429,49 +395,35 @@ public class CommandTH implements CommandExecutor {
             case "STATS":
             case "KILLS":
                 hcp = null;
+                cfgWorld = TrueHardcore.getCfg().world;
                 if (args.length == 1) {
-                    if (sender instanceof Player) {
-                        if (!Util.requirePermission((Player) sender, "truehardcore.stats")) {
-                            return true;
-                        }
-
-                        player = (Player) sender;
-                        hcp = plugin.hcPlayers.get(player);
-                        if (hcp == null) {
-                            sender.sendMessage(ChatColor.RED
-                                  + "You must be in the hardcore world to use this command");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Usage: /th info <player> [world]");
+                    if (!(sender instanceof Player)) {
+                        sender.sendMessage(ChatColor.RED + "Usage: /th stats <player>");
+                        break;
                     }
-                } else if (args.length == 2) {
-                    if (sender instanceof Player) {
-                        if (!Util.requirePermission((Player) sender,
-                              "truehardcore.stats.other")) {
-                            return true;
-                        }
+                    if (!Util.requirePermission((Player) sender, "truehardcore.stats")) {
+                        return true;
                     }
-                    player = plugin.getServer().getPlayer(args[1]);
-                    if (player != null) {
-                        hcp = plugin.hcPlayers.get(player);
-                        if (!plugin.isHardcoreWorld(player.getWorld())) {
-                            sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
-                        }
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Unknown player");
+                    player = (Player) sender;
+                    hcp = plugin.hcPlayers.get(cfgWorld, player.getUniqueId());
+                    if (hcp == null) {
+                        sender.sendMessage(ChatColor.RED + "Error: No hardcore record found!");
                     }
-                } else if (args.length == 3) {
+                } else {
                     if (sender instanceof Player) {
-                        if (!Util.requirePermission((Player) sender,
-                              "truehardcore.stats.other")) {
+                        if (!Util.requirePermission((Player) sender, "truehardcore.stats.other")) {
                             return true;
                         }
                     }
                     //noinspection deprecation
-                    hcp = plugin.hcPlayers.get(args[2],
-                          Bukkit.getOfflinePlayer(args[1]).getUniqueId());
-                    if (hcp == null) {
+                    OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+                    if (!target.hasPlayedBefore()) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
+                        break;
+                    }
+                    hcp = plugin.hcPlayers.get(cfgWorld, target.getUniqueId());
+                    if (hcp == null) {
+                        sender.sendMessage(ChatColor.RED + "Error: No hardcore record found!");
                     }
                 }
 
@@ -566,18 +518,18 @@ public class CommandTH implements CommandExecutor {
                     }
                 }
 
-                if (args.length < 3) {
-                    sender.sendMessage(ChatColor.RED + "Usage: /th load <player> <world>");
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th load <player>");
                     return true;
-                } else if (args.length == 3) {
-                    //noinspection deprecation
-                    if (plugin.loadPlayer(args[2],
-                          Bukkit.getOfflinePlayer(args[1]).getUniqueId())) {
-                        sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/"
-                              + args[1] + " has been reloaded.");
-                    } else {
-                        sender.sendMessage(ChatColor.RED + "Player record failed to load!");
-                    }
+                }
+                cfgWorld = TrueHardcore.getCfg().world;
+                //noinspection deprecation
+                if (plugin.loadPlayer(cfgWorld,
+                      Bukkit.getOfflinePlayer(args[1]).getUniqueId())) {
+                    sender.sendMessage(ChatColor.GREEN + "Player record " + cfgWorld + "/"
+                          + args[1] + " has been reloaded.");
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Player record failed to load!");
                 }
                 break;
             case "REDUCETIME":
@@ -587,56 +539,47 @@ public class CommandTH implements CommandExecutor {
                     }
                 }
 
-                if (args.length < 4) {
-                    sender.sendMessage(ChatColor.RED + "Usage: /th reducetime <player> <world> <hours>");
+                if (args.length < 3) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th reducetime <player> <hours>");
                     return true;
-                } else if (args.length == 4) {
-                    // Reduce the death time of the specified player in the specified world
+                } else if (args.length == 3) {
                     Player p = Bukkit.getPlayer(args[1]);
-                    String world = args[2];
-                    int hours = Integer.parseInt(args[3]);
+                    int hours = Integer.parseInt(args[2]);
                     if ((p == null) || (!p.isOnline())) {
-                        sender.sendMessage(ChatColor.RED + "Player must online to peform this command");
+                        sender.sendMessage(ChatColor.RED + "Player must be online to perform this command");
                         return true;
                     }
 
-                    // Ensure earliest gameend time is: Now - World Bantime + 5 mins
-                    // In case the player just died, we need to allow +5 mins for rollbacks, etc
-                    HardcoreWorld hcw = plugin.hardcoreWorlds.get(world);
+                    cfgWorld = TrueHardcore.getCfg().world;
+                    HardcoreWorld hcw = plugin.hardcoreWorlds.get(cfgWorld);
                     if (hcw == null) {
-                        sender.sendMessage(ChatColor.RED + "Error: Unknown hardcore world!");
+                        sender.sendMessage(ChatColor.RED + "Error: Hardcore world not configured!");
                         return true;
                     }
+                    // Earliest gameend time: Now - World Bantime + 5 mins
                     Date minEndTime = new Date(System.currentTimeMillis() - (hcw.getBantime() * 1000) + 300000);
 
-                    // Ensure we always have an up-to-date record
-                    plugin.loadPlayer(hcw.getWorld().getName(), p.getUniqueId());
-                    hcp = plugin.hcPlayers.get(hcw.getWorld().getName(), p.getUniqueId());
+                    plugin.loadPlayer(cfgWorld, p.getUniqueId());
+                    hcp = plugin.hcPlayers.get(cfgWorld, p.getUniqueId());
                     if (hcp == null) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown hardcore player!");
                         return true;
                     }
 
-                    // If player is dead in this world, reduce their death time
-                    if ((hcp != null) && (hcp.getState() == PlayerState.DEAD)) {
-                        // Always ensure the new end time is not before the min end time
-                        Date newEndTime = new Date(hcp.getGameEnd().getTime() - (hours * 3600000));
+                    if (hcp.getState() == PlayerState.DEAD) {
+                        Date newEndTime = new Date(hcp.getGameEnd().getTime() - (hours * 3600000L));
                         if (newEndTime.before(minEndTime))
                             newEndTime = minEndTime;
 
-                        // Ensure their name is updated
                         hcp.setPlayerName(p.getName());
-
-                        // Set their new end time and save record
                         hcp.setGameEnd(newEndTime);
                         plugin.savePlayer(hcp);
 
-                        // Log what has happened and the current state
                         Date now = new Date();
                         long diff = (now.getTime() - hcp.getGameEnd().getTime()) / 1000;
                         long wait = (hcw.getBantime() - diff);
                         TrueHardcore.log("Reduced death time for " + hcp.getPlayerName() + " in "
-                              + hcw.getWorld().getName() + " by " + hours + " hours "
+                              + cfgWorld + " by " + hours + " hours "
                               + "(time left: " + Util.long2Time(wait) + " / death time: " + hcp.getGameEnd() + ")");
                     }
                 }
@@ -709,39 +652,39 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                if (args.length < 3) {
-                    sender.sendMessage(ChatColor.RED + "Usage: /th forcealive <player> <world>");
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th forcealive <player>");
                     return true;
-                } else if (args.length == 3) {
-                    Player target = Bukkit.getPlayer(args[1]);
-                    if (target == null) {
-                        sender.sendMessage("Player must be online to peform the force alive..."
-                              + args[1] + " could not be found.");
-                        return true;
-                    }
-                    if (TrueHardcore.instance.isHardcoreWorld(target.getWorld())) {
-                        sender.sendMessage(target.getDisplayName() + " is in " + target.getWorld()
-                              + " ask them to return to lobby before updating.");
-                        return true;
-                    }
-                    if (plugin.loadPlayer(args[2], target.getUniqueId())) {
-                        sender.sendMessage(ChatColor.GREEN + "Player record " + args[2] + "/"
-                              + args[1] + " has been reloaded.");
-                        HardcorePlayer hcplayer = TrueHardcore.instance.hcPlayers.get(args[2],
-                              target.getUniqueId());
-                        if (hcplayer == null) {
-                            sender.sendMessage(ChatColor.RED + "Player record failed to load!");
-                            return false;
-                        }
-                        if (hcplayer.getState() == PlayerState.IN_GAME) {
-                            hcplayer.setLoadDataOnly(true);
-                            hcplayer.setState(PlayerState.ALIVE);
-                            hcplayer.setLoadDataOnly(false);
-                        }
-                        TrueHardcore.instance.savePlayer(hcplayer);
-                    } else {
+                }
+                cfgWorld = TrueHardcore.getCfg().world;
+                Player target = Bukkit.getPlayer(args[1]);
+                if (target == null) {
+                    sender.sendMessage("Player must be online to perform the force alive... "
+                          + args[1] + " could not be found.");
+                    return true;
+                }
+                if (TrueHardcore.instance.isHardcoreWorld(target.getWorld())) {
+                    sender.sendMessage(target.getDisplayName() + " is in " + target.getWorld()
+                          + " ask them to return to lobby before updating.");
+                    return true;
+                }
+                if (plugin.loadPlayer(cfgWorld, target.getUniqueId())) {
+                    sender.sendMessage(ChatColor.GREEN + "Player record " + cfgWorld + "/"
+                          + args[1] + " has been reloaded.");
+                    HardcorePlayer hcplayer = TrueHardcore.instance.hcPlayers.get(cfgWorld,
+                          target.getUniqueId());
+                    if (hcplayer == null) {
                         sender.sendMessage(ChatColor.RED + "Player record failed to load!");
+                        return false;
                     }
+                    if (hcplayer.getState() == PlayerState.IN_GAME) {
+                        hcplayer.setLoadDataOnly(true);
+                        hcplayer.setState(PlayerState.ALIVE);
+                        hcplayer.setLoadDataOnly(false);
+                    }
+                    TrueHardcore.instance.savePlayer(hcplayer);
+                } else {
+                    sender.sendMessage(ChatColor.RED + "Player record failed to load!");
                 }
                 break;
             case "TP":
@@ -816,40 +759,39 @@ public class CommandTH implements CommandExecutor {
                       + ": Exit the hardcore game");
                 sender.sendMessage(ChatColor.AQUA + "/th list       " + ChatColor.YELLOW
                       + ": List the current hardcore players");
-                sender.sendMessage(ChatColor.AQUA + "/th info       " + ChatColor.YELLOW
-                      + ": Display your game information");
-                sender.sendMessage(ChatColor.AQUA + "/th stats      " + ChatColor.YELLOW
+                sender.sendMessage(ChatColor.AQUA + "/th info [player]  " + ChatColor.YELLOW
+                      + ": Display game information");
+                sender.sendMessage(ChatColor.AQUA + "/th stats [player] " + ChatColor.YELLOW
                       + ": Display kill statistics");
                 if (!(sender instanceof Player) || (Util.requirePermission((Player) sender,
                       "truehardcore.admin"))) {
-                    sender.sendMessage(ChatColor.AQUA + "/th bcast      " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th bcast <msg>     " + ChatColor.YELLOW
                           + ": Message all TH players");
-                    sender.sendMessage(ChatColor.AQUA + "/th enable     " + ChatColor.YELLOW
-                          + ": Enable TrueHardocre");
-                    sender.sendMessage(ChatColor.AQUA + "/th disable    " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th enable          " + ChatColor.YELLOW
+                          + ": Enable TrueHardcore");
+                    sender.sendMessage(ChatColor.AQUA + "/th disable         " + ChatColor.YELLOW
                           + ": Disable TrueHardcore");
-                    sender.sendMessage(ChatColor.AQUA + "/th dump       " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th dump [player]   " + ChatColor.YELLOW
                           + ": Dump player record");
-                    sender.sendMessage(ChatColor.AQUA + "/th dumpworlds " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th dumpworlds      " + ChatColor.YELLOW
                           + ": Dump world records");
-                    sender.sendMessage(ChatColor.AQUA + "/th save       " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th save            " + ChatColor.YELLOW
                           + ": Save all in-memory changes");
-                    sender.sendMessage(ChatColor.AQUA + "/th load       " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th load <player>   " + ChatColor.YELLOW
                           + ": Load player data from DB");
-                    sender.sendMessage(ChatColor.AQUA + "/th reducetime " + ChatColor.YELLOW
-                            + ": Reduce wait time for a player");
-                    sender.sendMessage(ChatColor.AQUA + "/th whitelist  " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th reducetime <player> <hours> "
+                          + ChatColor.YELLOW + ": Reduce wait time for a player");
+                    sender.sendMessage(ChatColor.AQUA + "/th whitelist       " + ChatColor.YELLOW
                           + ": Add/remove player to whitelist");
-                    sender.sendMessage(ChatColor.AQUA + "/th account  " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th account <player> " + ChatColor.YELLOW
                           + ": Manage account types");
-                    sender.sendMessage(ChatColor.AQUA + "/th debug  " + ChatColor.YELLOW
+                    sender.sendMessage(ChatColor.AQUA + "/th debug           " + ChatColor.YELLOW
                           + ": Toggle debug until restart");
-                    sender.sendMessage(ChatColor.AQUA + "/th queue  " + ChatColor.YELLOW
-                          + ": Show the hardcore rollback queue.");
-                    sender.sendMessage(ChatColor.AQUA + "/th forcealive <player> <world>  "
+                    sender.sendMessage(ChatColor.AQUA + "/th queue           " + ChatColor.YELLOW
+                          + ": Show the hardcore rollback queue");
+                    sender.sendMessage(ChatColor.AQUA + "/th forcealive <player> "
                           + ChatColor.YELLOW
-                          + ": Forces an update the the player - removing them from game and "
-                          + "setting state to alive.");
+                          + ": Force remove player from game, set state to alive");
                 }
                 break;
         }

@@ -20,12 +20,13 @@
 package au.com.addstar.truehardcore.database;
 
 import au.com.addstar.truehardcore.TrueHardcore;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -37,208 +38,59 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 public class Database {
+
+    private HikariDataSource dataSource;
+    private Connection queryConn;
+
+    public Database() {
+    }
+
     /**
      * Check if connected and if not open a Connection.
      * @return connected
      */
     public boolean isConnected() {
-        if (!connected) {
-            connected = openDatabase();
+        if (dataSource == null || dataSource.isClosed()) {
+            return openDatabase();
         }
-        return connected;
-    }
-
-    private boolean connected = false;
-    private Connection conn;
-
-    public Database() {
+        return true;
     }
 
     private boolean openDatabase() {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-            String host = TrueHardcore.getCfg().host;
-            String port = TrueHardcore.getCfg().port;
-            String name = TrueHardcore.getCfg().name;
-            if (host == null) {
-                TrueHardcore.log("Host is null");
-            }
-            if (port == null) {
-                TrueHardcore.log("Port is null");
-            }
-            if (name == null) {
-                TrueHardcore.log("Name is null");
-            }
-            String user = TrueHardcore.getCfg().user;
-            String password = TrueHardcore.getCfg().password;
-            String url = "jdbc:mysql://" + host + ":" + port + "/" + name;
-            conn = DriverManager.getConnection(url, user, password);
+        String host = TrueHardcore.getCfg().host;
+        String port = TrueHardcore.getCfg().port;
+        String name = TrueHardcore.getCfg().name;
+        String user = TrueHardcore.getCfg().user;
+        String password = TrueHardcore.getCfg().password;
+        String url = "jdbc:mysql://" + host + ":" + port + "/" + name;
 
-            connected = true;
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(url);
+        config.setUsername(user);
+        config.setPassword(password);
+        config.setMaximumPoolSize(5);
+        config.setConnectionTimeout(5000);
+        config.setIdleTimeout(300000);
+        config.setMaxLifetime(600000);
+        config.setPoolName("TrueHardcore-DB");
 
-            tryConvert();
-        } catch (SQLException e) {
-            TrueHardcore.warn("Unable to open database!");
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            TrueHardcore.warn("Unable to find a suitable MySQL driver!");
-            e.printStackTrace();
-        }
-        return connected;
-    }
+        dataSource = new HikariDataSource(config);
 
-    private void tryConvert() throws SQLException {
-
-        // Schema check for new id column
-        Statement st = conn.createStatement();
-        try {
-            st.executeQuery("SELECT `id` from `players`");
-            return;
-        } catch (SQLException e) {
-            // Not present, do upgrade
-        }
-
-        Logger log = TrueHardcore.instance.getLogger();
-
-        log.info("A conversion to UUIDs is required.");
-
-        // First build a name map
-        log.info("- Building name cache");
-        HashMap<String, UUID> lookup = new HashMap<>();
-        for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
-            if (player.getName() != null) {
-                lookup.put(player.getName().toLowerCase(), player.getUniqueId());
-            }
-        }
-
-        // Next update the schema for the table
-        log.info("- Updating db schema");
-        st.executeUpdate("ALTER TABLE `players` ADD COLUMN (`id` CHAR(36));");
-
-        // Now query for all entries for an in place update
-        log.info("- Converting players ...");
-
-        PreparedStatement update = conn.prepareStatement(
-              "UPDATE `players` SET `id`= ? WHERE `player`=? AND `world`=?;");
-
-        int pending = 0;
-        int count = 0;
-        int failCount = 0;
-        long lastAnnounce = System.currentTimeMillis();
-
-        ResultSet rs = st.executeQuery("SELECT `player`,`world` from `players`");
-        while (rs.next()) {
-            String name = rs.getString("player");
-            String world = rs.getString("world");
-            UUID id = lookup.get(name.toLowerCase());
-            if (id != null) {
-                update.setString(1, id.toString());
-                update.setString(2, name);
-                update.setString(3, world);
-                update.addBatch();
-                ++pending;
-            } else {
-                update.setString(1,
-                      UUID.nameUUIDFromBytes(name.getBytes()).toString());
-                update.setString(2, name);
-                update.setString(3, world);
-                update.addBatch();
-                ++pending;
-                ++failCount;
-            }
-            ++count;
-            if (pending > 30) {
-                update.executeBatch();
-                pending = 0;
-            }
-
-            if (System.currentTimeMillis() - lastAnnounce > 4000) {
-                lastAnnounce = System.currentTimeMillis();
-                log.info("  * Processed " + count + " entries. "
-                      + failCount + " failed");
-            }
-        }
-
-        if (pending > 0) {
-            update.executeBatch();
-        }
-
-        log.info("  Finished converting " + count + " entries. " + failCount + " failed");
-
-        rs.close();
-        update.close();
-
-        // Finish the schema change
-        st.executeUpdate("ALTER TABLE `players` DROP PRIMARY KEY;");
-        st.executeUpdate("ALTER TABLE `players` ADD PRIMARY KEY (`id`, `world`);");
-
-        // Now convert the whitelist
-        log.info("- Converting whitelist");
-        st.executeUpdate("ALTER TABLE `whitelist` ADD COLUMN (`id` CHAR(36));");
-        //noinspection SqlResolve
-        update = conn.prepareStatement(
-              "UPDATE `whitelist` SET `id`= ? WHERE `player`=?;");
-        //noinspection SqlResolve
-        rs = st.executeQuery("SELECT `player` from `whitelist`");
-        while (rs.next()) {
-            String name = rs.getString("player");
-            UUID id = lookup.get(name.toLowerCase());
-            if (id != null) {
-                update.setString(1, id.toString());
-            } else {
-                ++failCount;
-                update.setString(1, UUID.nameUUIDFromBytes(name.getBytes()).toString());
-            }
-            update.setString(2, name);
-            update.addBatch();
-            ++pending;
-            ++count;
-            if (pending > 30) {
-                update.executeBatch();
-                pending = 0;
-            }
-            if (System.currentTimeMillis() - lastAnnounce > 4000) {
-                lastAnnounce = System.currentTimeMillis();
-                log.info("  * Processed " + count + " entries. " + failCount + " failed");
-            }
-        }
-        if (pending > 0) {
-            update.executeBatch();
-        }
-        log.info("  Finished converting " + count + " entries. "
-              + failCount + " failed");
-        st.executeUpdate("ALTER TABLE `whitelist` DROP PRIMARY KEY;");
-        //noinspection SqlResolve
-        st.executeUpdate("ALTER TABLE `whitelist` DROP `player`;");
-        st.executeUpdate("ALTER TABLE `whitelist` ADD PRIMARY KEY (`id`);");
-        rs.close();
-
-        log.info("- Conversion complete");
+        return true;
     }
 
     /**
-     * execute a query.
-     * @param query the query
-     * @return ResultSet
+     * Get a persistent connection for query operations.
+     * Reconnects automatically if the connection has died.
      */
-    @SuppressWarnings("unused")
-    public ResultSet executeQuery(String query) {
-        Statement st;
-
-        if (!connected) {
-            return null;
+    private Connection getQueryConnection() throws SQLException {
+        if (queryConn == null || queryConn.isClosed() || !queryConn.isValid(2)) {
+            if (queryConn != null) {
+                try { queryConn.close(); } catch (SQLException ignored) {}
+            }
+            queryConn = dataSource.getConnection();
         }
-
-        try {
-            st = conn.createStatement();
-            TrueHardcore.debug("SQL Query: " + query);
-            return st.executeQuery(query);
-        } catch (SQLException e) {
-            TrueHardcore.warn("Query execution failed!");
-            TrueHardcore.log("SQL: " + query);
-            e.printStackTrace();
-            return null;
-        }
+        return queryConn;
     }
 
     /**
@@ -248,15 +100,9 @@ public class Database {
      * @return ResultSet
      */
     public ResultSet preparedQuery(String query, String[] params) {
-        PreparedStatement ps;
-
-        if (!connected) {
-            return null;
-        }
-
         try {
-            ps = conn.prepareStatement(query);
-            // Construct PreparedStatement by adding all supplied params to the query
+            Connection conn = getQueryConnection();
+            PreparedStatement ps = conn.prepareStatement(query);
             TrueHardcore.debugLog("SQL Query: " + query);
             if (params != null) {
                 List<String> values = new ArrayList<>();
@@ -264,7 +110,6 @@ public class Database {
                     values.add((x+1) + ":" + params[x]);
                     ps.setString(x + 1, params[x]);
                 }
-                // Output all param values in a single log line, delimtered by commas
                 TrueHardcore.debug("Params: " + String.join(", ", values));
             }
             return ps.executeQuery();
@@ -277,32 +122,7 @@ public class Database {
     }
 
     /**
-     * Execute an update.
-     * @param query query
-     * @return int -1 on failure.
-     */
-    @SuppressWarnings("unused")
-    public int executeUpdate(String query) {
-        Statement st;
-
-        if (!connected) {
-            return -1;
-        }
-
-        try {
-            st = conn.createStatement();
-            TrueHardcore.debug("SQL Update: " + query);
-            return st.executeUpdate(query);
-        } catch (SQLException e) {
-            TrueHardcore.warn("Query execution failed!");
-            TrueHardcore.log("SQL: " + query);
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
-    /**
-     * Prepare a update.
+     * Prepare an update.
      * @param query the query
      * @param params the params
      * @return int -1 on failure
@@ -312,21 +132,15 @@ public class Database {
     }
 
     /**
-     * Prepare a update.
+     * Prepare an update.
      * @param query the query
      * @param params the params
+     * @param silent suppress debug logging
      * @return int -1 on failure
      */
     public int preparedUpdate(String query, String[] params, boolean silent) {
-        PreparedStatement ps;
-
-        if (!connected) {
-            return -1;
-        }
-
-        try {
-            ps = conn.prepareStatement(query);
-            // Construct PreparedStatement by adding all supplied params to the query
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             if (!silent) {
                 TrueHardcore.debugLog("SQL Update: " + query);
             }
@@ -336,12 +150,11 @@ public class Database {
                 ps.setString(x + 1, params[x]);
             }
             if (!silent) {
-                // Output all param values in a single log line, delimtered by commas
                 TrueHardcore.debug("Params: " + String.join(", ", values));
             }
             return ps.executeUpdate();
         } catch (SQLException e) {
-            TrueHardcore.warn("Prepared query execution failed!");
+            TrueHardcore.warn("Prepared update execution failed!");
             TrueHardcore.debugLog("SQL: " + query);
             e.printStackTrace();
             return -1;
@@ -350,101 +163,54 @@ public class Database {
 
     /**
      * Close the Database.
-     * @return true on success.
      */
-    @SuppressWarnings("unused")
-    public boolean closeDatabase() {
-        try {
-            conn.close();
-        } catch (SQLException e) {
-            TrueHardcore.warn("Close database failed!");
-            e.printStackTrace();
+    public void closeDatabase() {
+        if (queryConn != null) {
+            try { queryConn.close(); } catch (SQLException ignored) {}
+            queryConn = null;
         }
-        return true;
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+        }
     }
 
     /**
-     * Check and table exists.
+     * Check if a table exists.
      * @param conn connection
      * @param tableName table
      * @return true if exists.
      */
     @SuppressWarnings("unused")
     public boolean tableExists(Connection conn, String tableName) {
-        DatabaseMetaData md;
-        ResultSet rs;
-
         try {
-            md = conn.getMetaData();
-        } catch (SQLException e) {
-            // This shouldn't really happen
-            TrueHardcore.warn("Unable to read DatabaseMetaData from DB connection!");
-            e.printStackTrace();
-            return false;
-        }
-
-        try {
-            TrueHardcore.debug("Getting list of database tables");
-            rs = md.getTables(null, null, tableName, null);
-        } catch (SQLException e) {
-            // This shouldn't really happen
-            TrueHardcore.warn("Unable to getTables from DatabaseMetaData!");
-            e.printStackTrace();
-            return false;
-        }
-
-        try {
+            DatabaseMetaData md = conn.getMetaData();
+            ResultSet rs = md.getTables(null, null, tableName, null);
             if (rs.next()) {
-                // Table exists
                 return true;
             }
         } catch (SQLException e) {
-            // This shouldn't really happen
-            TrueHardcore.warn("Unable to iterate table resultSet!");
+            TrueHardcore.warn("Unable to check table existence!");
             e.printStackTrace();
         }
         return false;
     }
 
     /**
-     * Check a column exists on a table.
+     * Check if a column exists on a table.
      * @param conn connection
      * @param tableName table
      * @param cname column
      * @return true if exists
      */
-    @SuppressWarnings("unused")
     public boolean columnExists(Connection conn, String tableName, String cname) {
-        DatabaseMetaData md;
-        ResultSet rs;
-
         try {
-            md = conn.getMetaData();
-        } catch (SQLException e) {
-            // This shouldn't really happen
-            TrueHardcore.warn("Unable to read DatabaseMetaData from DB connection!");
-            e.printStackTrace();
-            return false;
-        }
-
-        try {
-            TrueHardcore.debug("Getting list of table columns");
-            rs = md.getColumns(null, null, tableName, cname);
-        } catch (SQLException e) {
-            // This shouldn't really happen
-            TrueHardcore.warn("Unable to getColumns from DatabaseMetaData!");
-            e.printStackTrace();
-            return false;
-        }
-
-        try {
+            DatabaseMetaData md = conn.getMetaData();
+            ResultSet rs = md.getColumns(null, null, tableName, cname);
             if (rs.next()) {
-                // Table exists
                 return true;
             }
         } catch (SQLException e) {
-            // This shouldn't really happen
-            TrueHardcore.warn("Unable to iterate column resultSet!");
+            TrueHardcore.warn("Unable to check column existence!");
             e.printStackTrace();
         }
         return false;

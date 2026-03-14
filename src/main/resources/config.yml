@@ -3,8 +3,8 @@
 # Set true to enable debug mode
 debugEnabled: false
 
-# A list of worlds
-worlds: []
+# The hardcore world for this server
+world: ""
 
 # Set true to enable
 gameEnabled: true
@@ -37,3 +37,46 @@ Difficulty:
 
 # The lobby game world name
 lobbyWorld: lobby
+
+world-settings:
+  # Greeting on World Entry
+  greeting: Welcome to Hardcore
+
+  # Time you are banned on death. Default 12hrs(43200s)
+  banTime: 43200
+
+  # Potential distance to look for random spawn
+  spawnDistance: 5000
+
+  # Time you are safe after respawing, Default 60sec
+  spawnProtection: 60
+
+  # A location: worldname,x,y,z,pitch,yaw
+  exitPos: "lobby,0,0,0,0,-2"
+
+  # The time before the world rolls back after death, Default 0 ticks
+  rollbackdelay: 0
+
+  # Does the player drop items on death
+  deathdrops: true
+
+  # How long to keep a chunk loaded after death. Default 5mins (300s)
+  chunkHoldOnDeath: 300
+
+  # This prevents a player quiting hardcore properly while in combat
+  antiCombatLog: false
+
+  # How long to consider players in combat mode, in seconds
+  combatTime: 30
+
+  # Does this world use the whitelist
+  whitelisted: true
+
+  # World difficulty: PEACEFUL, NORMAL, HARD
+  difficulty: HARD
+
+  # Command to be run on death. Can use <player> <displayname> <score> <cause> %place_holders%
+  deathcommand: ""
+
+  # Message to be sent to all players in the world when someone dies
+  rollbackBroadcast: "&eYou now have %time% to raid &b%player%'s &estuff before it all disappears!"

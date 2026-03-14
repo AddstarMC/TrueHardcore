@@ -19,16 +19,12 @@
 
 package au.com.addstar.truehardcore.objects;
 
-import au.com.addstar.truehardcore.config.HardcoreWorldConfig;
-import org.apache.commons.lang3.StringUtils;
-
+import au.com.addstar.truehardcore.config.ThConfig;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.World;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class HardcoreWorlds {
@@ -75,17 +71,12 @@ public class HardcoreWorlds {
         return worlds;
     }
 
-    public String getNames() {
-        List<String> names = new ArrayList<>(worlds.keySet());
-        return StringUtils.join(names, ",");
-    }
-
     @SuppressWarnings("unused")
     public static class HardcoreWorld {
         private World world;
-        private HardcoreWorldConfig config;
+        private ThConfig config;
 
-        public HardcoreWorld(World world, HardcoreWorldConfig config) {
+        public HardcoreWorld(World world, ThConfig config) {
             this.world = world;
             this.config = config;
         }

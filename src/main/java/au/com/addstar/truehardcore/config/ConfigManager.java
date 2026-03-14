@@ -25,7 +25,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 
 import java.io.File;
-import java.util.Set;
 
 public class ConfigManager {
     private final TrueHardcore plugin;
@@ -50,24 +49,21 @@ public class ConfigManager {
      */
     public void loadConfig() {
         config.load();
-        //write to a file
         config.save();
-        // Get the list of worlds
-        Set<String> worlds = config.worlds;
-        // Load each world's settings
-        if (worlds != null) {
-            TrueHardcore.log("Setting up worlds...");
-            for (String w : worlds) {
-                World world = Bukkit.getWorld(w);
-                if (world == null) {
-                    TrueHardcore.log("No world found named:" + w);
-                    continue;
-                }
-                HardcoreWorld hcw = new HardcoreWorld(world, config.getWorldConfig(w));
-                plugin.hardcoreWorlds.addWorld(world.getName(), hcw);
-            }
-        } else {
-            TrueHardcore.warn("No worlds configured! Things will not work!");
+
+        String worldName = config.world;
+        if (worldName == null || worldName.isEmpty()) {
+            TrueHardcore.warn("No world configured! Things will not work!");
+            return;
         }
+
+        TrueHardcore.log("Setting up world: " + worldName);
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            TrueHardcore.warn("No world found named: " + worldName);
+            return;
+        }
+        HardcoreWorld hcw = new HardcoreWorld(world, config);
+        plugin.hardcoreWorlds.addWorld(world.getName(), hcw);
     }
 }

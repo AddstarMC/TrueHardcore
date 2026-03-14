@@ -21,17 +21,15 @@ package au.com.addstar.truehardcore.config;
 
 import au.com.addstar.monolith.util.configuration.AutoConfig;
 import au.com.addstar.monolith.util.configuration.ConfigField;
+import au.com.addstar.truehardcore.functions.Util;
+import org.bukkit.Difficulty;
+import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * Created for the AddstarMC Project.
@@ -43,8 +41,8 @@ public class ThConfig extends AutoConfig {
     @ConfigField(comment = "Set true to enable debug mode ")
     public boolean debugEnabled = false;
 
-    @ConfigField(comment = "A list of worlds")
-    public HashSet<String> worlds = new HashSet<>();
+    @ConfigField(comment = "The hardcore world for this server")
+    public String world = "";
 
     @ConfigField(comment = "Set true to enable ")
     public boolean gameEnabled = true;
@@ -82,8 +80,53 @@ public class ThConfig extends AutoConfig {
     @ConfigField(comment = "The lobby world name")
     public String lobbyWorld = "lobby";
 
-    private Map<String, HardcoreWorldConfig> configs;
-    private File pluginDirectory;
+    // World-specific settings
+
+    public Location exitLocation;
+    public Difficulty bukkitDifficulty = Difficulty.HARD;
+
+    @ConfigField(category = "world-settings", comment = "Greeting on World Entry")
+    public String greeting = "Welcome to Hardcore";
+
+    @ConfigField(category = "world-settings", comment = "Time you are banned on death. Default 12hrs(43200s)")
+    public int banTime = 43200;
+
+    @ConfigField(category = "world-settings", comment = "Potential distance to look for random spawn")
+    public int spawnDistance = 5000;
+
+    @ConfigField(category = "world-settings", comment = "Time you are safe after respawing, Default 60sec")
+    public int spawnProtection = 60;
+
+    @ConfigField(category = "world-settings", comment = "A location: worldname,x,y,z,pitch,yaw")
+    public String exitPos = "lobby,0,0,0,0,-2";
+
+    @ConfigField(category = "world-settings", comment = "The time before the world rolls back after death, Default 0 ticks")
+    public int rollbackdelay = 0;
+
+    @ConfigField(category = "world-settings", comment = "Does the player drop items on death")
+    public boolean deathdrops = true;
+
+    @ConfigField(category = "world-settings", comment = "How long to keep a chunk loaded after death. Default 5mins (300s)")
+    public int chunkHoldOnDeath = 300;
+
+    @ConfigField(category = "world-settings", comment = "This prevents a player quiting hardcore properly while in combat")
+    public boolean antiCombatLog = false;
+
+    @ConfigField(category = "world-settings", comment = "How long to consider players in combat mode, in seconds")
+    public int combatTime = 30;
+
+    @ConfigField(category = "world-settings", comment = "Does this world use the whitelist")
+    public boolean whitelisted = true;
+
+    @ConfigField(category = "world-settings", comment = "World difficulty: PEACEFUL, NORMAL, HARD")
+    public String difficulty = "HARD";
+
+    @ConfigField(category = "world-settings",
+          comment = "Command to be run on death. Can use <player> <displayname> <score> <cause> %place_holders%")
+    public String deathcommand = "";
+
+    @ConfigField(category = "world-settings", comment = "Message to be sent to all players in the world when someone dies")
+    public String rollbackBroadcast = "&eYou now have %time% to raid &b%player%'s &estuff before it all disappears!";
 
     /**
      * Create a config.
@@ -92,37 +135,27 @@ public class ThConfig extends AutoConfig {
      */
     public ThConfig(File file, String pluginName) {
         super(file, pluginName);
-        pluginDirectory = file.getParentFile();
-        configs = new HashMap<>();
         final List<String> desc = new ArrayList<>();
         desc.add("HardCore Configuration");
         setDescription(desc);
     }
 
-
     @Override
     protected void onPostLoad(YamlConfiguration yaml) throws InvalidConfigurationException {
-        if(debugEnabled) {
-            Logger.getAnonymousLogger().info("Loading worlds...");
-        }
-        for (String world : worlds) {
-            File file = new File(pluginDirectory, world + ".yml");
-            HardcoreWorldConfig hcwConfig
-                  = new HardcoreWorldConfig(file, "TrueHardCore: " + world, world);
-            hcwConfig.load();
-            configs.put(world, hcwConfig);
+        exitLocation = Util.str2Loc(exitPos);
+        try {
+            bukkitDifficulty = Difficulty.valueOf(difficulty);
+        } catch (IllegalArgumentException e) {
+            bukkitDifficulty = Difficulty.HARD;
+            InvalidConfigurationException er = new InvalidConfigurationException("Invalid config");
+            er.addSuppressed(e);
+            throw er;
         }
     }
 
     @Override
     protected void onPreSave() {
-        for (Map.Entry<String, HardcoreWorldConfig> e : configs.entrySet()) {
-            e.getValue().save();
-        }
-    }
-
-    @Nullable
-    public HardcoreWorldConfig getWorldConfig(String worldName) {
-        return configs.get(worldName);
+        exitPos = Util.loc2Str(exitLocation);
+        difficulty = bukkitDifficulty.name();
     }
 }
