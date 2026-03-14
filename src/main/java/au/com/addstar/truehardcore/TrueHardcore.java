@@ -1011,6 +1011,10 @@ public final class TrueHardcore extends JavaPlugin {
                 + "Welcome to TrueHardcore. Good luck on your adventure!");
         player.sendMessage(ChatColor.GREEN + "Type " + ChatColor.AQUA
                 + "/th leave" + ChatColor.GREEN + " to exit (progress will be saved)");
+
+        if (!hcw.getNewLifeCommand().isEmpty()) {
+            executeConfigCommand(hcw.getNewLifeCommand(), player, hcp, hcw, "New Life");
+        }
     }
 
     /**

@@ -203,6 +203,13 @@ public class HardcoreWorlds {
         public void setDragonRespawnCommand(String command) {
             this.config.dragonrespawncommand = command;
         }
+
+        public String getNewLifeCommand() {
+            return config.newlifecommand;
+        }
+        public void setNewLifeCommand(String command) {
+            this.config.newlifecommand = command;
+        }
     }
 
 }

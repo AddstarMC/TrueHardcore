@@ -133,6 +133,10 @@ public class ThConfig extends AutoConfig {
           comment = "Command to be run when a player respawns the Ender Dragon. Can use <player> <displayname> <world> <score> <cause> %place_holders%")
     public String dragonrespawncommand = "";
 
+    @ConfigField(category = "world-settings",
+          comment = "Command to be run when a player starts a new life. Can use <player> <displayname> <world> <score> <cause> %place_holders%")
+    public String newlifecommand = "";
+
     @ConfigField(category = "world-settings", comment = "Message to be sent to all players in the world when someone dies")
     public String rollbackBroadcast = "&eYou now have %time% to raid &b%player%'s &estuff before it all disappears!";
 
