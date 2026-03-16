@@ -21,6 +21,7 @@ package au.com.addstar.truehardcore.config;
 
 import au.com.addstar.monolith.util.configuration.AutoConfig;
 import au.com.addstar.monolith.util.configuration.ConfigField;
+import au.com.addstar.truehardcore.TrueHardcore;
 import au.com.addstar.truehardcore.functions.Util;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
@@ -154,20 +155,26 @@ public class ThConfig extends AutoConfig {
 
     @Override
     protected void onPostLoad(YamlConfiguration yaml) throws InvalidConfigurationException {
-        exitLocation = Util.str2Loc(exitPos);
+        try {
+            exitLocation = Util.str2Loc(exitPos);
+        } catch (IllegalArgumentException e) {
+            exitLocation = null;
+            TrueHardcore.warn("Exit location world is not available ('" + exitPos
+                  + "'). Please update exitPos in config.yml.");
+        }
         try {
             bukkitDifficulty = Difficulty.valueOf(difficulty);
         } catch (IllegalArgumentException e) {
             bukkitDifficulty = Difficulty.HARD;
-            InvalidConfigurationException er = new InvalidConfigurationException("Invalid config");
-            er.addSuppressed(e);
-            throw er;
+            TrueHardcore.warn("Invalid difficulty '" + difficulty + "' in config, defaulting to HARD.");
         }
     }
 
     @Override
     protected void onPreSave() {
-        exitPos = Util.loc2Str(exitLocation);
+        if (exitLocation != null) {
+            exitPos = Util.loc2Str(exitLocation);
+        }
         difficulty = bukkitDifficulty.name();
     }
 }

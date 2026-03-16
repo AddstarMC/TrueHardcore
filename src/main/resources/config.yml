@@ -4,7 +4,7 @@
 debugEnabled: false
 
 # The hardcore world for this server
-world: ""
+world: "hardcore"
 
 # Set true to enable
 gameEnabled: true
@@ -36,7 +36,7 @@ Difficulty:
   baseChunkTime: 0
 
 # The lobby game world name
-lobbyWorld: lobby
+lobbyWorld: hclobby
 
 world-settings:
   # Greeting on World Entry
@@ -52,7 +52,7 @@ world-settings:
   spawnProtection: 60
 
   # A location: worldname,x,y,z,pitch,yaw
-  exitPos: "lobby,0,0,0,0,-2"
+  exitPos: "hclobby,0,0,0,0,-2"
 
   # The time before the world rolls back after death, Default 0 ticks
   rollbackdelay: 0

@@ -25,6 +25,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 
 import java.io.File;
+import java.io.IOException;
 
 public class ConfigManager {
     private final TrueHardcore plugin;
@@ -45,10 +46,40 @@ public class ConfigManager {
     }
 
     /**
+     * Ensure the config file exists on disk, creating it if necessary.
+     * AutoConfig's file creation has a bug with mkdirs() short-circuiting,
+     * so we handle it here before load() is called.
+     */
+    private void ensureConfigFileExists(File configFile) {
+        if (configFile.exists()) {
+            return;
+        }
+        File parent = configFile.getParentFile();
+        if (parent != null && !parent.exists()) {
+            if (!parent.mkdirs()) {
+                TrueHardcore.warn("Could not create config directory: " + parent);
+                return;
+            }
+        }
+        try {
+            if (!configFile.createNewFile()) {
+                TrueHardcore.warn("Could not create config file: " + configFile);
+            }
+        } catch (IOException e) {
+            TrueHardcore.warn("Could not create config file: " + e.getMessage());
+        }
+    }
+
+    /**
      * Load the config.
      */
     public void loadConfig() {
-        config.load();
+        File configFile = new File(plugin.getDataFolder(), "config.yml");
+        ensureConfigFileExists(configFile);
+
+        if (!config.load()) {
+            TrueHardcore.warn("Config failed to load cleanly; saving defaults.");
+        }
         config.save();
 
         String worldName = config.world;
