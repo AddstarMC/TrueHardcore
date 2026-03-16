@@ -332,15 +332,21 @@ public final class TrueHardcore extends JavaPlugin {
     @Override
     public void onDisable() {
         chunkStorage.disable();
-        combatTracker.onDisable();
-        rollbackHandler.onDisable();
+        if (combatTracker != null) {
+            combatTracker.onDisable();
+        }
+        if (rollbackHandler != null) {
+            rollbackHandler.onDisable();
+        }
         getServer().getScheduler().cancelTasks(this);
         saveAllPlayers();
         if (dbConnection != null) {
             dbConnection.closeDatabase();
         }
         log(pdfFile.getName() + " has been disabled!");
-        debugFileHandler.close();
+        if (debugFileHandler != null) {
+            debugFileHandler.close();
+        }
     }
 
     /**
