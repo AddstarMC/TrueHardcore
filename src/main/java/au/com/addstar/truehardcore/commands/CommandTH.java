@@ -93,8 +93,15 @@ public class CommandTH implements CommandExecutor {
                 }
                 break;
             case "LEAVE":
-
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(ChatColor.RED + "Error: Must be an in game player.");
+                    break;
+                }
                 player = (Player) sender;
+                if (!plugin.isHardcoreWorld(player.getWorld())) {
+                    player.sendMessage(ChatColor.RED + "Error: You are not in a hardcore world!");
+                    break;
+                }
                 final Location oldloc = player.getLocation();
 
                 if (!plugin.isPlayerSafe(player, 5, 5, 5)) {
@@ -103,6 +110,10 @@ public class CommandTH implements CommandExecutor {
                     return true;
                 }
                 HardcorePlayer hcPlayer = plugin.hcPlayers.get(player);
+                if (hcPlayer == null) {
+                    player.sendMessage(ChatColor.RED + "Error: No hardcore record found!");
+                    break;
+                }
                 if (hcPlayer.isInCombat() && hcPlayer.getCombatExpiry() > System.currentTimeMillis()) {
                     player.sendMessage(ChatColor.RED + "It's not safe to leave.. you are in combat! Please wait...");
                     return true;
