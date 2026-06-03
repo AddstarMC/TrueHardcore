@@ -34,6 +34,7 @@ import network.darkhelmet.prism.api.actions.Handler;
 import network.darkhelmet.prism.api.actions.PrismProcessType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Instrument;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -365,6 +366,16 @@ public class PlayerListener implements Listener {
         TrueHardcore.debug("PLAYER STATE : " + hcp.getState().toString());
         Location loc = plugin.getLobbyLocation(player, player.getWorld().getName());
         event.setRespawnLocation(loc);
+
+        // Clicking "Spectate world" on the hardcore death screen leaves the player in
+        // SPECTATOR mode. Force them back to SURVIVAL once the respawn has completed so
+        // they arrive in the lobby as a normal player instead of flying around.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            player.setGameMode(GameMode.SURVIVAL);
+            player.setAllowFlight(false);
+            player.setFlying(false);
+        });
+
         HardcoreWorld hcw = plugin.hardcoreWorlds.get(player.getWorld().getName());
         player.sendMessage(ChatColor.RED + "You are now banned from " + hcw.getWorld().getName()
                 + " for " + Util.long2Time(hcw.getBantime()) + "!");
