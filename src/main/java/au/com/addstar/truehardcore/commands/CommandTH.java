@@ -567,9 +567,6 @@ public class CommandTH implements CommandExecutor {
                         sender.sendMessage(ChatColor.RED + "Error: Hardcore world not configured!");
                         return true;
                     }
-                    // Earliest gameend time: Now - World Bantime + 5 mins
-                    Date minEndTime = new Date(System.currentTimeMillis() - (hcw.getBantime() * 1000) + 300000);
-
                     plugin.loadPlayer(cfgWorld, p.getUniqueId());
                     hcp = plugin.hcPlayers.get(cfgWorld, p.getUniqueId());
                     if (hcp == null) {
@@ -578,9 +575,10 @@ public class CommandTH implements CommandExecutor {
                     }
 
                     if (hcp.getState() == PlayerState.DEAD) {
+                        // No artificial floor: reducing the ban to zero is safe because entry is
+                        // independently gated by the rollback-pending flag until the world is
+                        // fully restored.
                         Date newEndTime = new Date(hcp.getGameEnd().getTime() - (hours * 3600000L));
-                        if (newEndTime.before(minEndTime))
-                            newEndTime = minEndTime;
 
                         hcp.setPlayerName(p.getName());
                         hcp.setGameEnd(newEndTime);
@@ -645,13 +643,10 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                sender.sendMessage(ChatColor.GREEN + "Queue locked: "
-                      + ChatColor.YELLOW + plugin.rollbackHandler.isQueueLocked());
                 sender.sendMessage(ChatColor.GREEN + "Hardcore rollback queue:");
                 for (int x = 0; x < plugin.rollbackHandler.getQueue().size(); x++) {
                     WorldRollback.RollbackRequest req = plugin.rollbackHandler.getQueue().get(x);
                     sender.sendMessage(ChatColor.RED + Integer.toString(x) + ": "
-                          + ChatColor.AQUA + req.type + " "
                           + ChatColor.YELLOW + req.world.getName() + " "
                           + ChatColor.GREEN + req.player.getName() + " "
                           + ChatColor.WHITE + req.taskTime);
@@ -697,6 +692,36 @@ public class CommandTH implements CommandExecutor {
                 } else {
                     sender.sendMessage(ChatColor.RED + "Player record failed to load!");
                 }
+                break;
+            case "CLEARROLLBACK":
+                if (sender instanceof Player) {
+                    if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th clearrollback <player>");
+                    return true;
+                }
+                cfgWorld = TrueHardcore.getCfg().world;
+                UUID clearId = Bukkit.getOfflinePlayer(args[1]).getUniqueId();
+                HardcorePlayer clearHcp = plugin.hcPlayers.get(cfgWorld, clearId);
+                if (clearHcp == null) {
+                    sender.sendMessage(ChatColor.RED + "Error: Unknown hardcore player!");
+                    return true;
+                }
+                if (!clearHcp.isRollbackPending()) {
+                    sender.sendMessage(ChatColor.YELLOW + clearHcp.getPlayerName()
+                          + " has no pending rollback in " + cfgWorld + ".");
+                    return true;
+                }
+                clearHcp.setRollbackPending(false);
+                plugin.savePlayer(clearHcp);
+                sender.sendMessage(ChatColor.GREEN + "Cleared pending rollback for "
+                      + clearHcp.getPlayerName() + " in " + cfgWorld
+                      + ". They may now re-enter.");
+                TrueHardcore.log(sender.getName() + " manually cleared rollback-pending for "
+                      + clearHcp.getPlayerName() + " in " + cfgWorld);
                 break;
             case "TP":
                 if (sender instanceof Player) {

@@ -60,6 +60,7 @@ CREATE TABLE `players` (
   `otherkills` int(11) NOT NULL,
   `playerkills` int(11) NOT NULL,
   `mooshkills` int(11) NOT NULL,
+  `rollbackpending` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`,`world`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;

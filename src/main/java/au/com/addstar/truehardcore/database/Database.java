@@ -215,4 +215,31 @@ public class Database {
         }
         return false;
     }
+
+    /**
+     * Ensure a column exists on a table, adding it via ALTER TABLE if it is missing.
+     *
+     * <p>Lightweight schema migration so new columns deploy automatically across all HC
+     * instances without a manual DB step. No-op if the column already exists.</p>
+     *
+     * @param tableName the table
+     * @param column    the column name
+     * @param ddlType   the column definition (e.g. "tinyint(1) NOT NULL DEFAULT 0")
+     */
+    public void ensureColumn(String tableName, String column, String ddlType) {
+        try {
+            Connection conn = getQueryConnection();
+            if (columnExists(conn, tableName, column)) {
+                return;
+            }
+            String sql = "ALTER TABLE `" + tableName + "` ADD COLUMN `" + column + "` " + ddlType;
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate(sql);
+            }
+            TrueHardcore.log("Added missing column `" + column + "` to `" + tableName + "`.");
+        } catch (SQLException e) {
+            TrueHardcore.warn("Failed to ensure column `" + column + "` on `" + tableName + "`!");
+            e.printStackTrace();
+        }
+    }
 }

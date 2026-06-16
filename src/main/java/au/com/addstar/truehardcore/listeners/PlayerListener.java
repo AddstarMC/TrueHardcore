@@ -26,12 +26,11 @@ import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
 import com.destroystokyo.paper.event.player.PlayerTeleportEndGatewayEvent;
-import network.darkhelmet.prism.actionlibs.ActionsQuery;
-import network.darkhelmet.prism.api.actions.MatchRule;
-import network.darkhelmet.prism.actionlibs.QueryParameters;
-import network.darkhelmet.prism.actionlibs.QueryResult;
-import network.darkhelmet.prism.api.actions.Handler;
-import network.darkhelmet.prism.api.actions.PrismProcessType;
+import org.prism_mc.prism.api.activities.Activity;
+import org.prism_mc.prism.api.activities.ActivityQuery;
+import org.prism_mc.prism.api.containers.Container;
+import org.prism_mc.prism.api.containers.PlayerContainer;
+import org.prism_mc.prism.paper.api.activities.PaperActivityQuery;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -744,21 +743,52 @@ public class PlayerListener implements Listener {
             return;
             //if Prism isn't loaded ...this wont work.
         }
-        QueryParameters parameters = new QueryParameters();
-        parameters.setSpecificBlockLocation(location);
-        parameters.setProcessType(PrismProcessType.LOOKUP);
-        parameters.setLimit(1);
-        parameters.addActionType("block-place", MatchRule.INCLUDE);
-        ActionsQuery aq = new ActionsQuery(plugin.prism);
-        QueryResult lookupResult = aq.lookup(parameters);
-        if (lookupResult.getActionResults().size() > 0) {
-            Handler handle = lookupResult.getActionResults().get(0);
-            UUID killerUuid = handle.getUuid();
+        // Ask Prism who most recently placed the block at this location, so a TNT kill can be
+        // attributed to whoever placed the TNT. Prism v4's lookup runs the query off-thread and
+        // hands us the results via a future; we hop back to the main thread to update the game.
+        // Queries default to lookup mode, so no rollback()/restore() call is needed here.
+        ActivityQuery query = PaperActivityQuery.builder()
+                .location(location)
+                .actionTypeKey("block-place")
+                .limit(1)
+                .build();
+
+        plugin.prism.lookup(query).whenComplete((results, error) -> {
+            if (error != null) {
+                TrueHardcore.warn("Prism placer lookup failed at " + location + ": "
+                        + error.getMessage());
+                return;
+            }
+            if (results.isEmpty()) {
+                return;
+            }
+            UUID killerUuid = placerUuid(results.get(0));
+            if (killerUuid == null) {
+                return;
+            }
             OfflinePlayer killer = Bukkit.getOfflinePlayer(killerUuid);
             Bukkit.getScheduler().runTask(plugin, () -> updateGame(worldName, killed, killer,
                     displayName));
+        });
+    }
 
+    /**
+     * Extract the UUID of the player who caused an activity, or null if it wasn't caused by a
+     * player. In Prism v4 the cause is wrapped in a {@link Container}; a player cause is a
+     * {@link PlayerContainer}.
+     *
+     * @param activity the activity returned by a Prism lookup
+     * @return the causing player's UUID, or null
+     */
+    private UUID placerUuid(Activity activity) {
+        if (activity.cause() == null) {
+            return null;
         }
+        Container container = activity.cause().container();
+        if (container instanceof PlayerContainer playerContainer) {
+            return playerContainer.uuid();
+        }
+        return null;
     }
 
     private void updateGame(String worldName, OfflinePlayer killed, OfflinePlayer killer,

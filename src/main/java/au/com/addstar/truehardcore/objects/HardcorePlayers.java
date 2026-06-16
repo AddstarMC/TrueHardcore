@@ -186,6 +186,7 @@ public class HardcorePlayers {
         private Integer mooshKills = 0;
         private Integer otherKills = 0;
         private Integer playerKills = 0;
+        private boolean rollbackPending = false;
         private boolean modified = false;
         private boolean loadDataOnly = false;
         private boolean godMode = false;
@@ -555,6 +556,32 @@ public class HardcorePlayers {
          */
         public void setDeaths(Integer deaths) {
             this.deaths = deaths;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Whether a Prism rollback for this player's most recent death is still outstanding.
+         *
+         * <p>Set on death and cleared once the rollback fully completes (see
+         * {@code WorldRollback}). Deliberately independent of {@link PlayerState}: a revived
+         * player is ALIVE but may still have a pending rollback, and must not re-enter the world
+         * until it finishes.</p>
+         *
+         * @return true if a rollback is still pending
+         */
+        public boolean isRollbackPending() {
+            return rollbackPending;
+        }
+
+        /**
+         * Set whether a Prism rollback is still pending for this player.
+         * @param rollbackPending pending state
+         */
+        public void setRollbackPending(boolean rollbackPending) {
+            this.rollbackPending = rollbackPending;
             if (loadDataOnly) {
                 return;
             }

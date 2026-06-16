@@ -100,6 +100,18 @@
             <id>rwd-repo</id>
             <url>https://repo.rosewooddev.io/repository/public/</url>
         </repository>
+
+        <!-- Prism v4 API (snapshots only until 4.4 release) -->
+        <repository>
+            <id>prism-mc-snapshots</id>
+            <url>https://nexus.prism-mc.org/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -168,16 +180,13 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--Used for Prism stuff -->
+        <!-- Prism v4 API (rollback on death). API published only as a snapshot on the
+             prism-mc Nexus until 4.4 is released; see the prism-mc repository below. -->
         <dependency>
-            <groupId>network.darkhelmet.prism</groupId>
-            <artifactId>Prism-Api</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>network.darkhelmet</groupId>
-            <artifactId>prism</artifactId>
-            <version>3.12.0</version>
+            <groupId>org.prism_mc.prism</groupId>
+            <artifactId>prism-paper-api</artifactId>
+            <version>4.3-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

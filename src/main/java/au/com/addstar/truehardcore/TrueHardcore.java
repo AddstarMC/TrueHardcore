@@ -54,7 +54,7 @@ import dev.esophose.playerparticles.particles.FixedParticleEffect;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.*;
 import net.kyori.adventure.title.Title;
-import network.darkhelmet.prism.Prism;
+import org.prism_mc.prism.paper.api.PrismPaperApi;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
@@ -126,7 +126,7 @@ public final class TrueHardcore extends JavaPlugin {
     public Boolean prismHooked = false;
     public Boolean oiHooked = false;
     public IOpenInv openInv;
-    public Prism prism;
+    public PrismPaperApi prism;
     private boolean vaultEnabled = false;
     private FileHandler debugFileHandler;
     private PluginManager pm = null;
@@ -210,10 +210,14 @@ public final class TrueHardcore extends JavaPlugin {
             lwcHooked = false;
             log("LWC not Found");
         }
-        p = pm.getPlugin("Prism");
-        if (p instanceof Prism) {
+        // Prism v4 exposes its API through the Bukkit ServicesManager rather than the plugin
+        // instance. It registers the service on enable, so as long as Prism is in our softdepend
+        // (it is) it will be available by the time we run.
+        RegisteredServiceProvider<PrismPaperApi> prismProvider =
+                getServer().getServicesManager().getRegistration(PrismPaperApi.class);
+        if (prismProvider != null) {
             prismHooked = true;
-            prism = (Prism) p;
+            prism = prismProvider.getProvider();
             log("Prism found, hooking it.");
             rollbackHandler = new WorldRollback(prism);
         } else {
@@ -278,6 +282,9 @@ public final class TrueHardcore extends JavaPlugin {
         dbConnection = new Database();
         if (dbConnection.isConnected()) {
             log("Successfully connected to the database.");
+            // Lightweight schema migration: ensure newer columns exist before loading.
+            dbConnection.ensureColumn("players", "rollbackpending",
+                    "tinyint(1) NOT NULL DEFAULT 0");
             log("Loading players from database...");
             loadAllPlayers();
         } else {
@@ -549,6 +556,13 @@ public final class TrueHardcore extends JavaPlugin {
             executeConfigCommand(hcw.getDeathCommand(), player, hcp, hcw, deathMessage);
         }
 
+        // Mark a rollback as outstanding so the player can't re-enter (even after a paid revive)
+        // until it completes. Cleared by WorldRollback once every dimension's rollback finishes.
+        // Only set when Prism is hooked - otherwise no rollback runs and nothing would clear it.
+        if (prismHooked) {
+            hcp.setRollbackPending(true);
+        }
+
         savePlayer(hcp);
 
         // Dont drop XP or items
@@ -684,6 +698,13 @@ public final class TrueHardcore extends JavaPlugin {
 
         HardcorePlayer hcp = hcPlayers.get(world, player.getUniqueId());
         if (hcp != null) {
+            // Never let a player into a world that is still being restored from their last death.
+            // This gates revived (ALIVE) players too, since rollbackPending is independent of state.
+            if (hcp.isRollbackPending()) {
+                player.sendMessage(ChatColor.RED + "Rollback is still in progress from your "
+                      + "previous death - please try again shortly.");
+                return false;
+            }
             if ((hcp.getState() == PlayerState.DEAD) && (hcp.getGameEnd() != null)) {
                 // Check last death time
                 Date now = new Date();
@@ -1072,6 +1093,26 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     /**
+     * Called by {@link au.com.addstar.truehardcore.functions.WorldRollback} once every dimension
+     * of a player's death has been rolled back successfully. Clears the pending flag so the
+     * player is allowed back into the world. Must be called on the main thread.
+     *
+     * @param playerId  the player whose rollback completed
+     * @param worldName any dimension of the world (suffix is stripped to find the record)
+     */
+    public void onRollbackComplete(UUID playerId, String worldName) {
+        HardcorePlayer hcp = hcPlayers.get(worldName, playerId);
+        if (hcp == null) {
+            warn("Rollback completed for an unknown player record: " + worldName + "/" + playerId);
+            return;
+        }
+        hcp.setRollbackPending(false);
+        savePlayer(hcp);
+        debug("Rollback fully complete for " + hcp.getWorld() + "/" + hcp.getPlayerName()
+                + "; cleared rollback-pending.");
+    }
+
+    /**
      * Save a player.
      *
      * @param hcp the player
@@ -1110,15 +1151,15 @@ public final class TrueHardcore extends JavaPlugin {
               + "`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, "
               + "`deaths`,`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, "
               + "`creeperkills`, `zombiekills`, `skeletonkills`,`spiderkills`, `enderkills`,"
-              + " `slimekills`, `mooshkills`, `otherkills`, `playerkills`)"
-              + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+              + " `slimekills`, `mooshkills`, `otherkills`, `playerkills`, `rollbackpending`)"
+              + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
               + "ON DUPLICATE KEY UPDATE "
               + "`spawnpos`=?, `lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,"
               + "`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, "
               + "`deathpos`=?, `deaths`=?, `cowkills`=?, `pigkills`=?, `sheepkills`=?, "
               + "`chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?, "
               + "`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?,"
-              + "`playerkills`=?\n";
+              + "`playerkills`=?, `rollbackpending`=?\n";
 
         final String[] values = {
               hcp.getUniqueId().toString(),
@@ -1153,6 +1194,7 @@ public final class TrueHardcore extends JavaPlugin {
               String.valueOf(hcp.getMooshKills()),
               String.valueOf(hcp.getOtherKills()),
               String.valueOf(hcp.getPlayerKills()),
+              hcp.isRollbackPending() ? "1" : "0",
 
               // REPEATED FOR UPDATE!
               Util.loc2Str(hcp.getSpawnPos()),
@@ -1183,7 +1225,8 @@ public final class TrueHardcore extends JavaPlugin {
               String.valueOf(hcp.getSlimeKills()),
               String.valueOf(hcp.getMooshKills()),
               String.valueOf(hcp.getOtherKills()),
-              String.valueOf(hcp.getPlayerKills())
+              String.valueOf(hcp.getPlayerKills()),
+              hcp.isRollbackPending() ? "1" : "0"
         };
         hcp.setModified(false);
 
@@ -1340,6 +1383,7 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setMooshKills(res.getInt("mooshkills"));
             hcp.setOtherKills(res.getInt("otherkills"));
             hcp.setPlayerKills(res.getInt("playerkills"));
+            hcp.setRollbackPending(res.getBoolean("rollbackpending"));
             hcp.setModified(false);
             hcp.setLoadDataOnly(false);
         } catch (Exception e) {

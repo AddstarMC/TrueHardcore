@@ -20,74 +20,164 @@
 package au.com.addstar.truehardcore.functions;
 
 import au.com.addstar.truehardcore.TrueHardcore;
-import network.darkhelmet.prism.Prism;
-import network.darkhelmet.prism.actionlibs.ActionsQuery;
-import network.darkhelmet.prism.api.actions.MatchRule;
-import network.darkhelmet.prism.actionlibs.QueryParameters;
-import network.darkhelmet.prism.actionlibs.QueryResult;
-import network.darkhelmet.prism.api.actions.PrismProcessType;
-import network.darkhelmet.prism.appliers.Rollback;
-import network.darkhelmet.prism.purge.PurgeTask;
-import network.darkhelmet.prism.purge.SenderPurgeCallback;
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+import org.prism_mc.prism.api.activities.ActivityQuery;
+import org.prism_mc.prism.paper.api.PrismPaperApi;
+import org.prism_mc.prism.paper.api.activities.PaperActivityQuery;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static au.com.addstar.truehardcore.TrueHardcore.warn;
 import static au.com.addstar.truehardcore.TrueHardcore.debug;
 import static au.com.addstar.truehardcore.TrueHardcore.log;
 
+/**
+ * Rolls back a player's world changes when they die, using the Prism v4 API.
+ *
+ * <p>True hardcore means death is permanent: everything a player built or broke is undone.
+ * On death the plugin queues a rollback (per dimension) here; after a short delay we ask
+ * Prism to reverse every reversible change that player caused in that world.</p>
+ *
+ * <p>The delay exists so the world is settled before we touch it (death animation, item
+ * drops, the player being moved to the lobby, etc.). Prism's {@code rollback(...)} helper is
+ * itself asynchronous - it runs the storage query off-thread and applies block changes back
+ * on the region/main thread for us - so this class only needs to hold pending requests and
+ * fire them once their delay has elapsed.</p>
+ *
+ * <p>We do not purge the activity rows afterwards. Prism v4 marks rolled-back activities as
+ * {@code reversed}, and our rollback query excludes reversed activities, so a player's death
+ * is never rolled back twice. This keeps the audit trail intact; trimming old rows is left to
+ * Prism's own purge configuration.</p>
+ *
+ * <p>A single death fans out into up to three dimension rollbacks (overworld/nether/end), whose
+ * Prism futures complete independently and possibly out of order. We track them in memory per
+ * death and, only once <em>every</em> dimension has completed successfully, clear the player's
+ * {@code rollbackPending} flag (via {@link TrueHardcore#onRollbackComplete}). Until then the
+ * player is held out of the world. Any failure leaves the flag set so the world is never entered
+ * half-restored - failing safe. This in-memory tracking does not survive a restart: a crash
+ * mid-rollback leaves the persisted flag set, requiring an admin to clear it.</p>
+ */
 public class WorldRollback {
-    private Prism prism;
-    private TrueHardcore plugin;
+    /**
+     * Reversible actions we want undone on death. This deliberately mirrors the historical
+     * TrueHardcore rollback scope rather than rolling back everything Prism can reverse.
+     * Item drops/pickups are intentionally not listed - they aren't reversible block changes
+     * and {@link ActivityQuery.ActivityQueryBuilder#rollback()} already restricts the query to
+     * reversible actions, so they're never touched.
+     *
+     * <p>v4 key changes from the old v3 list: {@code water-bucket} -> {@code bucket-empty},
+     * {@code lighter} -> {@code block-ignite}, and {@code portal-create} no longer exists in v4
+     * (portal blocks are recorded as {@code block-place}, which is already covered).</p>
+     */
+    private static final List<String> ROLLBACK_ACTION_KEYS = List.of(
+            "block-break",
+            "block-place",
+            "item-insert",
+            "entity-shear",
+            "entity-leash",
+            "entity-dye",
+            "bucket-empty",
+            "block-ignite"
+    );
+
+    private final PrismPaperApi prism;
+    private final TrueHardcore plugin;
     private final ArrayList<RollbackRequest> rollbackQueue;
-    private BukkitTask queueTask;
-    private Boolean queueLocked = false;
+    private final BukkitTask queueTask;
 
     /**
-     * Rollback handler using Prism.
-     * @param prism plugin
+     * Identifies this plugin as the owner of the Prism modification queues we create.
+     * Prism keys queues and completion results by owner; using a dedicated marker keeps our
+     * death rollbacks separate from any operator-issued {@code /pr} commands.
      */
-    public WorldRollback(Prism prism) {
-        plugin = TrueHardcore.instance;
-        this.prism = prism;
-        rollbackQueue = new ArrayList<>();
+    private final Object queueOwner = new Object();
 
-        // Launch the queue processor thread (with delayed start)
-        queueTask = plugin.getServer().getScheduler().runTaskTimer(plugin,
-              new ProcessNextRequest(),600L, 100L);
+    /**
+     * Outstanding deaths being rolled back, keyed by {@link #deathKey(UUID, String)}. Each entry
+     * counts the dimensions still pending for that death so we only clear the player's pending
+     * flag once all of them have finished. Guarded by its own monitor.
+     */
+    private final Map<String, PendingDeath> pendingDeaths = new HashMap<>();
+
+    /**
+     * Tracks the rollback progress of a single death across its dimension worlds.
+     */
+    private static class PendingDeath {
+        final UUID playerId;
+        final String worldBase;
+        int remaining;
+        boolean failed;
+
+        PendingDeath(UUID playerId, String worldBase) {
+            this.playerId = playerId;
+            this.worldBase = worldBase;
+        }
     }
 
     /**
-     * Call on shutdown to ensure thread is taken care off.
+     * Key a death by player and base world name. The {@code _nether}/{@code _the_end} dimension
+     * suffixes are stripped so all three dimensions of one death share a single tracker, matching
+     * how player records are keyed.
+     */
+    private static String deathKey(UUID playerId, String worldName) {
+        return worldName.replaceAll("_nether|_the_end", "") + "/" + playerId;
+    }
+
+    /**
+     * Rollback handler backed by the Prism v4 API.
+     *
+     * @param prism the Prism API service obtained from the Bukkit ServicesManager
+     */
+    public WorldRollback(PrismPaperApi prism) {
+        this.plugin = TrueHardcore.instance;
+        this.prism = prism;
+        this.rollbackQueue = new ArrayList<>();
+
+        // Poll the queue on the main thread; due requests are dispatched to Prism, which then
+        // handles its own threading. Delayed start so we don't fire during server warm-up.
+        queueTask = plugin.getServer().getScheduler().runTaskTimer(plugin,
+                new ProcessNextRequest(), 600L, 100L);
+    }
+
+    /**
+     * Call on shutdown to stop the queue processor.
      */
     public void onDisable() {
         queueTask.cancel();
     }
 
+    /**
+     * A pending rollback for one player in one world (dimension), due at {@link #taskTime}.
+     */
     public static class RollbackRequest {
-        public Player player;
-        public World world;
-        public Instant taskTime;
-        public String type;
+        public final Player player;
+        public final World world;
+        public final Instant taskTime;
+        /** Player UUID captured at queue time; the player may be offline by completion. */
+        public final UUID playerId;
+        /** Tracker key for the death this dimension belongs to. */
+        public final String deathKey;
 
         /**
-         * Create a rollback Request.
-         * @param t type
-         * @param p player
-         * @param w world
-         * @param time time
+         * Create a rollback request.
+         *
+         * @param player the dead player whose changes are being undone
+         * @param world  the world (dimension) to roll back
+         * @param time   the earliest time this request should be executed
          */
-        public RollbackRequest(String t, Player p, World w, Instant time) {
-            this.type = t;
-            this.player = p;
-            this.world = w;
+        public RollbackRequest(Player player, World world, Instant time) {
+            this.player = player;
+            this.world = world;
             this.taskTime = time;
+            this.playerId = player.getUniqueId();
+            this.deathKey = deathKey(this.playerId, world.getName());
         }
     }
 
@@ -96,197 +186,158 @@ public class WorldRollback {
     }
 
     /**
-     *Create the rollback request for a scheduled time and add it to the queue.
-     * @param t type
-     * @param p player
-     * @param w world
-     * @param delay delay
+     * Queue a rollback to run after the given delay.
+     *
+     * <p>Called once per dimension when a player dies. The {@code type} argument is retained for
+     * call-site compatibility; only rollbacks are queued now (the old v3 PURGE step is gone, as
+     * Prism v4 tracks reversed activities itself).</p>
+     *
+     * @param type  legacy request type, expected to be {@code "ROLLBACK"}
+     * @param p     the dead player
+     * @param w     the world (dimension) to roll back
+     * @param delay seconds to wait before executing
      */
-    public void queueRollback(String t, Player p, World w, int delay) {
+    public void queueRollback(String type, Player p, World w, int delay) {
+        if (!"ROLLBACK".equalsIgnoreCase(type)) {
+            warn("Ignoring unsupported rollback request type \"" + type + "\" for "
+                    + w.getName() + "/" + p.getName());
+            return;
+        }
         Instant time = Instant.now().plusSeconds(delay);
-        RollbackRequest req = new RollbackRequest(t, p, w, time);
-        debug("Queuing " + req.type.toLowerCase() + " task: "
-              + req.world.getName() + "/" + req.player.getName() + " @ " + time);
+        RollbackRequest req = new RollbackRequest(p, w, time);
+        debug("Queuing rollback task: " + w.getName() + "/" + p.getName() + " @ " + time);
+
+        // Register this dimension against the death so we know how many completions to wait for.
+        synchronized (pendingDeaths) {
+            PendingDeath pd = pendingDeaths.computeIfAbsent(req.deathKey,
+                    k -> new PendingDeath(req.playerId,
+                            w.getName().replaceAll("_nether|_the_end", "")));
+            pd.remaining++;
+        }
+
         synchronized (rollbackQueue) {
             rollbackQueue.add(req);
         }
     }
 
     /**
-     * Get the next item in the Queue.
-     * @return RollbackRequest
+     * Record one dimension's rollback outcome and, when the whole death has finished, clear the
+     * player's pending flag. Called from the Prism completion callback (off the main thread).
+     *
+     * @param req     the dimension request that just completed
+     * @param success true if the rollback applied without error
+     */
+    private void dimensionComplete(RollbackRequest req, boolean success) {
+        boolean clearFlag = false;
+        synchronized (pendingDeaths) {
+            PendingDeath pd = pendingDeaths.get(req.deathKey);
+            if (pd == null) {
+                // Restart or admin clear removed the tracker; nothing to do.
+                return;
+            }
+            if (!success) {
+                pd.failed = true;
+            }
+            pd.remaining--;
+            if (pd.remaining <= 0) {
+                pendingDeaths.remove(req.deathKey);
+                if (!pd.failed) {
+                    clearFlag = true;
+                } else {
+                    warn("Rollback for " + pd.worldBase + "/" + req.player.getName()
+                            + " had a failed dimension; leaving rollback pending (manual review).");
+                }
+            }
+        }
+
+        if (clearFlag) {
+            // Touch player state on the main thread.
+            plugin.getServer().getScheduler().runTask(plugin,
+                    () -> plugin.onRollbackComplete(req.playerId, req.world.getName()));
+        }
+    }
+
+    /**
+     * Remove and return the first request whose delay has elapsed, or null if none are due.
+     *
+     * @return the next due RollbackRequest, or null
      */
     public RollbackRequest getNextRequest() {
         synchronized (rollbackQueue) {
-            if (rollbackQueue.size() == 0) {
-                return null;
-            }
-            // Find the first task in the queue that is due to be executed
             for (RollbackRequest req : rollbackQueue) {
                 if (Instant.now().isAfter(req.taskTime)) {
-                    // This task can be executed now so lets do it!
                     rollbackQueue.remove(req);
-                    debug("Found " + req.type.toLowerCase()
-                          + " task to run: " + req.world.getName() + "/"
-                          + req.player.getName());
+                    debug("Found rollback task to run: " + req.world.getName()
+                            + "/" + req.player.getName());
                     return req;
                 }
             }
-
             return null;
         }
     }
-    
+
+    /**
+     * Build the Prism query for a single death rollback: every reversible change the player
+     * caused in the given world, excluding activities Prism has already reversed.
+     *
+     * @param req the request to build a query for
+     * @return a Prism activity query in rollback mode
+     */
+    private ActivityQuery buildQuery(RollbackRequest req) {
+        return PaperActivityQuery.builder()
+                .causePlayerName(req.player.getName())
+                .worldUuid(req.world.getUID())
+                .actionTypeKeys(ROLLBACK_ACTION_KEYS)
+                .reversed(false)
+                .rollback()
+                .build();
+    }
+
+    /**
+     * Polls the queue and dispatches due rollbacks to Prism.
+     *
+     * <p>Runs on the main thread. {@link PrismPaperApi#rollback(Object, ActivityQuery)} returns
+     * immediately with a future and handles querying/applying off the main thread, so there's
+     * no need to wrap this in an async task or guard it with a manual lock as the v3 version did.</p>
+     */
     public class ProcessNextRequest implements Runnable {
         @Override
         public void run() {
-            // Attempt to lock the queue. If already locked, it will fail so we skip this cycle.
-            if (!lockQueue()) {
+            final RollbackRequest req = getNextRequest();
+            if (req == null) {
                 return;
             }
 
+            if (req.player == null || req.world == null) {
+                warn("WARNING: Rollback task has a null player or world! Ignoring..");
+                return;
+            }
+
+            final String who = req.world.getName() + "/" + req.player.getName();
+            debug("Handling rollback task for: " + who);
+
             try {
-                final RollbackRequest req = getNextRequest();
-                if (req == null) {
-                    unlockQueue();
-                    return;
-                }
-                debug("Handling " + req.type.toLowerCase() + " task for: "
-                      + req.world.getName() + "/" + req.player.getName());
-                if (req.player == null) {
-                    warn("WARNING: Rollback task contains an invalid player! Ignoring..");
-                    unlockQueue();
-                    return;
-                }
-                if (req.world == null) {
-                    warn("WARNING: Rollback task contains an invalid world! Ignoring..");
-                    unlockQueue();
-                    return;
-                }
-
-                final QueryParameters params = new QueryParameters();
-                params.addPlayerName(req.player.getName());
-                params.setWorld(req.world.getName());
-                params.setProcessType(PrismProcessType.ROLLBACK);
-                params.addActionType("item-drop", MatchRule.EXCLUDE);
-                params.addActionType("item-pickup", MatchRule.EXCLUDE);
-                params.addActionType("block-break");
-                params.addActionType("block-place");
-                params.addActionType("item-insert");
-                params.addActionType("entity-shear");
-                params.addActionType("entity-leash");
-                params.addActionType("entity-dye");
-                params.addActionType("water-bucket");
-                params.addActionType("lighter");
-                params.addActionType("portal-create");
-
-                switch (req.type) {
-                    case "ROLLBACK":
-                        // Rollback found changes
-                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                            try {
-                                // Lookup changes for specified world+player
-                                ActionsQuery aq = new ActionsQuery(prism);
-                                debug("Querying changes for " + req.player.getName() + " ("
-                                        + req.world.getName() + ")...");
-                                QueryResult result = aq.lookup(params);
-
-                                if (result.getActionResults().size() > 0) {
-                                    // Always add a purge query for this death to the end of the queue
-                                    queueRollback("PURGE", req.player, req.world, 20);
-
-                                    log("Rolling back " + result.getActionResults().size()
-                                            + " changes for " + req.player.getName() + " ("
-                                            + req.world.getName() + ")...");
-                                    Rollback rollback = new Rollback(prism, Bukkit.getConsoleSender(),
-                                            result.getActionResults(), params, null);
-                                    rollback.apply();
-                                } else {
-                                    debug("Nothing to rollback for " + req.player.getName()
-                                            + " (" + req.world.getName() + ")");
-                                }
-                            } catch (Exception e) {
-                                warn("Rollback failed for " + req.player.getName() + "/"
-                                        + req.world.getName() + "!");
-                                e.printStackTrace();
+                prism.rollback(queueOwner, buildQuery(req))
+                        .whenComplete((result, error) -> {
+                            if (error != null) {
+                                warn("Rollback failed for " + who + "!");
+                                error.printStackTrace();
+                                dimensionComplete(req, false);
+                                return;
                             }
-                            unlockQueue();
-                        });
-                        break;
-                    case "PURGE":
-                        // We can't do this on the main thread or the server will lock up too long
-                        // This will cause Prism connection locking issues sometimes - eventually
-                        // we'll figure out a better way to do this without causing server lag or
-                        // DB connection issues
-                        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                            try {
-                                debug("Purging changes for " + req.player.getName() + " ("
-                                      + req.world.getName() + ")...");
-
-                                // build callback
-                                final SenderPurgeCallback callback = new SenderPurgeCallback();
-                                callback.setSender(Bukkit.getConsoleSender());
-
-                                // add to an arraylist so we're consistent
-                                QueryParameters parameters = new QueryParameters();
-                                parameters.addPlayerName(req.player.getName());
-                                parameters.setWorld(req.world.getName());
-                                final CopyOnWriteArrayList<QueryParameters> paramList = new CopyOnWriteArrayList<>();
-                                paramList.add(parameters);
-
-                                final ActionsQuery aq = new ActionsQuery(prism);
-                                final long minId = parameters.getMinPrimaryKey();
-                                final long maxId = parameters.getMaxPrimaryKey();
-
-                                plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
-                                        new PurgeTask(prism, paramList, 20, minId, maxId, callback));
-
-                                log("Purge queued for " + req.player.getName() + " ("
-                                      + req.world.getName() + ")...");
-                            } catch (Exception e) {
-                                warn("Activity purge failed for " + req.player.getName()
-                                      + "/" + req.world.getName() + "!");
-                                e.printStackTrace();
+                            if (result.applied() == 0) {
+                                debug("Nothing to rollback for " + who);
+                            } else {
+                                log("Rolled back " + result.applied() + " changes for " + who);
                             }
-                            unlockQueue();
+                            dimensionComplete(req, true);
                         });
-                        break;
-                    default:
-                        warn("WARNING: Unknown rollback task \"" + req.type + "\"!");
-                        unlockQueue();
-                        break;
-                }
             } catch (Exception e) {
-                // Do nothing or throw an error if you want
+                warn("Rollback dispatch failed for " + who + "!");
                 e.printStackTrace();
-                unlockQueue();
+                // Count the failed dispatch so the death's tracker doesn't hang forever.
+                dimensionComplete(req, false);
             }
-        }
-    }
-
-    // Lock rollback queue so no further entries can be processed
-    private boolean lockQueue() {
-        synchronized (queueLocked) {
-            if (queueLocked) {
-                // queue already locked
-                return false;
-            }
-            queueLocked = true;
-            return true;
-        }
-    }
-
-    // Unlock queue to allow further processing.
-    private void unlockQueue() {
-        synchronized (queueLocked) {
-            queueLocked = false;
-        }
-    }
-
-    // Check if the queue is locked or not
-    public boolean isQueueLocked() {
-        synchronized (queueLocked) {
-            return queueLocked;
         }
     }
 }
