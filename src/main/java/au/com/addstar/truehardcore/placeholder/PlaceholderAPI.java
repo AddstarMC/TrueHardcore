@@ -20,6 +20,7 @@
 package au.com.addstar.truehardcore.placeholder;
 
 import au.com.addstar.truehardcore.TrueHardcore;
+import au.com.addstar.truehardcore.objects.AccessState;
 import au.com.addstar.truehardcore.objects.HardcoreWorlds.HardcoreWorld;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.PlayerState;
@@ -38,28 +39,50 @@ public class PlaceholderAPI extends PlaceholderExpansion {
         else if (identifier.equals("world")) {
             return TrueHardcore.getCfg().world;
         }
+        else if (identifier.equals("canplay")) {
+            String world = TrueHardcore.getCfg().world;
+            return plugin.getAccessState(world, player).canPlay() ? "yes" : "no";
+        }
+        else if (identifier.equals("access_reason")) {
+            String world = TrueHardcore.getCfg().world;
+            AccessState state = plugin.getAccessState(world, player);
+            if (state == AccessState.COOLDOWN) {
+                // Append the remaining cooldown so the hologram shows how long is left
+                long minutes = cooldownMinutes(world, player);
+                return state.getReason() + ": " + minutes + "m";
+            }
+            return state.getReason();
+        }
         else if (identifier.startsWith("cooldown_mins_")) {
-            long now = System.currentTimeMillis();
-            long remaining = 0;
             String worldName = identifier.substring("cooldown_mins_".length());
-            HardcoreWorld hcw = plugin.hardcoreWorlds.get(worldName);
-            if (hcw == null) {
+            if (plugin.hardcoreWorlds.get(worldName) == null) {
                 return String.valueOf(0); // No such world
             }
-
-            HardcorePlayer hcp = plugin.hcPlayers.get(worldName, player.getUniqueId());
-            if (hcp != null && hcp.getState() == PlayerState.DEAD && hcp.getGameEnd() != null) {
-                long diff = (now - hcp.getGameEnd().getTime()) / 1000;
-                long wait = hcw.getBantime() - diff;
-                if (wait > remaining) {
-                    remaining = wait;
-                }
-            }
-
-            long minutes = (remaining + 59) / 60;
-            return String.valueOf(minutes);
+            return String.valueOf(cooldownMinutes(worldName, player));
         }
         return null;
+    }
+
+    /**
+     * Remaining death-cooldown for a player in a world, rounded up to whole minutes.
+     *
+     * @return minutes left before the player may play again, or 0 if not on cooldown
+     */
+    private long cooldownMinutes(final String worldName, final OfflinePlayer player) {
+        long remaining = 0;
+        HardcoreWorld hcw = plugin.hardcoreWorlds.get(worldName);
+        if (hcw == null) {
+            return 0;
+        }
+        HardcorePlayer hcp = plugin.hcPlayers.get(worldName, player.getUniqueId());
+        if (hcp != null && hcp.getState() == PlayerState.DEAD && hcp.getGameEnd() != null) {
+            long diff = (System.currentTimeMillis() - hcp.getGameEnd().getTime()) / 1000;
+            long wait = hcw.getBantime() - diff;
+            if (wait > remaining) {
+                remaining = wait;
+            }
+        }
+        return (remaining + 59) / 60;
     }
 
     @Override

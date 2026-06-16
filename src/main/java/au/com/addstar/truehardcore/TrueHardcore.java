@@ -30,6 +30,7 @@ import au.com.addstar.truehardcore.functions.WorldRollback;
 import au.com.addstar.truehardcore.listeners.ChunkListener;
 import au.com.addstar.truehardcore.listeners.PacketListener;
 import au.com.addstar.truehardcore.listeners.PlayerListener;
+import au.com.addstar.truehardcore.objects.AccessState;
 import au.com.addstar.truehardcore.objects.ChunkStorage;
 import au.com.addstar.truehardcore.objects.HardcorePlayers;
 import au.com.addstar.truehardcore.objects.HardcorePlayers.HardcorePlayer;
@@ -778,6 +779,80 @@ public final class TrueHardcore extends JavaPlugin {
             cleanAndGreet(player, world);
         }
         return true;
+    }
+
+    /**
+     * Compute a player's current eligibility to play a hardcore world.
+     *
+     * <p>This is a read-only mirror of the gate checks performed by
+     * {@link #playGame(String, Player)}, in the same order, but performs no writes
+     * (no account-type or tracking updates). Safe to call repeatedly, e.g. from the
+     * lobby hologram placeholders.
+     *
+     * <p>The remaining cooldown time (when {@link AccessState#COOLDOWN}) is not
+     * returned here; callers that need it should recompute it from
+     * {@code hcp.getGameEnd()} and {@code hcw.getBantime()} as the placeholder does.
+     *
+     * @param world  the world name
+     * @param player the player (may be offline)
+     * @return the computed access state
+     */
+    public AccessState getAccessState(String world, OfflinePlayer player) {
+        HardcoreWorld hcw = hardcoreWorlds.get(world);
+        if (hcw == null) {
+            // No such world configured - nothing to play
+            return AccessState.DISABLED;
+        }
+
+        // Whitelist (only enforced on whitelisted worlds)
+        if (hcw.isWhitelisted() && !isOnWhiteList(player.getUniqueId())) {
+            return AccessState.NOT_WHITELISTED;
+        }
+
+        // Game globally disabled. playGame exempts truehardcore.admin, but we can't
+        // check live permissions for an OfflinePlayer, so report DISABLED regardless.
+        if (!cfg.gameEnabled) {
+            return AccessState.DISABLED;
+        }
+
+        HardcorePlayer hcp = hcPlayers.get(world, player.getUniqueId());
+        if (hcp != null) {
+            // Rollback still outstanding from a previous death - gates even revived
+            // (ALIVE) players, matching playGame.
+            if (hcp.isRollbackPending()) {
+                return AccessState.ROLLBACK;
+            }
+
+            // Death cooldown
+            if (hcp.getState() == PlayerState.DEAD && hcp.getGameEnd() != null) {
+                long diff = (new Date().getTime() - hcp.getGameEnd().getTime()) / 1000;
+                long wait = hcw.getBantime() - diff;
+                if (wait > 0) {
+                    return AccessState.COOLDOWN;
+                }
+            }
+        }
+
+        // Alt account. Read-only: never writes account type or tracking here.
+        String accType = getAccountType(player.getUniqueId());
+        if ("alt".equals(accType)) {
+            return AccessState.ALT;
+        }
+        if (accType == null) {
+            // Live IP-based alt detection needs the online player; if offline we
+            // simply fall back to the stored (absent) account type.
+            Player online = Bukkit.getPlayer(player.getUniqueId());
+            if (online != null && isAltAccount(online)) {
+                return AccessState.ALT;
+            }
+        }
+
+        // Already in a game
+        if (hcp != null && hcp.getState() == PlayerState.IN_GAME) {
+            return AccessState.IN_GAME;
+        }
+
+        return AccessState.ALLOWED;
     }
 
     private void cleanAndGreet(Player player, String world) {
