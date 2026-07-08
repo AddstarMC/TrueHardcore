@@ -101,7 +101,7 @@ public class ThConfig extends AutoConfig {
     @ConfigField(category = "world-settings", comment = "A location: worldname,x,y,z,pitch,yaw")
     public String exitPos = "lobby,0,0,0,0,-2";
 
-    @ConfigField(category = "world-settings", comment = "The time before the world rolls back after death, Default 0 ticks")
+    @ConfigField(category = "world-settings", comment = "The time in seconds before the world rolls back after death, Default 0 seconds")
     public int rollbackdelay = 0;
 
     @ConfigField(category = "world-settings", comment = "Does the player drop items on death")
