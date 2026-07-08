@@ -723,6 +723,41 @@ public class CommandTH implements CommandExecutor {
                 TrueHardcore.log(sender.getName() + " manually cleared rollback-pending for "
                       + clearHcp.getPlayerName() + " in " + cfgWorld);
                 break;
+            case "PURGEHISTORY":
+                if (sender instanceof Player) {
+                    if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {
+                        return true;
+                    }
+                }
+                if (args.length < 2) {
+                    sender.sendMessage(ChatColor.RED + "Usage: /th purgehistory <player>");
+                    return true;
+                }
+                if (!plugin.prismHooked) {
+                    sender.sendMessage(ChatColor.RED + "Prism is not hooked; cannot purge.");
+                    return true;
+                }
+                cfgWorld = TrueHardcore.getCfg().world;
+                UUID purgeId = Bukkit.getOfflinePlayer(args[1]).getUniqueId();
+                HardcorePlayer purgeHcp = plugin.hcPlayers.get(cfgWorld, purgeId);
+                if (purgeHcp == null) {
+                    sender.sendMessage(ChatColor.RED + "Error: Unknown hardcore player!");
+                    return true;
+                }
+                if (purgeHcp.getGameEnd() == null) {
+                    sender.sendMessage(ChatColor.YELLOW + purgeHcp.getPlayerName()
+                          + " has no recorded death to purge history for.");
+                    return true;
+                }
+                sender.sendMessage(ChatColor.GREEN + "Purging Prism history for "
+                      + purgeHcp.getPlayerName() + " in " + cfgWorld + " (before "
+                      + purgeHcp.getGameEnd() + ")...");
+                TrueHardcore.log(sender.getName() + " forced a history purge for "
+                      + purgeHcp.getPlayerName() + " in " + cfgWorld);
+                // Force purge ignoring retention and the already-purged flag; runs async.
+                plugin.getServer().getScheduler().runTaskAsynchronously(plugin,
+                      () -> plugin.purgeHistoryForPlayer(purgeHcp, true));
+                break;
             case "TP":
                 if (sender instanceof Player) {
                     if (!Util.requirePermission((Player) sender, "truehardcore.admin")) {

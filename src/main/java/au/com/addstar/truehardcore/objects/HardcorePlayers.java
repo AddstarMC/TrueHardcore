@@ -187,6 +187,7 @@ public class HardcorePlayers {
         private Integer otherKills = 0;
         private Integer playerKills = 0;
         private boolean rollbackPending = false;
+        private boolean historyPurged = false;
         private boolean modified = false;
         private boolean loadDataOnly = false;
         private boolean godMode = false;
@@ -582,6 +583,32 @@ public class HardcorePlayers {
          */
         public void setRollbackPending(boolean rollbackPending) {
             this.rollbackPending = rollbackPending;
+            if (loadDataOnly) {
+                return;
+            }
+            setModified(true);
+        }
+
+        /**
+         * Whether this player's activity history for their most recent death has been purged from
+         * Prism yet.
+         *
+         * <p>Reset to false on each death and set true once the death-anchored purge has run
+         * (see {@code WorldRollback#purgeHistory}). Used by the periodic sweeper to purge each
+         * death exactly once, ~retention days after it. Independent of {@link PlayerState}.</p>
+         *
+         * @return true if the last death's history has been purged
+         */
+        public boolean isHistoryPurged() {
+            return historyPurged;
+        }
+
+        /**
+         * Set whether this player's last-death history has been purged.
+         * @param historyPurged purged state
+         */
+        public void setHistoryPurged(boolean historyPurged) {
+            this.historyPurged = historyPurged;
             if (loadDataOnly) {
                 return;
             }

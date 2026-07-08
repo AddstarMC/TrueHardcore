@@ -286,6 +286,8 @@ public final class TrueHardcore extends JavaPlugin {
             // Lightweight schema migration: ensure newer columns exist before loading.
             dbConnection.ensureColumn("players", "rollbackpending",
                     "tinyint(1) NOT NULL DEFAULT 0");
+            dbConnection.ensureColumn("players", "historypurged",
+                    "tinyint(1) NOT NULL DEFAULT 0");
             log("Loading players from database...");
             loadAllPlayers();
         } else {
@@ -334,6 +336,15 @@ public final class TrueHardcore extends JavaPlugin {
                   300 * 20L, 300 * 20L);
         }
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, chunkStorage::expireOldChunks, 300 * 20L, 5 * 20L);
+
+        if (cfg.historyPurgeEnabled) {
+            // Real-time interval from config, converted to ticks only for scheduling.
+            long intervalTicks = Math.max(1L, (long) cfg.historyPurgeIntervalMinutes) * 60L * 20L;
+            log("Launching Prism history-purge sweep (every " + cfg.historyPurgeIntervalMinutes
+                  + " minutes, retention " + cfg.historyPurgeRetentionDays + " days)...");
+            getServer().getScheduler().runTaskTimerAsynchronously(this,
+                  this::sweepHistoryPurges, intervalTicks, intervalTicks);
+        }
         log(pdfFile.getName() + " " + pdfFile.getVersion() + " has been enabled");
     }
 
@@ -562,6 +573,9 @@ public final class TrueHardcore extends JavaPlugin {
         // Only set when Prism is hooked - otherwise no rollback runs and nothing would clear it.
         if (prismHooked) {
             hcp.setRollbackPending(true);
+            // Re-arm the death-anchored history purge for this new death (clears any true left
+            // over from a previous life). The periodic sweeper purges it ~retention days later.
+            hcp.setHistoryPurged(false);
         }
 
         savePlayer(hcp);
@@ -1226,15 +1240,16 @@ public final class TrueHardcore extends JavaPlugin {
               + "`level`, `exp`, `score`, `topscore`, `state`, `deathmsg`, `deathpos`, "
               + "`deaths`,`cowkills`, `pigkills`, `sheepkills`, `chickenkills`, "
               + "`creeperkills`, `zombiekills`, `skeletonkills`,`spiderkills`, `enderkills`,"
-              + " `slimekills`, `mooshkills`, `otherkills`, `playerkills`, `rollbackpending`)"
-              + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+              + " `slimekills`, `mooshkills`, `otherkills`, `playerkills`, `rollbackpending`,"
+              + " `historypurged`)"
+              + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
               + "ON DUPLICATE KEY UPDATE "
               + "`spawnpos`=?, `lastpos`=?, `lastjoin`=?, `lastquit`=?, `gamestart`=?, `gameend`=?, `gametime`=?,"
               + "`level`=?, `exp`=?, `score`=?, `topscore`=?, `state`=?, `deathmsg`=?, "
               + "`deathpos`=?, `deaths`=?, `cowkills`=?, `pigkills`=?, `sheepkills`=?, "
               + "`chickenkills`=?, `creeperkills`=?, `zombiekills`=?, `skeletonkills`=?, "
               + "`spiderkills`=?, `enderkills`=?, `slimekills`=?, `mooshkills`=?, `otherkills`=?,"
-              + "`playerkills`=?, `rollbackpending`=?\n";
+              + "`playerkills`=?, `rollbackpending`=?, `historypurged`=?\n";
 
         final String[] values = {
               hcp.getUniqueId().toString(),
@@ -1270,6 +1285,7 @@ public final class TrueHardcore extends JavaPlugin {
               String.valueOf(hcp.getOtherKills()),
               String.valueOf(hcp.getPlayerKills()),
               hcp.isRollbackPending() ? "1" : "0",
+              hcp.isHistoryPurged() ? "1" : "0",
 
               // REPEATED FOR UPDATE!
               Util.loc2Str(hcp.getSpawnPos()),
@@ -1301,7 +1317,8 @@ public final class TrueHardcore extends JavaPlugin {
               String.valueOf(hcp.getMooshKills()),
               String.valueOf(hcp.getOtherKills()),
               String.valueOf(hcp.getPlayerKills()),
-              hcp.isRollbackPending() ? "1" : "0"
+              hcp.isRollbackPending() ? "1" : "0",
+              hcp.isHistoryPurged() ? "1" : "0"
         };
         hcp.setModified(false);
 
@@ -1459,6 +1476,7 @@ public final class TrueHardcore extends JavaPlugin {
             hcp.setOtherKills(res.getInt("otherkills"));
             hcp.setPlayerKills(res.getInt("playerkills"));
             hcp.setRollbackPending(res.getBoolean("rollbackpending"));
+            hcp.setHistoryPurged(res.getBoolean("historypurged"));
             hcp.setModified(false);
             hcp.setLoadDataOnly(false);
         } catch (Exception e) {
@@ -1490,6 +1508,98 @@ public final class TrueHardcore extends JavaPlugin {
                     savePlayer(hcp, true, true);
                 }
             }
+        }
+    }
+
+    /**
+     * Resolve this instance's dimension worlds (overworld + nether + end) for a base world name.
+     * Nulls (dimension not loaded) are included; callers/purgeHistory skip them.
+     *
+     * @param baseWorld the primary world name (dimension suffixes stripped)
+     * @return the three dimension worlds, some possibly null
+     */
+    private List<World> worldsForBase(String baseWorld) {
+        List<World> worlds = new ArrayList<>();
+        worlds.add(getServer().getWorld(baseWorld));
+        worlds.add(getServer().getWorld(baseWorld + "_nether"));
+        worlds.add(getServer().getWorld(baseWorld + "_the_end"));
+        return worlds;
+    }
+
+    /**
+     * Periodic sweep (runs off the main thread) that purges the Prism history of players whose
+     * most recent death is older than the configured retention. Each death is purged exactly once
+     * thanks to the persisted historyPurged flag, so in steady state this does almost no work.
+     * Eligible players are spaced out by the configured delay to avoid a burst of DB deletes.
+     */
+    private void sweepHistoryPurges() {
+        if (!prismHooked) {
+            return;
+        }
+        final long retentionMillis =
+                (long) getCfg().historyPurgeRetentionDays * 24L * 60L * 60L * 1000L;
+        final long now = System.currentTimeMillis();
+
+        // Snapshot eligible records so we don't hold/iterate the live map across scheduling.
+        final List<HardcorePlayer> eligible = new ArrayList<>();
+        for (HardcorePlayer hcp : hcPlayers.allRecords().values()) {
+            if (hcp == null || hcp.isHistoryPurged()
+                    || hcp.getState() != PlayerState.DEAD || hcp.getGameEnd() == null) {
+                continue;
+            }
+            if ((now - hcp.getGameEnd().getTime()) > retentionMillis) {
+                eligible.add(hcp);
+            }
+        }
+        if (eligible.isEmpty()) {
+            return;
+        }
+
+        debug("History purge sweep: " + eligible.size() + " death(s) eligible.");
+        final long delayTicks = Math.max(0L, (long) getCfg().historyPurgeDelaySeconds) * 20L;
+        for (int i = 0; i < eligible.size(); i++) {
+            final HardcorePlayer hcp = eligible.get(i);
+            getServer().getScheduler().runTaskLaterAsynchronously(this,
+                    () -> purgeHistoryForPlayer(hcp), i * delayTicks);
+        }
+    }
+
+    /**
+     * Purge one player's death history and, on success, mark it purged. Runs the Prism delete off
+     * the main thread; the flag save hops back to the main thread. Safe to call for an already
+     * purged record (re-checks the flag). Reused by the admin force-purge command.
+     *
+     * @param hcp the dead player's record
+     */
+    public void purgeHistoryForPlayer(HardcorePlayer hcp) {
+        purgeHistoryForPlayer(hcp, false);
+    }
+
+    /**
+     * Purge one player's death history and, on success, mark it purged.
+     *
+     * @param hcp   the dead player's record
+     * @param force if true, purge even if already marked purged (admin/manual use)
+     */
+    public void purgeHistoryForPlayer(HardcorePlayer hcp, boolean force) {
+        if (hcp == null || hcp.getGameEnd() == null) {
+            return;
+        }
+        if (!force && hcp.isHistoryPurged()) {
+            return;
+        }
+        if (rollbackHandler == null) {
+            return;
+        }
+        List<World> worlds = worldsForBase(hcp.getWorld());
+        boolean ok = rollbackHandler.purgeHistory(hcp.getPlayerName(), worlds, hcp.getGameEnd());
+        if (ok) {
+            // Touch player state + save on the main thread.
+            getServer().getScheduler().runTask(this, () -> {
+                hcp.setHistoryPurged(true);
+                savePlayer(hcp);
+                debug("Marked history purged for " + hcp.getWorld() + "/" + hcp.getPlayerName());
+            });
         }
     }
 

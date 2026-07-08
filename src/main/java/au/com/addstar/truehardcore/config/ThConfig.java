@@ -104,6 +104,18 @@ public class ThConfig extends AutoConfig {
     @ConfigField(category = "world-settings", comment = "The time in seconds before the world rolls back after death, Default 0 seconds")
     public int rollbackdelay = 0;
 
+    @ConfigField(category = "world-settings", comment = "Enable periodic purge of a dead player's Prism activity history")
+    public boolean historyPurgeEnabled = true;
+
+    @ConfigField(category = "world-settings", comment = "Days after a death before that death's Prism history is purged. Default 7 days")
+    public int historyPurgeRetentionDays = 7;
+
+    @ConfigField(category = "world-settings", comment = "Real-time minutes between history-purge sweeps. Default 1440 (24h)")
+    public int historyPurgeIntervalMinutes = 1440;
+
+    @ConfigField(category = "world-settings", comment = "Real-time seconds to wait between purging each player in a sweep (spreads DB load). Default 5s")
+    public int historyPurgeDelaySeconds = 5;
+
     @ConfigField(category = "world-settings", comment = "Does the player drop items on death")
     public boolean deathdrops = true;
 

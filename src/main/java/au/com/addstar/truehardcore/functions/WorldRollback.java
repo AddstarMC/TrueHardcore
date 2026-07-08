@@ -24,11 +24,13 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.prism_mc.prism.api.activities.ActivityQuery;
+import org.prism_mc.prism.api.util.Pair;
 import org.prism_mc.prism.paper.api.PrismPaperApi;
 import org.prism_mc.prism.paper.api.activities.PaperActivityQuery;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -291,6 +293,63 @@ public class WorldRollback {
                 .reversed(false)
                 .rollback()
                 .build();
+    }
+
+    /**
+     * Permanently delete a player's Prism activity history from before their most recent death,
+     * across the given worlds. This is the death-anchored history purge: everything the player
+     * caused with a timestamp earlier than {@code gameEnd} (their last death) is removed -
+     * rolled-back rows and non-reversible clutter (pickups, item-use) alike. Current-life
+     * activity is always timestamped after {@code gameEnd} and is never touched.
+     *
+     * <p><strong>Must be called off the main thread.</strong> Unlike {@code prism.rollback(...)},
+     * the storage-adapter delete/count calls are synchronous and hit the database directly.</p>
+     *
+     * @param playerName the cause player name Prism recorded activities under
+     * @param worlds     the worlds (dimensions) to purge; nulls are skipped
+     * @param gameEnd    the player's most recent death time; the purge upper bound
+     * @return true if all worlds purged without error (safe to mark the death purged), false if
+     *         any world failed (leave the flag unset so it retries)
+     */
+    public boolean purgeHistory(String playerName, List<World> worlds, Date gameEnd) {
+        // Prism stores timestamps as epoch SECONDS, and the query before() bound is in seconds.
+        final long beforeSeconds = gameEnd.getTime() / 1000L;
+        boolean allOk = true;
+        int totalDeleted = 0;
+
+        for (World world : worlds) {
+            if (world == null) {
+                continue;
+            }
+            try {
+                ActivityQuery query = PaperActivityQuery.builder()
+                        .causePlayerName(playerName)
+                        .worldUuid(world.getUID())
+                        .before(beforeSeconds)
+                        .build();
+
+                Pair<Integer, Integer> bounds =
+                        prism.storageAdapter().getActivitiesPkBounds(query);
+                if (bounds == null || bounds.key() == null || bounds.value() == null) {
+                    // No matching rows in this world - nothing to delete.
+                    continue;
+                }
+                int deleted = prism.storageAdapter()
+                        .deleteActivities(query, bounds.key(), bounds.value());
+                totalDeleted += deleted;
+                debug("Purged " + deleted + " history rows for " + playerName
+                        + " in " + world.getName());
+            } catch (Exception e) {
+                warn("History purge failed for " + playerName + " in " + world.getName() + "!");
+                e.printStackTrace();
+                allOk = false;
+            }
+        }
+
+        if (totalDeleted > 0) {
+            log("Purged " + totalDeleted + " total history rows for " + playerName);
+        }
+        return allOk;
     }
 
     /**
