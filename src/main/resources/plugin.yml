@@ -4,7 +4,7 @@ version: ${plugin.version}
 api-version: ${paper.api.version}
 author: add5tar
 softdepend: [Vault, Multiverse-Core, My_Worlds, Prism, LWC, PremiumVanish, WorldBorder, ChatControlRed, Monolith,
-             Pandora, PlaceholderAPI]
+             Pandora, PlaceholderAPI, ProtocolLib]
 description: Multiplayer hardcore plugin to simulate true hardcore
 
 commands:
