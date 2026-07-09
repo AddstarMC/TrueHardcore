@@ -46,7 +46,6 @@ import com.destroystokyo.paper.MaterialTags;
 import com.griefcraft.lwc.LWC;
 import com.griefcraft.lwc.LWCPlugin;
 import com.griefcraft.model.Protection;
-import com.lishid.openinv.IOpenInv;
 import com.wimbli.WorldBorder.BorderData;
 import com.wimbli.WorldBorder.WorldBorder;
 import de.myzelyam.api.vanish.VanishAPI;
@@ -135,8 +134,6 @@ public final class TrueHardcore extends JavaPlugin {
     public CombatTracker combatTracker;
     public WorldRollback rollbackHandler;
     public Boolean prismHooked = false;
-    public Boolean oiHooked = false;
-    public IOpenInv openInv;
     public PrismPaperApi prism;
     private boolean vaultEnabled = false;
     private FileHandler debugFileHandler;
@@ -264,8 +261,6 @@ public final class TrueHardcore extends JavaPlugin {
             ppHooked = false;
             log("PlayerParticles not found! Particle effects will not be removed on death.");
         }
-
-        oiHooked = checkOpenInventory();
 
         p = pm.getPlugin("ProtocolLib");
         if (p instanceof ProtocolLib) {
@@ -395,21 +390,6 @@ public final class TrueHardcore extends JavaPlugin {
         }
         econ = rsp.getProvider();
         return true;
-    }
-
-    private boolean checkOpenInventory() {
-        Plugin p = getServer().getPluginManager().getPlugin("OpenInv");
-        if (p == null) {
-            log("Open Inventory support disabled");
-            return false;
-        } else {
-            if (p instanceof IOpenInv) {
-                openInv = (IOpenInv) p;
-                log("Open Inventory support enabled");
-                return true;
-            }
-        }
-        return false;
     }
 
     public FileConfiguration config() {

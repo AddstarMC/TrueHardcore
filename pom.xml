@@ -159,12 +159,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.lishid</groupId>
-            <artifactId>openinvapi</artifactId>
-            <version>4.1.6-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.wimbli.WorldBorder</groupId>
             <artifactId>WorldBorder</artifactId>
             <version>1.9.0</version>
