@@ -803,6 +803,23 @@ public final class TrueHardcore extends JavaPlugin {
      * @return the computed access state
      */
     public AccessState getAccessState(String world, OfflinePlayer player) {
+        return getAccessState(world, player, false);
+    }
+
+    /**
+     * As {@link #getAccessState(String, OfflinePlayer)}, but able to suppress the debug
+     * logging of the queries it runs.
+     *
+     * <p>Polled callers such as the lobby hologram placeholders re-evaluate this on an
+     * interval for every viewer, which would otherwise flood the debug log. Live callers
+     * (join/play gating) should leave {@code silent} false so the queries stay visible.
+     *
+     * @param world  the world name
+     * @param player the player (may be offline)
+     * @param silent suppress debug logging of the queries run
+     * @return the computed access state
+     */
+    public AccessState getAccessState(String world, OfflinePlayer player, boolean silent) {
         HardcoreWorld hcw = hardcoreWorlds.get(world);
         if (hcw == null) {
             // No such world configured - nothing to play
@@ -810,7 +827,7 @@ public final class TrueHardcore extends JavaPlugin {
         }
 
         // Whitelist (only enforced on whitelisted worlds)
-        if (hcw.isWhitelisted() && !isOnWhiteList(player.getUniqueId())) {
+        if (hcw.isWhitelisted() && !isOnWhiteList(player.getUniqueId(), silent)) {
             return AccessState.NOT_WHITELISTED;
         }
 
@@ -839,7 +856,7 @@ public final class TrueHardcore extends JavaPlugin {
         }
 
         // Alt account. Read-only: never writes account type or tracking here.
-        String accType = getAccountType(player.getUniqueId());
+        String accType = getAccountType(player.getUniqueId(), silent);
         if ("alt".equals(accType)) {
             return AccessState.ALT;
         }
@@ -847,7 +864,7 @@ public final class TrueHardcore extends JavaPlugin {
             // Live IP-based alt detection needs the online player; if offline we
             // simply fall back to the stored (absent) account type.
             Player online = Bukkit.getPlayer(player.getUniqueId());
-            if (online != null && isAltAccount(online)) {
+            if (online != null && isAltAccount(online, silent)) {
                 return AccessState.ALT;
             }
         }
@@ -1676,9 +1693,13 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     private boolean isOnWhiteList(UUID player) {
+        return isOnWhiteList(player, false);
+    }
+
+    private boolean isOnWhiteList(UUID player, boolean silent) {
         String query = "SELECT 1 FROM `whitelist` WHERE id=?";
         try {
-            ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()}, true);
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()}, silent);
             if (res != null && res.next()) {
                 return true;
             }
@@ -1716,9 +1737,13 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     public String getAccountType(UUID uuid) {
+        return getAccountType(uuid, false);
+    }
+
+    public String getAccountType(UUID uuid, boolean silent) {
         String query = "SELECT type FROM `accounts` WHERE id=?";
         try {
-            ResultSet res = dbConnection.preparedQuery(query, new String[]{uuid.toString()});
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{uuid.toString()}, silent);
             if ((res != null) && (res.next())) {
                 return res.getString("type");
             }
@@ -1748,12 +1773,16 @@ public final class TrueHardcore extends JavaPlugin {
     }
 
     public boolean isAltAccount(Player player) {
+        return isAltAccount(player, false);
+    }
+
+    public boolean isAltAccount(Player player, boolean silent) {
         String query = "SELECT * FROM `tracking` WHERE ip=? AND id!=? "
               + "AND lastseen > DATE_SUB(NOW(), INTERVAL 7 DAY) LIMIT 1";
         try {
             String ip = player.getAddress().getAddress().getHostAddress();
             UUID uuid = player.getUniqueId();
-            ResultSet res = dbConnection.preparedQuery(query, new String[]{ip.toString(), uuid.toString()});
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{ip.toString(), uuid.toString()}, silent);
             if ((res != null) && (res.next())) {
                 return true;
             }

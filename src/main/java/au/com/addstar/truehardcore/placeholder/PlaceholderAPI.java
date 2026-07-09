@@ -41,11 +41,11 @@ public class PlaceholderAPI extends PlaceholderExpansion {
         }
         else if (identifier.equals("canplay")) {
             String world = TrueHardcore.getCfg().world;
-            return plugin.getAccessState(world, player).canPlay() ? "yes" : "no";
+            return plugin.getAccessState(world, player, true).canPlay() ? "yes" : "no";
         }
         else if (identifier.equals("access_reason")) {
             String world = TrueHardcore.getCfg().world;
-            AccessState state = plugin.getAccessState(world, player);
+            AccessState state = plugin.getAccessState(world, player, true);
             if (state == AccessState.COOLDOWN) {
                 // Append the remaining cooldown so the hologram shows how long is left
                 long minutes = cooldownMinutes(world, player);
