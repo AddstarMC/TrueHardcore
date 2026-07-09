@@ -113,7 +113,17 @@ public final class TrueHardcore extends JavaPlugin {
     public final String header = ChatColor.DARK_RED + "[" + ChatColor.RED + "TrueHardcore"
           + ChatColor.DARK_RED + "] " + ChatColor.YELLOW;
 
+    // Number of columns to probe within a single loaded chunk before giving up on it.
+    // Loading the chunk is the expensive part, so sampling several columns per load makes
+    // a first-attempt success far more likely.
+    private static final int SPAWN_SAMPLE_COLUMNS = 10;
+
+    // Common natural surface blocks that no Tag/MaterialTag below captures, so they must be
+    // listed explicitly. Notably GRASS_BLOCK is NOT part of Tag.DIRT, so without this it (and
+    // therefore most overworld surface) would be rejected as a spawn spot.
     private final List<Material> spawnBlocks = new ArrayList<>(Arrays.asList(
+            Material.GRASS_BLOCK,
+            Material.STONE,
             Material.DIORITE,
             Material.GRANITE,
             Material.ANDESITE,
@@ -316,10 +326,11 @@ public final class TrueHardcore extends JavaPlugin {
         spawnBlocks.addAll(Tag.ICE.getValues());
         spawnBlocks.addAll(Tag.TERRACOTTA.getValues());
         spawnBlocks.addAll(Tag.SAND.getValues());
+        spawnBlocks.addAll(Tag.LOGS.getValues());
+        spawnBlocks.addAll(Tag.CONCRETE_POWDER.getValues());
         spawnBlocks.addAll(MaterialTags.SANDSTONES.getValues());
         spawnBlocks.addAll(MaterialTags.COBBLESTONES.getValues());
         spawnBlocks.addAll(MaterialTags.CONCRETES.getValues());
-        spawnBlocks.addAll(MaterialTags.CONCRETE_POWDER.getValues());
         spawnBlocks.addAll(MaterialTags.MUSHROOM_BLOCKS.getValues());
         spawnBlocks.addAll(MaterialTags.ORES.getValues());
 
@@ -937,37 +948,25 @@ public final class TrueHardcore extends JavaPlugin {
                 double x = (dist * Math.cos(Math.toRadians(deg))) + l.getBlockX();
                 double z = (dist * Math.sin(Math.toRadians(deg))) + l.getBlockZ();
 
-                // Get the highest block at the selected location
-                int startY = hcw.getWorld().getMaxHeight();
-                Block b = new Location(hcw.getWorld(), x, startY, z).getBlock();
-                for (int y = startY; y > 10; y--) {
-                    b = b.getRelative(BlockFace.DOWN);
-                    reason = "Unable to find valid block (" + b.getType() + ")";
+                // Loading a far-out chunk is the expensive part; a single column probe throws
+                // most of that work away. Instead, snap to the chunk we just paid to load and
+                // sample several columns within it, greatly raising the odds of a first-try hit.
+                int chunkOriginX = (int) Math.floor(x / 16.0) * 16;
+                int chunkOriginZ = (int) Math.floor(z / 16.0) * 16;
 
-                    if (b.isEmpty()) {
-                        // Move down to the next block if this one is empty
-                        continue;
-                    }
-                    else if (b.isLiquid()) {
-                        // We never want lava or water, so just skip this location
-                        reason = "BAD: Found liquid (" + b.getType() + ")";
-                        break;
-                    }
-                    else if (b.isSolid() && b.getType().isBlock()) {
-                        // We've found a real block so lets check it
-                        Tag.LEAVES.isTagged(b.getType());
-                        if (spawnBlocks.contains(b.getType())) {
-                            // Make sure it's inside the world border (if one exists)
-                            if (insideWorldBorder(b.getLocation())) {
-                                goodSpawn = true;
-                                reason = "Allowed block type (" + b.getType() + ")!";
-                            } else {
-                                reason = "Outside world border";
-                            }
-                        } else {
-                            reason = "Wrong block type (" + b.getType() + ")";
-                        }
-                        break;
+                // 'b' holds the last-scanned ground block so the give-up/debug output below still
+                // has a sensible location to report even when no column in the chunk was valid.
+                Block b = new Location(hcw.getWorld(), x, hcw.getWorld().getMaxHeight(), z).getBlock();
+                for (int i = 0; i < SPAWN_SAMPLE_COLUMNS && !goodSpawn; i++) {
+                    // Random column within the 16x16 chunk (keeps the "natural" spread of spawns)
+                    int cx = chunkOriginX + (int) (Math.random() * 16);
+                    int cz = chunkOriginZ + (int) (Math.random() * 16);
+
+                    ColumnResult result = scanColumn(hcw.getWorld(), cx, cz);
+                    b = result.ground;
+                    reason = result.reason;
+                    if (result.valid) {
+                        goodSpawn = true;
                     }
                 }
 
@@ -1028,6 +1027,63 @@ public final class TrueHardcore extends JavaPlugin {
                 }
             }
         }.runTaskTimer(instance, 2L, 25L);
+    }
+
+    /**
+     * Outcome of scanning a single (x,z) column for a valid spawn ground block.
+     */
+    private static final class ColumnResult {
+        final boolean valid;
+        final Block ground;
+        final String reason;
+
+        ColumnResult(boolean valid, Block ground, String reason) {
+            this.valid = valid;
+            this.ground = ground;
+            this.reason = reason;
+        }
+    }
+
+    /**
+     * Scan a single column from the top down and decide whether it is a valid spawn spot.
+     * Mirrors the original per-column validation: the first solid block found must be an
+     * allowed {@code spawnBlocks} type, inside the world border, and not liquid.
+     *
+     * @param world the world to scan in
+     * @param x     block x coordinate of the column
+     * @param z     block z coordinate of the column
+     * @return the scan result (valid flag, the ground block reached, and a debug reason)
+     */
+    private ColumnResult scanColumn(World world, int x, int z) {
+        int startY = world.getMaxHeight();
+        Block b = new Location(world, x, startY, z).getBlock();
+        String reason = "Unable to find valid block (unknown)";
+
+        for (int y = startY; y > 10; y--) {
+            b = b.getRelative(BlockFace.DOWN);
+            reason = "Unable to find valid block (" + b.getType() + ")";
+
+            if (b.isEmpty()) {
+                // Move down to the next block if this one is empty
+                continue;
+            }
+            else if (b.isLiquid()) {
+                // We never want lava or water, so just skip this column
+                return new ColumnResult(false, b, "BAD: Found liquid (" + b.getType() + ")");
+            }
+            else if (b.isSolid() && b.getType().isBlock()) {
+                // We've found a real block so lets check it
+                if (spawnBlocks.contains(b.getType())) {
+                    // Make sure it's inside the world border (if one exists)
+                    if (insideWorldBorder(b.getLocation())) {
+                        return new ColumnResult(true, b, "Allowed block type (" + b.getType() + ")!");
+                    }
+                    return new ColumnResult(false, b, "Outside world border");
+                }
+                return new ColumnResult(false, b, "Wrong block type (" + b.getType() + ")");
+            }
+        }
+        return new ColumnResult(false, b, reason);
     }
 
     /**
