@@ -1678,7 +1678,7 @@ public final class TrueHardcore extends JavaPlugin {
     private boolean isOnWhiteList(UUID player) {
         String query = "SELECT 1 FROM `whitelist` WHERE id=?";
         try {
-            ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()});
+            ResultSet res = dbConnection.preparedQuery(query, new String[]{player.toString()}, true);
             if (res != null && res.next()) {
                 return true;
             }

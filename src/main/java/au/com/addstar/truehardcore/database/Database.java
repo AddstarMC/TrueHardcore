@@ -100,17 +100,32 @@ public class Database {
      * @return ResultSet
      */
     public ResultSet preparedQuery(String query, String[] params) {
+        return preparedQuery(query, params, false);
+    }
+
+    /**
+     * Prepare a query.
+     * @param query the query
+     * @param params the params
+     * @param silent suppress debug logging
+     * @return ResultSet
+     */
+    public ResultSet preparedQuery(String query, String[] params, boolean silent) {
         try {
             Connection conn = getQueryConnection();
             PreparedStatement ps = conn.prepareStatement(query);
-            TrueHardcore.debugLog("SQL Query: " + query);
+            if (!silent) {
+                TrueHardcore.debugLog("SQL Query: " + query);
+            }
             if (params != null) {
                 List<String> values = new ArrayList<>();
                 for (int x = 0; x < params.length; x++) {
                     values.add((x+1) + ":" + params[x]);
                     ps.setString(x + 1, params[x]);
                 }
-                TrueHardcore.debug("Params: " + String.join(", ", values));
+                if (!silent) {
+                    TrueHardcore.debug("Params: " + String.join(", ", values));
+                }
             }
             return ps.executeQuery();
         } catch (SQLException e) {

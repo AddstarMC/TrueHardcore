@@ -179,6 +179,11 @@
                     <groupId>org.kitteh</groupId>
                     <artifactId>VanishNoPacket</artifactId>
                 </exclusion>
+                <!-- Its POM declares itself as its own parent, which Maven reports as a cycle -->
+                <exclusion>
+                    <groupId>org.mineacademy</groupId>
+                    <artifactId>chatcontrol-bukkit</artifactId>
+                </exclusion>
             </exclusions>
             <scope>provided</scope>
         </dependency>
