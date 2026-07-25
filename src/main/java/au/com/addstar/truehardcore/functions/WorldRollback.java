@@ -23,15 +23,24 @@ import au.com.addstar.truehardcore.TrueHardcore;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
+import org.prism_mc.prism.api.activities.Activity;
 import org.prism_mc.prism.api.activities.ActivityQuery;
+import org.prism_mc.prism.api.services.modifications.ModificationQueueMode;
+import org.prism_mc.prism.api.services.modifications.ModificationQueueResult;
+import org.prism_mc.prism.api.services.modifications.ModificationResult;
+import org.prism_mc.prism.api.services.modifications.ModificationResultStatus;
+import org.prism_mc.prism.api.services.modifications.ModificationSkipReason;
+import org.prism_mc.prism.api.util.Coordinate;
 import org.prism_mc.prism.api.util.Pair;
 import org.prism_mc.prism.paper.api.PrismPaperApi;
 import org.prism_mc.prism.paper.api.activities.PaperActivityQuery;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -156,6 +165,19 @@ public class WorldRollback {
     }
 
     /**
+     * Total dispatches for a single dimension's rollback: the initial attempt plus one retry. Prism
+     * v4 can leave part of an operation un-applied (skipped/partial/planned); because those
+     * activities stay {@code reversed=false}, re-running the same query re-matches only the
+     * leftovers, clearing the common transient case. One retry is enough - a persistent shortfall
+     * usually means blocks Prism genuinely can't restore (e.g. other players have since edited the
+     * area), so we accept the result after the retry rather than holding the player out.
+     */
+    private static final int MAX_ROLLBACK_ATTEMPTS = 2;
+
+    /** Seconds to wait before the retry, letting the world settle before re-applying. */
+    private static final int RETRY_DELAY_SECONDS = 3;
+
+    /**
      * A pending rollback for one player in one world (dimension), due at {@link #taskTime}.
      */
     public static class RollbackRequest {
@@ -166,6 +188,8 @@ public class WorldRollback {
         public final UUID playerId;
         /** Tracker key for the death this dimension belongs to. */
         public final String deathKey;
+        /** 1-based dispatch attempt for this dimension; incremented on the retry. */
+        public int attempt = 1;
 
         /**
          * Create a rollback request.
@@ -353,6 +377,226 @@ public class WorldRollback {
     }
 
     /**
+     * Maximum number of individual non-applied changes to log coordinates for, per dimension.
+     * A large rollback can skip hundreds of changes; we log the first few so an operator can walk
+     * to them in-world without flooding the log.
+     */
+    private static final int MAX_LOGGED_DETAILS = 15;
+
+    /**
+     * Log the outcome of a single dimension's rollback. Prism v4's {@link ModificationQueueResult}
+     * reports far more than the applied count: how many changes were <em>planned</em> versus
+     * actually applied, plus per-change {@code SKIPPED}/{@code PARTIAL} statuses with reasons. A
+     * partial rollback (permadeath world left half-restored) is high-severity here, so whenever
+     * {@code applied} falls short of {@code planned} we surface the shortfall, a breakdown of why
+     * changes were skipped/partial, and the coordinates of the first several offenders so they can
+     * be found in-world.
+     *
+     * @param who      world/player label for log lines
+     * @param result   the Prism rollback result
+     * @param elapsed  wall-clock time from dispatch to completion
+     * @return true if the rollback hit a <em>retry-worthy problem</em> - a genuine failure to apply
+     *         a change (an {@code ERRORED} skip, or changes left {@code PLANNED} because the queue
+     *         didn't complete). Returns false when everything either applied or was
+     *         <em>validly</em> skipped (e.g. {@code ALREADY_SET}: the block was changed by someone
+     *         else since, so Prism must not overwrite it). Valid skips are expected in normal play
+     *         and a retry cannot clear them - it would re-skip identically - so they don't count.
+     */
+    private boolean logResult(String who, ModificationQueueResult result, Duration elapsed) {
+        final int planned = result.planned();
+        final int applied = result.applied();
+        final int skipped = result.skipped();
+        final int partial = result.partial();
+
+        if (planned == 0 && applied == 0) {
+            debug("Nothing to rollback for " + who);
+            return false;
+        }
+
+        // Classify the non-applied result rows into "valid skips" (expected, permanent - a retry
+        // can't help) vs "problems" (ERRORED / left PLANNED - worth one retry). See classifyRows.
+        Shortfall sf = classifyRows(result.results());
+
+        // Headline: report planned vs applied plus the queue mode. mode != COMPLETING means the
+        // rollback previewed/planned but never executed - changes left outstanding, which looks
+        // in-world exactly like a partial rollback.
+        String headline = "Rolled back " + applied + "/" + planned + " changes for " + who
+                + " (skipped=" + skipped + ", partial=" + partial
+                + ", validSkips=" + sf.validSkips + ", problems=" + sf.problems
+                + ", mode=" + result.mode() + ", " + elapsed.toMillis() + "ms)";
+
+        // Side-effect counters - handy for spotting unexpected lava drains / entity moves / drop
+        // removals that could look like "missing" world state to a reporting player.
+        debug("Rollback side effects for " + who + ": removedBlocks=" + result.removedBlocks()
+                + ", drainedLava=" + result.drainedLava()
+                + ", movedEntities=" + result.movedEntities()
+                + ", removedDrops=" + result.removedDrops()
+                + ", mode=" + result.mode());
+
+        boolean modeIncomplete = result.mode() != ModificationQueueMode.COMPLETING;
+        if (sf.problems == 0 && !modeIncomplete) {
+            // Fully restored, modulo blocks Prism validly refused. This is the healthy steady state.
+            log(headline);
+            logReasonHistogram(who, sf, false); // valid-skip breakdown at debug only
+            return false;
+        }
+
+        // A genuine problem or an incomplete queue. Warn and explain, and ask for a retry.
+        warn(headline + " - rollback did NOT fully complete; see breakdown below");
+        logReasonHistogram(who, sf, true);
+        return true;
+    }
+
+    /**
+     * A classified breakdown of a rollback's non-applied result rows.
+     *
+     * <p>Prism v4 skip reasons split cleanly into two groups (verified against Prism's
+     * {@code PaperBlockAction}/queue source):</p>
+     * <ul>
+     *   <li><b>Valid skips</b> - {@code ALREADY_SET} (the block was modified by someone/something
+     *   since, so Prism must not overwrite it - the common collaborative-area case),
+     *   {@code BLACKLISTED} (config says don't touch), {@code FULL_INVENTORY} (can't return an item
+     *   to a full container). These are expected, permanent, and a retry re-skips them identically.</li>
+     *   <li><b>Problems</b> - {@code ERRORED} (a block-set threw), and any row left {@code PLANNED}
+     *   (the queue didn't reach COMPLETING for it - interrupted/aborted). {@code NOT_IMPLEMENTED} is
+     *   the builder default and also counts as a problem. These are worth one retry, since the
+     *   activities stay {@code reversed=false} and a fresh pass can pick them up.</li>
+     * </ul>
+     */
+    private static class Shortfall {
+        int validSkips;
+        int problems;
+        int plannedRows;
+        /** Reason histogram keyed "STATUS:reason", first-seen order. */
+        final Map<String, Integer> reasons = new LinkedHashMap<>();
+        /** Human-readable "action @ x,y,z -> reason" for the first few problem rows. */
+        final List<String> problemDetails = new ArrayList<>();
+        /** True if per-change detail was unavailable, so counts came from headline totals only. */
+        boolean detailMissing;
+    }
+
+    /**
+     * Classify the per-change result rows into valid-skips vs problems. A change is a "problem" if
+     * it errored or was left planned; every other non-applied row is a valid skip.
+     */
+    private Shortfall classifyRows(List<ModificationResult> results) {
+        Shortfall sf = new Shortfall();
+        if (results == null || results.isEmpty()) {
+            sf.detailMissing = true;
+            return sf;
+        }
+
+        for (ModificationResult r : results) {
+            ModificationResultStatus status = r.status();
+            if (status == ModificationResultStatus.APPLIED) {
+                continue;
+            }
+
+            String reason;
+            boolean problem;
+            if (status == ModificationResultStatus.SKIPPED) {
+                ModificationSkipReason sr = r.skipReason();
+                reason = "SKIPPED:" + sr;
+                // ERRORED (and the NOT_IMPLEMENTED default) are real failures; other skips are valid.
+                problem = sr == ModificationSkipReason.ERRORED
+                        || sr == ModificationSkipReason.NOT_IMPLEMENTED;
+            } else if (status == ModificationResultStatus.PARTIAL) {
+                // PARTIAL means the change applied but with blacklisted content stripped / a full
+                // inventory - the block itself was set, so treat as a valid (expected) outcome.
+                reason = "PARTIAL:" + r.partialReason();
+                problem = false;
+            } else {
+                // PLANNED (or anything unexpected) means it never completed - a problem.
+                reason = String.valueOf(status);
+                problem = true;
+                sf.plannedRows++;
+            }
+
+            sf.reasons.merge(reason, 1, Integer::sum);
+            if (problem) {
+                sf.problems++;
+                if (sf.problemDetails.size() < MAX_LOGGED_DETAILS) {
+                    sf.problemDetails.add(describe(r) + " -> " + reason);
+                }
+            } else {
+                sf.validSkips++;
+            }
+        }
+        return sf;
+    }
+
+    /**
+     * Log the reason histogram and, when problems are present, the coordinates of the first several
+     * problem blocks so an operator can find them in-world.
+     *
+     * @param who      world/player label
+     * @param sf       the classified breakdown
+     * @param asWarning true to log at warning level (real problem), false for debug (valid-skip noise)
+     */
+    private void logReasonHistogram(String who, Shortfall sf, boolean asWarning) {
+        if (sf.detailMissing) {
+            if (asWarning) {
+                warn("  (no per-change detail available from Prism for " + who + ")");
+            }
+            return;
+        }
+        if (sf.reasons.isEmpty()) {
+            return; // everything applied
+        }
+
+        StringBuilder sb = new StringBuilder("  rollback reasons for ").append(who).append(": ");
+        boolean first = true;
+        for (Map.Entry<String, Integer> e : sf.reasons.entrySet()) {
+            if (!first) {
+                sb.append(", ");
+            }
+            sb.append(e.getKey()).append(" x").append(e.getValue());
+            first = false;
+        }
+        if (asWarning) {
+            warn(sb.toString());
+        } else {
+            debug(sb.toString());
+        }
+
+        if (!asWarning) {
+            return; // valid-skip breakdown: histogram at debug is enough, skip per-block detail
+        }
+
+        // Interpret a PLANNED tail so an operator needn't know Prism's internals: these changes were
+        // matched and queued but the queue never completed them (e.g. a batch fetch failed
+        // mid-stream). They remain reversible in Prism, hence restorable by a preview.
+        if (sf.plannedRows > 0) {
+            warn("  " + sf.plannedRows + " change(s) for " + who + " were left PLANNED (queue did"
+                    + " not complete - likely interrupted mid-stream); still reversible in Prism.");
+        }
+
+        for (String d : sf.problemDetails) {
+            warn("    " + d);
+        }
+        int shown = sf.problemDetails.size();
+        if (sf.problems > shown) {
+            warn("    ...and " + (sf.problems - shown) + " more problem block(s) not shown");
+        }
+    }
+
+    /**
+     * Render one non-applied change as "action @ x,y,z" for the detail log, so an operator can go
+     * straight to the block that wasn't restored. Defensive against nulls in the result row.
+     */
+    private String describe(ModificationResult r) {
+        Activity a = r.activity();
+        if (a == null) {
+            return (r.target() != null ? r.target() : "?") + " @ ?";
+        }
+        String action = (a.action() != null && a.action().type() != null)
+                ? a.action().type().key() : "?";
+        Coordinate c = a.coordinate();
+        String loc = (c != null) ? (c.intX() + "," + c.intY() + "," + c.intZ()) : "?";
+        return action + " @ " + loc;
+    }
+
+    /**
      * Polls the queue and dispatches due rollbacks to Prism.
      *
      * <p>Runs on the main thread. {@link PrismPaperApi#rollback(Object, ActivityQuery)} returns
@@ -372,31 +616,86 @@ public class WorldRollback {
                 return;
             }
 
-            final String who = req.world.getName() + "/" + req.player.getName();
-            debug("Handling rollback task for: " + who);
-
-            try {
-                prism.rollback(queueOwner, buildQuery(req))
-                        .whenComplete((result, error) -> {
-                            if (error != null) {
-                                warn("Rollback failed for " + who + "!");
-                                error.printStackTrace();
-                                dimensionComplete(req, false);
-                                return;
-                            }
-                            if (result.applied() == 0) {
-                                debug("Nothing to rollback for " + who);
-                            } else {
-                                log("Rolled back " + result.applied() + " changes for " + who);
-                            }
-                            dimensionComplete(req, true);
-                        });
-            } catch (Exception e) {
-                warn("Rollback dispatch failed for " + who + "!");
-                e.printStackTrace();
-                // Count the failed dispatch so the death's tracker doesn't hang forever.
-                dimensionComplete(req, false);
-            }
+            dispatch(req);
         }
+    }
+
+    /**
+     * Dispatch a rollback for a dimension to Prism and handle its completion.
+     *
+     * <p>If the result is a shortfall (some changes skipped/partial/left planned) we retry the same
+     * query exactly once - the un-applied activities stay {@code reversed=false}, so re-running
+     * re-matches only the leftovers and clears the common transient case. A shortfall is expected in
+     * normal play (multiple players editing the same area means Prism legitimately can't restore
+     * some blocks), so after that single retry we always treat the dimension as
+     * <strong>complete</strong> regardless of whether it fully applied: the leftover details are
+     * logged (and remain reversible in Prism for manual cleanup), but the player is never held out
+     * of the world for a partial rollback. We only mark the dimension failed on a hard error from
+     * Prism (the future completing exceptionally), where nothing meaningful happened.</p>
+     *
+     * <p>Called on the main thread (from the queue processor or the retry task). Prism's
+     * {@code rollback(...)} runs off-thread and completes the returned future off-thread.</p>
+     *
+     * @param req the dimension request to (re)dispatch
+     */
+    private void dispatch(RollbackRequest req) {
+        final String who = req.world.getName() + "/" + req.player.getName();
+        final Instant dispatched = Instant.now();
+        debug("Handling rollback task for: " + who
+                + (req.attempt > 1 ? " (retry " + req.attempt + "/" + MAX_ROLLBACK_ATTEMPTS + ")" : ""));
+
+        try {
+            prism.rollback(queueOwner, buildQuery(req))
+                    .whenComplete((result, error) -> {
+                        if (error != null) {
+                            warn("Rollback failed for " + who + "!");
+                            error.printStackTrace();
+                            dimensionComplete(req, false);
+                            return;
+                        }
+
+                        // problemFound is true only for retry-worthy issues (errored / left
+                        // planned) - NOT for valid skips like ALREADY_SET, which a retry can't fix.
+                        boolean problemFound =
+                                logResult(who, result, Duration.between(dispatched, Instant.now()));
+
+                        if (problemFound && req.attempt < MAX_ROLLBACK_ATTEMPTS) {
+                            // Genuine shortfall - one retry may sweep up changes the queue didn't
+                            // complete (they stay reversed=false, so a fresh pass re-matches them).
+                            req.attempt++;
+                            warn("Rollback for " + who + " had unresolved problems; scheduling one"
+                                    + " retry in " + RETRY_DELAY_SECONDS + "s.");
+                            scheduleRetry(req);
+                            return;
+                        }
+
+                        if (problemFound) {
+                            // Retry still left problems. Accept anyway so the player is not held out;
+                            // leftovers are logged above and stay reversible in Prism for cleanup.
+                            warn("Rollback for " + who + " still had problems after retry; accepting"
+                                    + " and letting the player continue (problem blocks logged above;"
+                                    + " still reversible via /pr for manual cleanup).");
+                        }
+                        // Valid skips or a cleared retry both land here: dimension is done, player
+                        // is released. We never hold a player out for a partial rollback.
+                        dimensionComplete(req, true);
+                    });
+        } catch (Exception e) {
+            warn("Rollback dispatch failed for " + who + "!");
+            e.printStackTrace();
+            // Count the failed dispatch so the death's tracker doesn't hang forever.
+            dimensionComplete(req, false);
+        }
+    }
+
+    /**
+     * Re-dispatch a partial rollback after {@link #RETRY_DELAY_SECONDS}. Prism completes futures off
+     * the main thread, so hop back onto it before touching the world again.
+     *
+     * @param req the request to retry
+     */
+    private void scheduleRetry(RollbackRequest req) {
+        plugin.getServer().getScheduler().runTaskLater(plugin,
+                () -> dispatch(req), RETRY_DELAY_SECONDS * 20L);
     }
 }
