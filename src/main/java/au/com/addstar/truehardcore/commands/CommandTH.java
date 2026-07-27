@@ -159,7 +159,7 @@ public class CommandTH implements CommandExecutor {
                     }
                     //noinspection deprecation
                     OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-                    if (!target.hasPlayedBefore()) {
+                    if (!target.isOnline() && !target.hasPlayedBefore()) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
                         break;
                     }
@@ -428,7 +428,7 @@ public class CommandTH implements CommandExecutor {
                     }
                     //noinspection deprecation
                     OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-                    if (!target.hasPlayedBefore()) {
+                    if (!target.isOnline() && !target.hasPlayedBefore()) {
                         sender.sendMessage(ChatColor.RED + "Error: Unknown player!");
                         break;
                     }
@@ -643,9 +643,23 @@ public class CommandTH implements CommandExecutor {
                         return true;
                     }
                 }
-                sender.sendMessage(ChatColor.GREEN + "Hardcore rollback queue:");
-                for (int x = 0; x < plugin.rollbackHandler.getQueue().size(); x++) {
-                    WorldRollback.RollbackRequest req = plugin.rollbackHandler.getQueue().get(x);
+                // In-flight: the one rollback currently running in Prism's single global queue.
+                // It is not in getQueue() (removed on dispatch), so show it separately on top.
+                WorldRollback.RollbackRequest running = plugin.rollbackHandler.getInFlight();
+                if (running != null) {
+                    sender.sendMessage(ChatColor.GREEN + "In flight: "
+                          + ChatColor.YELLOW + running.world.getName() + " "
+                          + ChatColor.GREEN + running.player.getName() + " "
+                          + ChatColor.AQUA + "(attempt " + running.attempt + ")");
+                } else {
+                    sender.sendMessage(ChatColor.GRAY + "In flight: none (Prism queue idle)");
+                }
+
+                java.util.List<WorldRollback.RollbackRequest> waiting =
+                        plugin.rollbackHandler.getQueue();
+                sender.sendMessage(ChatColor.GREEN + "Waiting rollback queue (" + waiting.size() + "):");
+                for (int x = 0; x < waiting.size(); x++) {
+                    WorldRollback.RollbackRequest req = waiting.get(x);
                     sender.sendMessage(ChatColor.RED + Integer.toString(x) + ": "
                           + ChatColor.YELLOW + req.world.getName() + " "
                           + ChatColor.GREEN + req.player.getName() + " "
@@ -797,7 +811,10 @@ public class CommandTH implements CommandExecutor {
 
                 //noinspection deprecation
                 OfflinePlayer p = Bukkit.getOfflinePlayer(args[1]);
-                if (!p.hasPlayedBefore()) {
+                // hasPlayedBefore() reads the on-disk playerdata, which isn't written until
+                // the player's first save/quit - so check online status first, otherwise a
+                // first-time joiner appears not to exist until they relog.
+                if (!p.isOnline() && !p.hasPlayedBefore()) {
                     sender.sendMessage(ChatColor.RED + "Player " + args[1] + " does not exist!");
                     return true;
                 }

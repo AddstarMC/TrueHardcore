@@ -86,15 +86,20 @@ public class WorldRollback {
      * <p>v4 key changes from the old v3 list: {@code water-bucket} -> {@code bucket-empty},
      * {@code lighter} -> {@code block-ignite}, and {@code portal-create} no longer exists in v4
      * (portal blocks are recorded as {@code block-place}, which is already covered).</p>
+     *
+     * <p><strong>{@code bucket-empty} and {@code item-insert} are intentionally omitted:</strong>
+     * Prism v4.4 has no rollback handler for these action types - it returns them as
+     * {@code SKIPPED:NOT_IMPLEMENTED}, so querying them only produces hundreds of noise "problem"
+     * rows (spamming the log and triggering pointless retries) while restoring nothing. If a future
+     * Prism build implements rollback for placed fluids (bucket-empty) or container inserts
+     * (item-insert), re-add them here. Until then they cannot be undone regardless of the query.</p>
      */
     private static final List<String> ROLLBACK_ACTION_KEYS = List.of(
             "block-break",
             "block-place",
-            "item-insert",
             "entity-shear",
             "entity-leash",
             "entity-dye",
-            "bucket-empty",
             "block-ignite"
     );
 
@@ -102,6 +107,21 @@ public class WorldRollback {
     private final TrueHardcore plugin;
     private final ArrayList<RollbackRequest> rollbackQueue;
     private final BukkitTask queueTask;
+
+    /**
+     * The rollback currently handed to Prism, or {@code null} when Prism's queue is idle.
+     *
+     * <p>Prism exposes a <em>single global</em> modification queue: only one rollback/restore can
+     * run at a time, and dispatching a second while one is in flight throws
+     * {@code IllegalStateException: A modification queue is already running}. We therefore serialise
+     * every dispatch through this reference - across all deaths, all players, and all dimensions,
+     * not just the dimensions of one death. It is set right before we hand a request to Prism and
+     * cleared in the completion callback (success or failure). Touched only on the main thread (the
+     * queue poller and the retry task both run there), so no synchronisation is needed. While it is
+     * non-null the poller leaves requests on the queue and retries requeue themselves, so nothing is
+     * dropped; work just waits its turn. Exposed via {@link #getInFlight()} for {@code /th queue}.</p>
+     */
+    private RollbackRequest inFlight = null;
 
     /**
      * Identifies this plugin as the owner of the Prism modification queues we create.
@@ -183,7 +203,8 @@ public class WorldRollback {
     public static class RollbackRequest {
         public final Player player;
         public final World world;
-        public final Instant taskTime;
+        /** Earliest time this request may run; pushed forward when a retry is requeued. */
+        public Instant taskTime;
         /** Player UUID captured at queue time; the player may be offline by completion. */
         public final UUID playerId;
         /** Tracker key for the death this dimension belongs to. */
@@ -209,6 +230,17 @@ public class WorldRollback {
 
     public ArrayList<RollbackRequest> getQueue() {
         return rollbackQueue;
+    }
+
+    /**
+     * The rollback currently running in Prism's single global queue, or {@code null} if idle. Note
+     * an in-flight request is <em>not</em> in {@link #getQueue()} - the poller removes it on dispatch
+     * - so callers wanting the full picture should show this alongside the waiting queue.
+     *
+     * @return the in-flight request, or null
+     */
+    public RollbackRequest getInFlight() {
+        return inFlight;
     }
 
     /**
@@ -403,12 +435,14 @@ public class WorldRollback {
      *         and a retry cannot clear them - it would re-skip identically - so they don't count.
      */
     private boolean logResult(String who, ModificationQueueResult result, Duration elapsed) {
-        final int planned = result.planned();
         final int applied = result.applied();
         final int skipped = result.skipped();
         final int partial = result.partial();
+        // NB: result.planned() is unreliable in COMPLETING mode (observed as 0 even when thousands
+        // applied), so we don't use it. "Processed" is the trustworthy total of what Prism acted on.
+        final int processed = applied + skipped + partial;
 
-        if (planned == 0 && applied == 0) {
+        if (processed == 0) {
             debug("Nothing to rollback for " + who);
             return false;
         }
@@ -417,10 +451,10 @@ public class WorldRollback {
         // can't help) vs "problems" (ERRORED / left PLANNED - worth one retry). See classifyRows.
         Shortfall sf = classifyRows(result.results());
 
-        // Headline: report planned vs applied plus the queue mode. mode != COMPLETING means the
-        // rollback previewed/planned but never executed - changes left outstanding, which looks
+        // Headline: applied out of total processed, plus the queue mode. mode != COMPLETING means
+        // the rollback previewed/planned but never executed - changes left outstanding, which looks
         // in-world exactly like a partial rollback.
-        String headline = "Rolled back " + applied + "/" + planned + " changes for " + who
+        String headline = "Rolled back " + applied + "/" + processed + " processed for " + who
                 + " (skipped=" + skipped + ", partial=" + partial
                 + ", validSkips=" + sf.validSkips + ", problems=" + sf.problems
                 + ", mode=" + result.mode() + ", " + elapsed.toMillis() + "ms)";
@@ -606,6 +640,13 @@ public class WorldRollback {
     public class ProcessNextRequest implements Runnable {
         @Override
         public void run() {
+            // Prism runs one rollback at a time; if one is in flight, leave requests queued and try
+            // again next tick. This is what prevents the "A modification queue is already running"
+            // crash when multiple deaths (or dimensions) come due close together.
+            if (inFlight != null) {
+                return;
+            }
+
             final RollbackRequest req = getNextRequest();
             if (req == null) {
                 return;
@@ -634,7 +675,8 @@ public class WorldRollback {
      * Prism (the future completing exceptionally), where nothing meaningful happened.</p>
      *
      * <p>Called on the main thread (from the queue processor or the retry task). Prism's
-     * {@code rollback(...)} runs off-thread and completes the returned future off-thread.</p>
+     * {@code rollback(...)} runs off-thread and completes the returned future off-thread; we hop
+     * back to the main thread in the callback to clear {@link #rollbackInFlight} and continue.</p>
      *
      * @param req the dimension request to (re)dispatch
      */
@@ -644,58 +686,94 @@ public class WorldRollback {
         debug("Handling rollback task for: " + who
                 + (req.attempt > 1 ? " (retry " + req.attempt + "/" + MAX_ROLLBACK_ATTEMPTS + ")" : ""));
 
+        // Claim the single global Prism queue. Cleared on every completion/failure path below and
+        // in onRollbackReturned().
+        inFlight = req;
         try {
             prism.rollback(queueOwner, buildQuery(req))
-                    .whenComplete((result, error) -> {
-                        if (error != null) {
-                            warn("Rollback failed for " + who + "!");
-                            error.printStackTrace();
-                            dimensionComplete(req, false);
-                            return;
-                        }
-
-                        // problemFound is true only for retry-worthy issues (errored / left
-                        // planned) - NOT for valid skips like ALREADY_SET, which a retry can't fix.
-                        boolean problemFound =
-                                logResult(who, result, Duration.between(dispatched, Instant.now()));
-
-                        if (problemFound && req.attempt < MAX_ROLLBACK_ATTEMPTS) {
-                            // Genuine shortfall - one retry may sweep up changes the queue didn't
-                            // complete (they stay reversed=false, so a fresh pass re-matches them).
-                            req.attempt++;
-                            warn("Rollback for " + who + " had unresolved problems; scheduling one"
-                                    + " retry in " + RETRY_DELAY_SECONDS + "s.");
-                            scheduleRetry(req);
-                            return;
-                        }
-
-                        if (problemFound) {
-                            // Retry still left problems. Accept anyway so the player is not held out;
-                            // leftovers are logged above and stay reversible in Prism for cleanup.
-                            warn("Rollback for " + who + " still had problems after retry; accepting"
-                                    + " and letting the player continue (problem blocks logged above;"
-                                    + " still reversible via /pr for manual cleanup).");
-                        }
-                        // Valid skips or a cleared retry both land here: dimension is done, player
-                        // is released. We never hold a player out for a partial rollback.
-                        dimensionComplete(req, true);
-                    });
+                    .whenComplete((result, error) ->
+                            // Completion fires off-thread; resume on the main thread.
+                            plugin.getServer().getScheduler().runTask(plugin,
+                                    () -> onRollbackReturned(req, who, dispatched, result, error)));
+        } catch (IllegalStateException e) {
+            // Prism's queue was busy despite our guard (e.g. an operator /pr rollback is running).
+            // Don't fail the dimension - release the flag and requeue so the poller retries later.
+            warn("Prism queue busy for " + who + "; will requeue and retry (" + e.getMessage() + ")");
+            inFlight = null;
+            requeue(req);
         } catch (Exception e) {
             warn("Rollback dispatch failed for " + who + "!");
             e.printStackTrace();
+            inFlight = null;
             // Count the failed dispatch so the death's tracker doesn't hang forever.
             dimensionComplete(req, false);
         }
     }
 
     /**
-     * Re-dispatch a partial rollback after {@link #RETRY_DELAY_SECONDS}. Prism completes futures off
-     * the main thread, so hop back onto it before touching the world again.
+     * Handle a completed Prism rollback on the main thread: clear the in-flight flag, log/classify
+     * the result, and either retry (one problem-driven retry), accept-and-release, or fail on a hard
+     * Prism error. Releasing {@link #rollbackInFlight} here lets the poller dispatch the next queued
+     * rollback (another dimension, another death, another player) on the following tick.
+     */
+    private void onRollbackReturned(RollbackRequest req, String who, Instant dispatched,
+                                    ModificationQueueResult result, Throwable error) {
+        inFlight = null;
+
+        if (error != null) {
+            warn("Rollback failed for " + who + "!");
+            error.printStackTrace();
+            dimensionComplete(req, false);
+            return;
+        }
+
+        // problemFound is true only for retry-worthy issues (errored / left planned) - NOT for
+        // valid skips like ALREADY_SET, which a retry can't fix.
+        boolean problemFound = logResult(who, result, Duration.between(dispatched, Instant.now()));
+
+        if (problemFound && req.attempt < MAX_ROLLBACK_ATTEMPTS) {
+            // Genuine shortfall - one retry may sweep up changes the queue didn't complete (they
+            // stay reversed=false, so a fresh pass re-matches them).
+            req.attempt++;
+            warn("Rollback for " + who + " had unresolved problems; scheduling one retry in "
+                    + RETRY_DELAY_SECONDS + "s.");
+            scheduleRetry(req);
+            return;
+        }
+
+        if (problemFound) {
+            // Retry still left problems. Accept anyway so the player is not held out; leftovers are
+            // logged above and stay reversible in Prism for cleanup.
+            warn("Rollback for " + who + " still had problems after retry; accepting and letting the"
+                    + " player continue (problem blocks logged above; still reversible via /pr for"
+                    + " manual cleanup).");
+        }
+        // Valid skips or a cleared retry both land here: dimension is done, player is released. We
+        // never hold a player out for a partial rollback.
+        dimensionComplete(req, true);
+    }
+
+    /**
+     * Put a request back on the queue so the poller re-dispatches it once the Prism queue frees up.
+     * Used when a dispatch was refused because Prism was already running a modification.
+     */
+    private void requeue(RollbackRequest req) {
+        synchronized (rollbackQueue) {
+            rollbackQueue.add(req);
+        }
+    }
+
+    /**
+     * Schedule a retry of a partial rollback. Rather than dispatch directly (which could collide
+     * with another death's rollback that started in the meantime), we push the request's due-time
+     * out by {@link #RETRY_DELAY_SECONDS} and put it back on the queue. The poller then re-dispatches
+     * it once it's due <em>and</em> the single Prism queue is free - so retries serialise with all
+     * other rollbacks through the same {@link #rollbackInFlight} guard.
      *
      * @param req the request to retry
      */
     private void scheduleRetry(RollbackRequest req) {
-        plugin.getServer().getScheduler().runTaskLater(plugin,
-                () -> dispatch(req), RETRY_DELAY_SECONDS * 20L);
+        req.taskTime = Instant.now().plusSeconds(RETRY_DELAY_SECONDS);
+        requeue(req);
     }
 }
