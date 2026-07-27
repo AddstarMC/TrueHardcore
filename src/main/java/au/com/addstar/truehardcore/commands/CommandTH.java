@@ -880,6 +880,17 @@ public class CommandTH implements CommandExecutor {
                     sender.sendMessage(ChatColor.AQUA + "/th forcealive <player> "
                           + ChatColor.YELLOW
                           + ": Force remove player from game, set state to alive");
+                    sender.sendMessage(ChatColor.AQUA + "/th clearrollback <player> "
+                          + ChatColor.YELLOW
+                          + ": Clear a stuck rollback-pending flag so a player can re-enter");
+                    sender.sendMessage(ChatColor.AQUA + "/th purgehistory <player> "
+                          + ChatColor.YELLOW
+                          + ": Purge a player's Prism history before their last death");
+                    sender.sendMessage(ChatColor.AQUA + "/th tp <player> <player> "
+                          + ChatColor.YELLOW
+                          + ": Teleport one player to another");
+                    sender.sendMessage(ChatColor.AQUA + "/th set exit        " + ChatColor.YELLOW
+                          + ": Set the hardcore world exit to your location");
                 }
                 break;
         }
