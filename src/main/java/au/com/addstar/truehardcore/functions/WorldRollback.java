@@ -20,6 +20,8 @@
 package au.com.addstar.truehardcore.functions;
 
 import au.com.addstar.truehardcore.TrueHardcore;
+import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
@@ -102,6 +104,32 @@ public class WorldRollback {
             "entity-dye",
             "block-ignite"
     );
+
+    /**
+     * Item-holding blocks whose {@code block-break} we never roll back (unless
+     * {@code rollbackRestoreContainers} is enabled), as Prism's own block names.
+     *
+     * <p>Prism v4 saves a broken block's full NBT, so undoing a container break puts it back
+     * <em>with its contents</em>. That allows a cheap dupe: break another player's full chest,
+     * hand the items over, die, and the chest comes back full. Containers the player placed in
+     * the same life aren't affected either way (undoing the place leaves air), so in practice this
+     * only applies to containers they broke but didn't place: other players' and worldgen ones.
+     * This covers the common containers; less common item holders (decorated pots, chiseled
+     * bookshelves, lecterns, jukeboxes) are deliberately left out.</p>
+     */
+    private static final List<String> NON_RESTORED_CONTAINERS = buildContainerList();
+
+    private static List<String> buildContainerList() {
+        List<String> names = new ArrayList<>(List.of(
+                "chest", "trapped_chest", "barrel",
+                "furnace", "blast_furnace", "smoker",
+                "hopper", "dropper", "dispenser", "brewing_stand"
+        ));
+        for (Material m : Tag.SHULKER_BOXES.getValues()) {
+            names.add(m.getKey().getKey());
+        }
+        return List.copyOf(names);
+    }
 
     private final PrismPaperApi prism;
     private final TrueHardcore plugin;
@@ -211,20 +239,27 @@ public class WorldRollback {
         public final String deathKey;
         /** 1-based dispatch attempt for this dimension; incremented on the retry. */
         public int attempt = 1;
+        /**
+         * Start of the life being rolled back (the player's game start), captured at queue time.
+         * Only activity after this is rolled back. Null means unknown, so no lower bound is applied.
+         */
+        public final Date lifeStart;
 
         /**
          * Create a rollback request.
          *
-         * @param player the dead player whose changes are being undone
-         * @param world  the world (dimension) to roll back
-         * @param time   the earliest time this request should be executed
+         * @param player    the dead player whose changes are being undone
+         * @param world     the world (dimension) to roll back
+         * @param time      the earliest time this request should be executed
+         * @param lifeStart start of the life being rolled back, or null if unknown
          */
-        public RollbackRequest(Player player, World world, Instant time) {
+        public RollbackRequest(Player player, World world, Instant time, Date lifeStart) {
             this.player = player;
             this.world = world;
             this.taskTime = time;
             this.playerId = player.getUniqueId();
             this.deathKey = deathKey(this.playerId, world.getName());
+            this.lifeStart = lifeStart;
         }
     }
 
@@ -250,20 +285,27 @@ public class WorldRollback {
      * call-site compatibility; only rollbacks are queued now (the old v3 PURGE step is gone, as
      * Prism v4 tracks reversed activities itself).</p>
      *
-     * @param type  legacy request type, expected to be {@code "ROLLBACK"}
-     * @param p     the dead player
-     * @param w     the world (dimension) to roll back
-     * @param delay seconds to wait before executing
+     * @param type      legacy request type, expected to be {@code "ROLLBACK"}
+     * @param p         the dead player
+     * @param w         the world (dimension) to roll back
+     * @param delay     seconds to wait before executing
+     * @param lifeStart start of the life being rolled back (the player's game start); only
+     *                  activity after this is undone. Null rolls back with no lower bound.
      */
-    public void queueRollback(String type, Player p, World w, int delay) {
+    public void queueRollback(String type, Player p, World w, int delay, Date lifeStart) {
         if (!"ROLLBACK".equalsIgnoreCase(type)) {
             warn("Ignoring unsupported rollback request type \"" + type + "\" for "
                     + w.getName() + "/" + p.getName());
             return;
         }
+        if (lifeStart == null) {
+            warn("No game start recorded for " + w.getName() + "/" + p.getName()
+                    + "; rolling back ALL un-reversed history (not limited to this life).");
+        }
         Instant time = Instant.now().plusSeconds(delay);
-        RollbackRequest req = new RollbackRequest(p, w, time);
-        debug("Queuing rollback task: " + w.getName() + "/" + p.getName() + " @ " + time);
+        RollbackRequest req = new RollbackRequest(p, w, time, lifeStart);
+        debug("Queuing rollback task: " + w.getName() + "/" + p.getName() + " @ " + time
+                + " (life since " + lifeStart + ")");
 
         // Register this dimension against the death so we know how many completions to wait for.
         synchronized (pendingDeaths) {
@@ -336,19 +378,85 @@ public class WorldRollback {
 
     /**
      * Build the Prism query for a single death rollback: every reversible change the player
-     * caused in the given world, excluding activities Prism has already reversed.
+     * caused in the given world during the life that just ended, excluding activities Prism has
+     * already reversed.
+     *
+     * <p>Limiting to this life matters because Prism leaves validly-skipped activities (e.g.
+     * {@code ALREADY_SET}) as {@code reversed=false}. Without a lower bound, every later death
+     * would re-attempt those leftovers from earlier lives, and since Prism only skips a block
+     * that already matches, re-applying them could only ever overwrite changes made since,
+     * usually by other players. The old v3 integration got the same effect by purging after
+     * every rollback.</p>
      *
      * @param req the request to build a query for
      * @return a Prism activity query in rollback mode
      */
     private ActivityQuery buildQuery(RollbackRequest req) {
-        return PaperActivityQuery.builder()
-                .causePlayerName(req.player.getName())
+        var builder = PaperActivityQuery.builder();
+        builder.causePlayerName(req.player.getName())
                 .worldUuid(req.world.getUID())
                 .actionTypeKeys(ROLLBACK_ACTION_KEYS)
                 .reversed(false)
-                .rollback()
-                .build();
+                .rollback();
+        if (req.lifeStart != null) {
+            builder.after(lifeStartBound(req.lifeStart));
+        }
+        return builder.build();
+    }
+
+    /**
+     * Prism timestamps are epoch seconds and {@code after()} is exclusive, so step back one second
+     * to include anything recorded in the same second the life started.
+     */
+    private static long lifeStartBound(Date lifeStart) {
+        return lifeStart.getTime() / 1000L - 1L;
+    }
+
+    /**
+     * Mark this life's un-reversed container breaks as reversed, so the rollback that follows
+     * skips them and those containers stay broken. See {@link #NON_RESTORED_CONTAINERS}.
+     *
+     * <p>Must be called off the main thread: the storage adapter calls hit the database directly.
+     * Any failure is logged and swallowed - the rollback still runs, just with containers restored
+     * as Prism normally would, rather than holding the player out.</p>
+     *
+     * @param req the dimension request about to be rolled back
+     * @param who world/player label for log lines
+     */
+    private void excludeBrokenContainers(RollbackRequest req, String who) {
+        if (TrueHardcore.getCfg().rollbackRestoreContainers) {
+            return;
+        }
+        try {
+            var builder = PaperActivityQuery.builder();
+            builder.causePlayerName(req.player.getName())
+                    .worldUuid(req.world.getUID())
+                    .actionTypeKey("block-break")
+                    .affectedBlocks(NON_RESTORED_CONTAINERS)
+                    .reversed(false)
+                    .grouped(false);
+            if (req.lifeStart != null) {
+                builder.after(lifeStartBound(req.lifeStart));
+            }
+
+            List<Long> ids = new ArrayList<>();
+            for (Activity a : prism.storageAdapter().queryActivities(builder.build())) {
+                if (a.primaryKey() instanceof Number n) {
+                    ids.add(n.longValue());
+                }
+            }
+            if (ids.isEmpty()) {
+                return;
+            }
+
+            prism.storageAdapter().markReversed(ids, true);
+            log("Not restoring " + ids.size() + " broken container(s) for " + who
+                    + " (marked reversed so the rollback skips them)");
+        } catch (Exception e) {
+            warn("Could not exclude broken containers for " + who
+                    + "; they will be restored by this rollback.");
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -687,8 +795,29 @@ public class WorldRollback {
                 + (req.attempt > 1 ? " (retry " + req.attempt + "/" + MAX_ROLLBACK_ATTEMPTS + ")" : ""));
 
         // Claim the single global Prism queue. Cleared on every completion/failure path below and
-        // in onRollbackReturned().
+        // in onRollbackReturned(). Held across the async container step too, so nothing else is
+        // dispatched in between.
         inFlight = req;
+
+        // Excluding broken containers hits the DB directly, so do it off the main thread, then hop
+        // back to the main thread to hand the rollback to Prism.
+        // The hand-off is in finally so that even an Error in the container step can't leave the
+        // queue claimed with no rollback running.
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                excludeBrokenContainers(req, who);
+            } finally {
+                plugin.getServer().getScheduler().runTask(plugin,
+                        () -> startRollback(req, who, dispatched));
+            }
+        });
+    }
+
+    /**
+     * Hand the rollback to Prism. Runs on the main thread with {@link #inFlight} already set to
+     * {@code req} by {@link #dispatch}.
+     */
+    private void startRollback(RollbackRequest req, String who, Instant dispatched) {
         try {
             prism.rollback(queueOwner, buildQuery(req))
                     .whenComplete((result, error) ->

@@ -596,6 +596,10 @@ public final class TrueHardcore extends JavaPlugin {
             );
         }
 
+        // Snapshot the start of the life that just ended, so the rollback only undoes this life's
+        // changes even if the record is modified before the delayed task runs.
+        final Date lifeStart = hcp.getGameStart();
+
         instance.getServer().getScheduler().runTaskLater(instance, () -> {
             try {
                 if (instance.lwcHooked) {
@@ -624,18 +628,20 @@ public final class TrueHardcore extends JavaPlugin {
 
                 if (prismHooked) {
                     // Queue rollback for the Overworld
-                    rollbackHandler.queueRollback("ROLLBACK", player, world, hcw.getRollbackDelay());
+                    rollbackHandler.queueRollback("ROLLBACK", player, world, hcw.getRollbackDelay(), lifeStart);
 
                     // Queue rollback for The Nether
                     World netherworld = instance.getServer().getWorld(world.getName() + "_nether");
                     if (netherworld != null) {
-                        rollbackHandler.queueRollback("ROLLBACK", player, netherworld, hcw.getRollbackDelay());
+                        rollbackHandler.queueRollback("ROLLBACK", player, netherworld, hcw.getRollbackDelay(),
+                                lifeStart);
                     }
 
                     // Queue rollback for The End
                     World endworld = instance.getServer().getWorld(world.getName() + "_the_end");
                     if (endworld != null) {
-                        rollbackHandler.queueRollback("ROLLBACK", player, endworld, hcw.getRollbackDelay());
+                        rollbackHandler.queueRollback("ROLLBACK", player, endworld, hcw.getRollbackDelay(),
+                                lifeStart);
                     }
                 }
 
@@ -1581,7 +1587,8 @@ public final class TrueHardcore extends JavaPlugin {
 
     /**
      * Periodic sweep (runs off the main thread) that purges the Prism history of players whose
-     * most recent death is older than the configured retention. Each death is purged exactly once
+     * most recent death is older than the configured retention, whether or not they have since
+     * started a new life (only rows from before that death are deleted). Each death is purged exactly once
      * thanks to the persisted historyPurged flag, so in steady state this does almost no work.
      * Eligible players are spaced out by the configured delay to avoid a burst of DB deletes.
      */
@@ -1596,8 +1603,12 @@ public final class TrueHardcore extends JavaPlugin {
         // Snapshot eligible records so we don't hold/iterate the live map across scheduling.
         final List<HardcorePlayer> eligible = new ArrayList<>();
         for (HardcorePlayer hcp : hcPlayers.allRecords().values()) {
-            if (hcp == null || hcp.isHistoryPurged()
-                    || hcp.getState() != PlayerState.DEAD || hcp.getGameEnd() == null) {
+            // Not limited to DEAD players: someone who started a new life soon after dying still
+            // needs their previous life purged. That's safe because the purge only deletes rows
+            // from before their last death (gameEnd), and a new life only starts after it.
+            // Skip a death whose rollback hasn't completed, so a stuck rollback keeps its rows.
+            if (hcp == null || hcp.isHistoryPurged() || hcp.isRollbackPending()
+                    || hcp.getGameEnd() == null) {
                 continue;
             }
             if ((now - hcp.getGameEnd().getTime()) > retentionMillis) {

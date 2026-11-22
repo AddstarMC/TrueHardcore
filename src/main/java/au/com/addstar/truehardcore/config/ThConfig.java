@@ -104,6 +104,9 @@ public class ThConfig extends AutoConfig {
     @ConfigField(category = "world-settings", comment = "The time in seconds before the world rolls back after death, Default 0 seconds")
     public int rollbackdelay = 0;
 
+    @ConfigField(category = "world-settings", comment = "Restore containers (chests, barrels, shulkers, furnaces, etc) the player broke when rolling back a death. Prism restores them WITH their contents, which can be used to dupe items. Default false (broken containers stay broken)")
+    public boolean rollbackRestoreContainers = false;
+
     @ConfigField(category = "world-settings", comment = "Enable periodic purge of a dead player's Prism activity history")
     public boolean historyPurgeEnabled = true;
 
