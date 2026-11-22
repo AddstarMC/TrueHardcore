@@ -148,7 +148,7 @@
         <dependency>
             <groupId>org.prism_mc.prism</groupId>
             <artifactId>prism-paper-api</artifactId>
-            <version>4.4</version>
+            <version>4.5</version>
             <scope>provided</scope>
         </dependency>
 
