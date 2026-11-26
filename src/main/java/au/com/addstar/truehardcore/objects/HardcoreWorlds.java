@@ -165,6 +165,10 @@ public class HardcoreWorlds {
             this.config.antiCombatLog = combatlog;
         }
 
+        public Boolean getDismountOnQuit() {
+            return config.dismountOnQuit;
+        }
+
         public Integer getCombatTime() {
             return config.combatTime;
         }

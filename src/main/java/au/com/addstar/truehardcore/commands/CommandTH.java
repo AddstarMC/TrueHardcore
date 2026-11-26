@@ -319,6 +319,8 @@ public class CommandTH implements CommandExecutor {
                               + hcw.isWhitelisted());
                         sender.sendMessage(ChatColor.YELLOW + " AntiCombatLog : " + ChatColor.AQUA
                                 + hcw.getAntiCombatLog());
+                        sender.sendMessage(ChatColor.YELLOW + " DismountOnQuit: " + ChatColor.AQUA
+                                + hcw.getDismountOnQuit());
                         sender.sendMessage(ChatColor.YELLOW + " CombatTime    : " + ChatColor.AQUA
                                 + hcw.getCombatTime());
                         List<ChunkStorage.TrueHardCoreChunk> chunks = stored.get(hcw.getWorld().getUID());

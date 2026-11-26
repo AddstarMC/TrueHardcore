@@ -131,6 +131,12 @@ public class ThConfig extends AutoConfig {
     @ConfigField(category = "world-settings", comment = "How long to consider players in combat mode, in seconds")
     public int combatTime = 30;
 
+    @ConfigField(category = "world-settings",
+          comment = "Dismount players from horses/boats/etc. when they quit, leaving the mount in the world where they "
+                  + "logged off (vanilla hides it in the player file until they return). Required if MyWorlds "
+                  + "forceJoinOnMainWorld is on, which skips the vanilla step that respawns a saved mount (it would be lost).")
+    public boolean dismountOnQuit = false;
+
     @ConfigField(category = "world-settings", comment = "Does this world use the whitelist")
     public boolean whitelisted = true;
 

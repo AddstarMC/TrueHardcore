@@ -66,6 +66,12 @@ world-settings:
   # This prevents a player quiting hardcore properly while in combat
   antiCombatLog: false
 
+  # Dismount players from horses/boats/etc. when they quit, leaving the mount in the world
+  # where they logged off (vanilla hides it in the player file until they return). Required
+  # if MyWorlds forceJoinOnMainWorld is on, which skips the vanilla step that respawns a
+  # saved mount (it would be lost).
+  dismountOnQuit: false
+
   # How long to consider players in combat mode, in seconds
   combatTime: 30
 

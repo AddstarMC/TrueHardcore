@@ -219,6 +219,19 @@ public class PlayerListener implements Listener {
         }
 
         TrueHardcore.debug("EVENT: " + event.getEventName() + " / " + "LOCATION: " + player.getLocation());
+
+        // Leave the mount in the world instead of letting vanilla save it into the player
+        // file. Done before the position is recorded so lastpos is beside the mount.
+        if (player.isInsideVehicle()) {
+            HardcoreWorld hcw = plugin.hardcoreWorlds.get(player.getWorld().getName());
+            if (hcw != null && hcw.getDismountOnQuit()) {
+                String vehicle = player.getVehicle().getType().name();
+                boolean left = player.leaveVehicle();
+                TrueHardcore.debug(player.getName() + " quit while riding " + vehicle
+                        + (left ? ", dismounted at " + player.getLocation() : ", dismount was blocked"));
+            }
+        }
+
         // We only care about existing hardcore players
         HardcorePlayer hcp = hardcorePlayers.get(player);
         if (hcp == null) {
